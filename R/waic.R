@@ -1,0 +1,4 @@
+
+waic = function(post) {
+  
+}
