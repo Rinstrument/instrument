@@ -5,6 +5,11 @@
 #include <RcppArmadilloExtensions/sample.h>
 
 // [[Rcpp::export]]
+double min(double a, double b) {
+  return 0.5 * (a + b - std::abs(a - b));
+}
+
+// [[Rcpp::export]]
 double log_likelihood(arma::vec & x, arma::mat & data, arma::uvec & alpha_pos,
                       arma::uvec & delta_pos, arma::uvec & theta_pos) {
   
@@ -28,14 +33,15 @@ double log_likelihood(arma::vec & x, arma::mat & data, arma::uvec & alpha_pos,
   
   data_refl = -(data_refl - 1);
   
-  theta_mat = theta_mat % data + data_refl - (theta_mat % data_refl);
-
+  theta_mat = theta_mat % data + data_refl - (theta_mat % data_refl); // this may be wrong?? p^theta * (1-p)^(1-theta)???????????? Does this do that?
+  // did I do all of this on the log scale??????????????????????????????//
+  
   //arma::mat temp = arma::mat(n, j, arma::fill::randu);
   
-  double llk = arma::accu(arma::log(theta_mat + 0.0000000000000001)) + 
-    arma::accu(arma::log(arma::normpdf(x(theta_pos), 0.0, 1.0) + 0.0000000000000001)) + 
-    arma::accu(arma::log(arma::normpdf(x(delta_pos), 0.0, 2.0) + 0.0000000000000001)) + 
-    arma::accu(arma::log(arma::log_normpdf(x(alpha_pos), 0.0, 2.0) + 3.0)); // + 0.0000000001
+  double llk = arma::accu(arma::log(theta_mat + 0.0001)) + 
+    arma::accu(arma::log(arma::normpdf(x(theta_pos), 0.0, 1.0) + 0.0001)) + 
+    arma::accu(arma::log(arma::normpdf(x(delta_pos), 0.0, 2.0) + 0.0001)) + 
+    arma::accu(arma::log(arma::log_normpdf(x(alpha_pos), 0.0, 2.0) + 20.0)) + 10000.0; // + 0.0000000001
   
   // Rcpp::Rcout << x(alpha_pos) << std::endl;
   // Rcpp::Rcout << arma::log_normpdf(x(alpha_pos), 0.0, 2.0) << std::endl;
@@ -53,14 +59,23 @@ SEXP arwmh(arma::mat & x, int p, arma::vec x_current, int iter,
   
   // case switch the model to fit
   
-  double l_def = std::log(2.38 * 2.38 / 1);
+  double l_def = 2.38 * 2.38 / 1;
   
-  arma::vec prop_mu = arma::vec(iter + 1, arma::fill::zeros);  //   is iter + 1 correct indexing???
-  arma::vec prop_sigma = arma::vec(iter + 1, arma::fill::ones);
-  arma::vec ll_scaling = arma::vec(p, arma::fill::value(l_def));
-  arma::vec gam_correct = arma::linspace<arma::vec>(1, iter, iter + 1);
-  gam_correct -= 1;
-  gam_correct = 1 / (gam_correct + 1);
+  arma::vec prop_mu_t = arma::vec(p, arma::fill::zeros);
+  arma::vec prop_sigma_t = arma::vec(p, arma::fill::ones);
+  
+  arma::vec prop_mu_t1 = arma::vec(p, arma::fill::zeros);
+  arma::vec prop_sigma_t1 = arma::vec(p, arma::fill::ones);
+  
+  arma::vec l_scaling_t = arma::vec(p, arma::fill::value(l_def));
+  l_scaling_t = arma::log(l_scaling_t);
+  arma::vec l_scaling_t1 = arma::vec(p, arma::fill::value(l_def));
+  
+  //arma::vec gam_correct = arma::linspace<arma::vec>(1, iter, iter + 1);
+  
+  arma::vec gam_correct = arma::vec(p, arma::fill::ones);
+  //gam_correct -= 1;
+  //gam_correct = 1 / ((gam_correct/10) + 1);
   
   // random normal draws for proposal distribution
   arma::vec rn_prop_scale01 = arma::randn(iter, arma::distr_param(0, 1));
@@ -75,48 +90,86 @@ SEXP arwmh(arma::mat & x, int p, arma::vec x_current, int iter,
   
   for(int it = 0; it < iter; it++) {
     
-    int p_current_select = p_update_index(it);
+    //int p_current_select = p_update_index(it);
+    int p_current_select = 0;
     
-    
-    
-    //Rcpp::Rcout << "prop_sigma(it): " << prop_sigma(it) << std::endl;
+    gam_correct(p_current_select) = 1.0 / (it + 2.0); // / (gam_correct(p_current_select) + 1);
+    Rcpp::Rcout << "first gam_correct(p_current_select): " << gam_correct(p_current_select) << std::endl;
     
     // // 1. Sample candidate value for component p_i
-    x_proposal(p_current_select) = rn_prop_scale01(it) * (std::exp(ll_scaling(p_current_select)) * prop_sigma(it)) + x_current(p_current_select); 
+    Rcpp::Rcout << "here: " << std::endl;
+    Rcpp::Rcout << "rn_prop_scale01(it): " << rn_prop_scale01(it) << std::endl;
+    Rcpp::Rcout << "l_scaling_t(p_current_select): " << l_scaling_t(p_current_select) << std::endl;
+    Rcpp::Rcout << "rn_prop_scale01(it): " << rn_prop_scale01(it) << std::endl;
+    Rcpp::Rcout << "x_current(p_current_select): " << x_current(p_current_select) << std::endl;
     
+    x_proposal(p_current_select) = rn_prop_scale01(it) * (std::exp(l_scaling_t(p_current_select)) * prop_sigma_t(p_current_select)) + x_current(p_current_select); 
     
-    //Rcpp::Rcout << "p_current_select: " << p_current_select << std::endl;
-    //Rcpp::Rcout << "x_proposal(p_current_select): " << x_proposal(p_current_select) << std::endl;
-    //Rcpp::Rcout << "x_current(p_current_select): " << x_current(p_current_select) << std::endl;
+    Rcpp::Rcout << "Accepted: x_proposal(p_current_select): " << x_proposal(p_current_select) << std::endl;
+    Rcpp::Rcout << "Accepted: x_current(p_current_select): " << x_current(p_current_select) << std::endl;
     
-    
-    R = std::exp(log_likelihood(x_proposal, data, alpha_pos, delta_pos, theta_pos) - log_likelihood(x_current, data, alpha_pos, delta_pos, theta_pos)); // log likelihood should have
+    R = min(
+        std::exp(log_likelihood(x_proposal, data, alpha_pos, delta_pos, theta_pos) - 
+          log_likelihood(x_current, data, alpha_pos, delta_pos, theta_pos)), 
+        1); // log likelihood should have
     // the data and functions, indexes already contained, so the only argument is the parameter vector
 
     r_accept = R > ru_prop_mh(it);
-    
-    //Rcpp::Rcout << "log_likelihood(x_proposal: " << log_likelihood(x_proposal, data, alpha_pos, delta_pos, theta_pos) << std::endl;
-    //Rcpp::Rcout << "log_likelihood(x_current: " << log_likelihood(x_current, data, alpha_pos, delta_pos, theta_pos) << std::endl;
-    
-    //Rcpp::Rcout << "R: " << R << std::endl;
 
     // 2. Select the value for x(t+1) according to MH criterion
     if(r_accept == 1) {
       x_current(p_current_select) = x_proposal(p_current_select);
       //Rcpp::Rcout << "accepted" << std::endl;
-    } else {
-      x_proposal(p_current_select) = x_current(p_current_select);
+      
+      
     }
+    // } else {
+    //   //x_proposal(p_current_select) = x_current(p_current_select);
+    //   
+    //   // // 3. Adaptation step: update proposal distribution variance in two
+    //   // // steps and update component scaling parameter
+    //   // x_current_diff_prop_mu = x_current(p_current_select) - prop_mu_t(p_current_select);
+    //   // Rcpp::Rcout << "Rejected: x_proposal(p_current_select): " << x_proposal(p_current_select) << std::endl;
+    //   // Rcpp::Rcout << "Rejected: prop_mu(p_current_select): " << prop_mu_t(p_current_select) << std::endl;
+    //   // Rcpp::Rcout << "Rejected: x_current_diff_prop_mu: " << x_current_diff_prop_mu << std::endl;
+    //   
+    // }
+    
+    // 3. Adaptation step: update proposal distribution variance in two
+    // steps and update component scaling parameter
+    x_current_diff_prop_mu = x_current(p_current_select) - prop_mu_t(p_current_select);
+    Rcpp::Rcout << "Accepted: x_current(p_current_select): " << x_current(p_current_select) << std::endl;
+    Rcpp::Rcout << "Accepted: prop_mu(p_current_select): " << prop_mu_t(p_current_select) << std::endl;
+    Rcpp::Rcout << "Accepted: x_current_diff_prop_mu: " << x_current_diff_prop_mu << std::endl;
 
     x.col(it) = x_current;
 
-    // 3. Adaptation step: update proposal distribution variance in two
-    // steps and update component scaling parameter
-    x_current_diff_prop_mu = x_current(p_current_select) - prop_mu(it);
-    prop_mu(it + 1) = prop_mu(it) + (gam_correct(it) * x_current_diff_prop_mu);
-    prop_sigma(it + 1) = prop_sigma(it) + (gam_correct(it) * ((x_current_diff_prop_mu * x_current_diff_prop_mu)) - prop_sigma(it));
-    ll_scaling(p_current_select) = ll_scaling(p_current_select) + gam_correct(it + 1) * (R - a);
     
+    
+    //Rcpp::Rcout << "prop_mu(p_current_select) before: " << prop_mu(p_current_select) << std::endl;
+    //Rcpp::Rcout << "gam_correct(p_current_select): " << gam_correct(p_current_select) << std::endl;
+    //Rcpp::Rcout << "x_current_diff_prop_mu: " << x_current_diff_prop_mu << std::endl;
+    prop_mu_t1(p_current_select) = prop_mu_t(p_current_select) + (gam_correct(p_current_select) * x_current_diff_prop_mu);
+    //Rcpp::Rcout << "prop_mu(p_current_select): " << prop_mu(p_current_select) << std::endl;
+    
+    Rcpp::Rcout << "prop_sigma_t(p_current_select): " << prop_sigma_t(p_current_select) << std::endl;
+    Rcpp::Rcout << "gam_correct(p_current_select): " << gam_correct(p_current_select) << std::endl;
+    Rcpp::Rcout << "x_current_diff_prop_m: " << x_current_diff_prop_mu << std::endl;
+    prop_sigma_t1(p_current_select) = prop_sigma_t(p_current_select) + (gam_correct(p_current_select) * ((x_current_diff_prop_mu * x_current_diff_prop_mu)) - prop_sigma_t(p_current_select));
+    Rcpp::Rcout << "prop_sigma_t1(p_current_select) after: " << prop_sigma_t1(p_current_select) << std::endl;
+    
+    l_scaling_t1(p_current_select) = l_scaling_t(p_current_select) + gam_correct(p_current_select) * (R - a);
+    
+    Rcpp::Rcout << "l_scaling_t1(p_current_select): " << l_scaling_t1(p_current_select) << std::endl;
+    
+    
+    Rcpp::Rcout << "    " << std::endl;
+    
+    prop_mu_t(p_current_select) = prop_mu_t1(p_current_select);
+    prop_sigma_t(p_current_select) = prop_sigma_t1(p_current_select);
+    l_scaling_t(p_current_select) = l_scaling_t1(p_current_select);
+    
+    //x_proposal(p_current_select) = x_current(p_current_select);
   }
   
   arma::vec lambda_p = arma::vec(p, arma::fill::value(l_def));
@@ -125,10 +178,11 @@ SEXP arwmh(arma::mat & x, int p, arma::vec x_current, int iter,
 }
 
 /*** R
-n = 800
-j = 50
+set.seed("7794153")
+n = 300
+j = 20
 p = 2 * j + n
-iterations = 150000
+iterations = 10
 
 alpha = exp(runif(j))
 delta = rnorm(j, 0, 2)
@@ -146,7 +200,7 @@ for(i in 1:n) {
 
 x = matrix(data = 0, p, iterations)
 
-start = c(exp(runif(j, 0, 1)), rnorm(j, 0, 2), rnorm(n, 0, 1))
+start = c(c(0.7, alpha[-1]), delta, theta)
 #start = c(alpha + exp(runif(j, 0, 0.1)), delta + rnorm(j, 0, 0.2), theta + rnorm(n, 0, 0.1))
 
 #c(alpha, delta, theta)[548]
@@ -154,15 +208,16 @@ start = c(exp(runif(j, 0, 1)), rnorm(j, 0, 2), rnorm(n, 0, 1))
 arwmh(x, p = p, x_current = start, iter = iterations, a = 0.44, data = data,
       alpha_pos = 0:(j - 1), delta_pos = j:(2 * j - 1), theta_pos = (2 * j):(p - 1))
 
-x2 = x[0:(j - 1) + 1, 40000:50000]
+# 0:(j - 1) + 1
+#x2 = x[, 80000:100000]
 
-apply(x2, 1, mean)
-post.mean = apply(x2, 1, mean)
-post.mean[is.infinite(post.mean)] = NA
-post.compare = cbind.data.frame(true, post.mean)
-post.compare = post.compare[complete.cases(post.compare),]
-cor(post.compare)
-cor(cbind.data.frame(true, start))
+#apply(x2, 1, mean)
+#post.mean = apply(x2, 1, mean)
+# post.mean[is.infinite(post.mean)] = NA
+#post.compare = cbind.data.frame(true, post.mean)
+# post.compare = post.compare[complete.cases(post.compare),]
+#cor(post.compare)
+#cor(cbind.data.frame(true, start))
 
 # log_likelihood(x = start, data = data, alpha_pos = 0:(j - 1),
 #       delta_pos = j:(2 * j - 1), theta_pos = (2 * j):(p - 1))
