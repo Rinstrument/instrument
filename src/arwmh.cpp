@@ -59,7 +59,7 @@ SEXP arwmh(arma::mat & x, int p, arma::vec x_current, int iter,
   
   // case switch the model to fit
   
-  double l_def = 2.38 * 2.38 / 1;
+  double l_def = 2.38 * 2.38 / 100;
   
   arma::vec prop_mu_t = arma::vec(p, arma::fill::zeros);
   arma::vec prop_sigma_t = arma::vec(p, arma::fill::ones);

@@ -1,5 +1,6 @@
 #include <RcppArmadillo.h>
-// [[Rcpp::depends(RcppArmadillo)]]
+#include <RcppDist.h>
+// [[Rcpp::depends(RcppArmadillo, RcppDist)]]
 #include <RcppArmadilloExtensions/sample.h>
 
 // [[Rcpp::export]]
@@ -38,25 +39,26 @@ double llk_2pl_logit(arma::vec & x, arma::mat & data, std::list<arma::uvec> para
   arma::mat alpha_mat = arma::diagmat(x(alpha_pos));
   alpha_mat = ones * alpha_mat;
   
-  theta_mat = 1 / (1 + arma::exp(-alpha_mat % (theta_mat - delta_mat)));
+  theta_mat = 1.0 / (1.0 + arma::exp(-((alpha_mat % theta_mat) - delta_mat)));
   arma::mat data_refl = data;
-  data_refl = -(data_refl - 1);
-  theta_mat = theta_mat % data + data_refl - (theta_mat % data_refl); // this may be wrong?? p^theta * (1-p)^(1-theta)???????????? Does this do that?
+  data_refl = -(data_refl - 1.0);
+  theta_mat = (theta_mat % data) + data_refl - (theta_mat % data_refl); // this may be wrong?? p^theta * (1-p)^(1-theta)???????????? Does this do that?
   // did I do all of this on the log scale??????????????????????????????//
   
-  double llk = arma::accu(arma::log(theta_mat + 0.000000000000001)) + 
-    arma::accu(arma::log(arma::normpdf(x(theta_pos), 0.0, 1.0) + 0.000000000000001)) + 
-    arma::accu(arma::log(arma::normpdf(x(delta_pos), 0.0, 2.0) + 0.000000000000001)) + 
-    arma::accu(arma::log(arma::log_normpdf(x(alpha_pos), 0.0, 2.0) + 200.0) + 0.000000000000001);
+  double llk = arma::accu(arma::log(theta_mat + 0.0000000000001)) + 
+    arma::accu(arma::log(arma::normpdf(x(theta_pos), 0.0, 1.0) + 0.000000000001)) + 
+    arma::accu(arma::log(arma::normpdf(x(delta_pos), 0.0, 2.0) + 0.000000000001)) + 
+    //arma::accu(arma::log(d_truncnorm(x(delta_pos), 0.0, 2.0, 0.0, 10.0) + 0.000000000000001));
+    arma::accu(arma::log(arma::log_normpdf(x(alpha_pos), 0.0, 2.0) + 1000.0) + 0.000000000001);
   
   return llk;
 }
 
 // [[Rcpp::export]]
-SEXP arwmh(arma::mat & x, int p, arma::vec x_current, int iter, const double & a, arma::mat & data,
+arma::ivec arwmh(arma::mat & x, int p, arma::vec x_current, int iter, const double & a, arma::mat & data,
     int log_likelihood_selector, std::list<arma::uvec> parameter_indexes, arma::vec & accept) {
 
-  double l_def = 2.38 * 2.38 / 1;
+  double l_def = 1.0; //std::log(2.38 * 2.38 / 1.0);
 
   arma::vec prop_mu_t = arma::vec(p, arma::fill::zeros);
   arma::vec prop_sigma_t = arma::vec(p, arma::fill::ones);
@@ -115,8 +117,8 @@ SEXP arwmh(arma::mat & x, int p, arma::vec x_current, int iter, const double & a
     if(r_accept == 1) {
       x_current(p_current_select) = x_proposal(p_current_select);
       accept(it) = 1.0;
-      Rcpp::Rcout << "accepted" << std::endl;
-      Rcpp::Rcout << "total: " << arma::accu(accept) << std::endl;
+      //Rcpp::Rcout << "accepted" << std::endl;
+      //Rcpp::Rcout << "total: " << arma::accu(accept) << std::endl;
     }
 
     // 3. Adaptation step: update proposal distribution variance in two
@@ -144,45 +146,57 @@ SEXP arwmh(arma::mat & x, int p, arma::vec x_current, int iter, const double & a
   }
 
   arma::vec lambda_p = arma::vec(p, arma::fill::value(l_def));
+  
+  Rcpp::Rcout << "total: " << arma::accu(accept) / iter << std::endl;
 
-  return R_NilValue;
+  return p_update_index;
 }
 
 /*** R
 set.seed("7794153")
-n = 300
-j = 20
+n = 100
+j = 5
 p = 2 * j + n
-iterations = 200000
-
+iterations = 5000000
 alpha = exp(runif(j))
 delta = rnorm(j, 0, 2)
-theta = rnorm(n)
-
+theta = seq(-3, 3, length.out = n)
 true = c(alpha, delta, theta)
-
 data = matrix(0, nrow = n, ncol = j)
-
 for(i in 1:n) {
   for(jj in 1:j) {
-    data[i, jj] = (1 / (1 + exp(-alpha[jj]*(theta[i] - delta[jj])))) > runif(1)
+    data[i, jj] = (1 / (1 + exp(-(alpha[jj]*theta[i] - delta[jj])))) > runif(1)
   }
 }
-
+apply(data, 2, mean)
 x = matrix(data = 0, p, iterations)
 accept = rep(0, iterations)
-
-#start = c(c(0.7, alpha[-1]), delta, theta)
-#start = c(alpha, delta, theta)
-#llk_2pl_logit(x = start, data = data, list(0:(j - 1), j:(2 * j - 1), (2 * j):(p - 1)))
-start = c(exp(runif(j)), rnorm(j, 0, 2), rnorm(n))
-14.4264
-true2 = true
-true2[16] = 14
-llk_2pl_logit(x = true2, data = data, list(0:(j - 1), j:(2 * j - 1), (2 * j):(p - 1)))
-
-arwmh(x, p, start, iterations, a = 0.44, data, log_likelihood_selector = 0,
+start = c(rep(1, j), rep(0, j), rep(0, n))
+indices = arwmh(x, p, start, iterations, a = 0.44, data, log_likelihood_selector = 0,
       parameter_indexes = list(0:(j - 1), j:(2 * j - 1), (2 * j):(p - 1)),
       accept)
+get_draws = function(x, param, indices) {
+  indices = indices + 1
+  x[param, indices == param]
+}
+drws = get_draws(x, 1, indices = indices)
+library(ggplot2)
+pdat = data.frame(it = 1:length(drws), y = drws)
+ggplot(pdat) + aes(it, y) + geom_line()
+
+# rowMeans(x[0:(j - 1) + 1, 450000:500000])
+# true[0:(j - 1) + 1]
+# 
+# rowMeans(x[j:(2 * j - 1) + 1, 450000:500000])
+# true[j:(2 * j - 1) + 1]
+# 
+# rowMeans(x[(2 * j):(p - 1) + 1, 450000:500000])
+# true[(2 * j):(p - 1) + 1]
+# 
+# cor(
+#   rowMeans(x[(2 * j):(p - 1) + 1, 450000:500000]),
+#   true[(2 * j):(p - 1) + 1]
+# )
+
 
 */
