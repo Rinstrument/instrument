@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // amc
-arma::vec amc(arma::mat& x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, arma::mat& data, int lp_select, arma::vec& accept, arma::vec validation_indexes, arma::vec validation_lower, int p_reg);
-RcppExport SEXP _lmHOIRT_amc(SEXP xSEXP, SEXP x_startSEXP, SEXP iterSEXP, SEXP burnSEXP, SEXP greedy_iterationsSEXP, SEXP aSEXP, SEXP dataSEXP, SEXP lp_selectSEXP, SEXP acceptSEXP, SEXP validation_indexesSEXP, SEXP validation_lowerSEXP, SEXP p_regSEXP) {
+SEXP amc(arma::mat& x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, arma::mat& data, int lp_select, arma::vec& accept, arma::vec validation_indexes, arma::vec validation_lower, arma::vec validation_upper, arma::vec& gam_correct_iter_post_burn, int p_reg);
+RcppExport SEXP _lmHOIRT_amc(SEXP xSEXP, SEXP x_startSEXP, SEXP iterSEXP, SEXP burnSEXP, SEXP greedy_iterationsSEXP, SEXP aSEXP, SEXP dataSEXP, SEXP lp_selectSEXP, SEXP acceptSEXP, SEXP validation_indexesSEXP, SEXP validation_lowerSEXP, SEXP validation_upperSEXP, SEXP gam_correct_iter_post_burnSEXP, SEXP p_regSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -28,8 +28,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec& >::type accept(acceptSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type validation_indexes(validation_indexesSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type validation_lower(validation_lowerSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type validation_upper(validation_upperSEXP);
+    Rcpp::traits::input_parameter< arma::vec& >::type gam_correct_iter_post_burn(gam_correct_iter_post_burnSEXP);
     Rcpp::traits::input_parameter< int >::type p_reg(p_regSEXP);
-    rcpp_result_gen = Rcpp::wrap(amc(x, x_start, iter, burn, greedy_iterations, a, data, lp_select, accept, validation_indexes, validation_lower, p_reg));
+    rcpp_result_gen = Rcpp::wrap(amc(x, x_start, iter, burn, greedy_iterations, a, data, lp_select, accept, validation_indexes, validation_lower, validation_upper, gam_correct_iter_post_burn, p_reg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -74,6 +76,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// normd_dx
+double normd_dx(double x, double mean, double sd);
+RcppExport SEXP _lmHOIRT_normd_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< double >::type sd(sdSEXP);
+    rcpp_result_gen = Rcpp::wrap(normd_dx(x, mean, sd));
+    return rcpp_result_gen;
+END_RCPP
+}
 // log_unifd_dx
 double log_unifd_dx(double x, double l, double u);
 RcppExport SEXP _lmHOIRT_log_unifd_dx(SEXP xSEXP, SEXP lSEXP, SEXP uSEXP) {
@@ -84,6 +99,19 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type l(lSEXP);
     Rcpp::traits::input_parameter< double >::type u(uSEXP);
     rcpp_result_gen = Rcpp::wrap(log_unifd_dx(x, l, u));
+    return rcpp_result_gen;
+END_RCPP
+}
+// unifd_dx
+double unifd_dx(double x, double l, double u);
+RcppExport SEXP _lmHOIRT_unifd_dx(SEXP xSEXP, SEXP lSEXP, SEXP uSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type l(lSEXP);
+    Rcpp::traits::input_parameter< double >::type u(uSEXP);
+    rcpp_result_gen = Rcpp::wrap(unifd_dx(x, l, u));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -111,6 +139,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// add_2
+double add_2(double x);
+RcppExport SEXP _lmHOIRT_add_2(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(add_2(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // lp_2pl_logit_reg
 double lp_2pl_logit_reg(arma::vec& x, arma::mat& data, int p);
 RcppExport SEXP _lmHOIRT_lp_2pl_logit_reg(SEXP xSEXP, SEXP dataSEXP, SEXP pSEXP) {
@@ -124,30 +163,62 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// lp_lm
+double lp_lm(arma::vec& x, arma::mat& data, int n_mis);
+RcppExport SEXP _lmHOIRT_lp_lm(SEXP xSEXP, SEXP dataSEXP, SEXP n_misSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< int >::type n_mis(n_misSEXP);
+    rcpp_result_gen = Rcpp::wrap(lp_lm(x, data, n_mis));
+    return rcpp_result_gen;
+END_RCPP
+}
+// lp_2pl_ho2l
+double lp_2pl_ho2l(arma::vec& x, arma::mat& data, int p);
+RcppExport SEXP _lmHOIRT_lp_2pl_ho2l(SEXP xSEXP, SEXP dataSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< int >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(lp_2pl_ho2l(x, data, p));
+    return rcpp_result_gen;
+END_RCPP
+}
 // validate_proposal
-arma::vec validate_proposal(arma::vec proposal, arma::vec indexes, arma::vec lower);
-RcppExport SEXP _lmHOIRT_validate_proposal(SEXP proposalSEXP, SEXP indexesSEXP, SEXP lowerSEXP) {
+arma::vec validate_proposal(arma::vec proposal, arma::vec indexes, arma::vec lower, arma::vec upper);
+RcppExport SEXP _lmHOIRT_validate_proposal(SEXP proposalSEXP, SEXP indexesSEXP, SEXP lowerSEXP, SEXP upperSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec >::type proposal(proposalSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type indexes(indexesSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type lower(lowerSEXP);
-    rcpp_result_gen = Rcpp::wrap(validate_proposal(proposal, indexes, lower));
+    Rcpp::traits::input_parameter< arma::vec >::type upper(upperSEXP);
+    rcpp_result_gen = Rcpp::wrap(validate_proposal(proposal, indexes, lower, upper));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_lmHOIRT_amc", (DL_FUNC) &_lmHOIRT_amc, 12},
+    {"_lmHOIRT_amc", (DL_FUNC) &_lmHOIRT_amc, 14},
     {"_lmHOIRT_lognorm_dens_dx", (DL_FUNC) &_lmHOIRT_lognorm_dens_dx, 3},
     {"_lmHOIRT_logtruncnorm_dens_dx", (DL_FUNC) &_lmHOIRT_logtruncnorm_dens_dx, 5},
     {"_lmHOIRT_log_normd_dx", (DL_FUNC) &_lmHOIRT_log_normd_dx, 3},
+    {"_lmHOIRT_normd_dx", (DL_FUNC) &_lmHOIRT_normd_dx, 3},
     {"_lmHOIRT_log_unifd_dx", (DL_FUNC) &_lmHOIRT_log_unifd_dx, 3},
+    {"_lmHOIRT_unifd_dx", (DL_FUNC) &_lmHOIRT_unifd_dx, 3},
     {"_lmHOIRT_min", (DL_FUNC) &_lmHOIRT_min, 2},
     {"_lmHOIRT_lp_2pl_logit", (DL_FUNC) &_lmHOIRT_lp_2pl_logit, 2},
+    {"_lmHOIRT_add_2", (DL_FUNC) &_lmHOIRT_add_2, 1},
     {"_lmHOIRT_lp_2pl_logit_reg", (DL_FUNC) &_lmHOIRT_lp_2pl_logit_reg, 3},
-    {"_lmHOIRT_validate_proposal", (DL_FUNC) &_lmHOIRT_validate_proposal, 3},
+    {"_lmHOIRT_lp_lm", (DL_FUNC) &_lmHOIRT_lp_lm, 3},
+    {"_lmHOIRT_lp_2pl_ho2l", (DL_FUNC) &_lmHOIRT_lp_2pl_ho2l, 3},
+    {"_lmHOIRT_validate_proposal", (DL_FUNC) &_lmHOIRT_validate_proposal, 4},
     {NULL, NULL, 0}
 };
 

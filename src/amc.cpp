@@ -7,8 +7,9 @@
 #include "posteriors.h"
 
 // [[Rcpp::export]]
-arma::vec amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, arma::mat & data,
-              int lp_select, arma::vec & accept, arma::vec validation_indexes, arma::vec validation_lower, int p_reg) {
+SEXP amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, arma::mat & data,
+         int lp_select, arma::vec & accept, arma::vec validation_indexes, arma::vec validation_lower, arma::vec validation_upper,
+         arma::vec & gam_correct_iter_post_burn, int p_reg) {
   int p = x.n_rows;
   double l_def = 2.38 * 2.38 / p;
   arma::vec x_current = x_start;
@@ -17,7 +18,7 @@ arma::vec amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_i
   arma::ivec p_update_index = arma::randi(iter, arma::distr_param(1, +(p)));
   arma::vec gam_correct = arma::vec(p, arma::fill::zeros);
   arma::vec gam_correct_iter = arma::vec(p, arma::fill::zeros);
-  arma::vec gam_correct_iter_post_burn = arma::vec(p, arma::fill::zeros);
+  //arma::vec gam_correct_iter_post_burn = arma::vec(p, arma::fill::zeros);
   arma::vec l_scaling_t = arma::vec(p, arma::fill::value(l_def));
   // random normal draws for proposal distribution
   arma::vec ru_prop_mh = arma::randu(iter, arma::distr_param(0, 1));
@@ -25,15 +26,15 @@ arma::vec amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_i
   double R = 1;
   double (* lp)(arma::vec &, arma::mat &, int);
   if(lp_select == 0) { // 1-P logit
-    lp = lp_2pl_logit_reg;
+    lp = lp_lm; //lp_2pl_logit_reg;
   } else if(lp_select == 1) { // 2-P logit
-    lp = lp_2pl_logit_reg;
+    lp = lp_lm; //lp_2pl_logit_reg;
   }
   for(int it = 0; it < iter; it++) {
     arma::uvec updates = arma::randperm(p, p_update_index(it));
     // // 1. Sample candidate value for component p_i
     x_proposal(updates) = l_scaling_t(updates) % (arma::randn(p_update_index(it), arma::distr_param(0, 1)) % prop_sigma_t(updates)) + x_current(updates);
-    x_proposal = validate_proposal(x_proposal, validation_indexes, validation_lower);
+    x_proposal = validate_proposal(x_proposal, validation_indexes, validation_lower, validation_upper);
     if(it >= greedy_iterations) {
       R = min(std::exp(lp(x_proposal, data, p_reg) - lp(x_current, data, p_reg)), 1.0) > ru_prop_mh(it);
     } else {
@@ -66,5 +67,5 @@ arma::vec amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_i
       l_scaling_t(updates) = arma::exp(arma::log(l_scaling_t(updates)) + (gam_correct(updates)) * (R - a));
     }
   }
-  return gam_correct_iter_post_burn;
+  return R_NilValue;
 }

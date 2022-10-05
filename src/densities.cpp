@@ -25,8 +25,20 @@ double log_normd_dx(double x, double mean, double sd) {
 }
 
 // [[Rcpp::export]]
+double normd_dx(double x, double mean, double sd) {
+  return (1.0 / (sd * std::sqrt(2 * 3.14159265358979323846))) * std::exp(-0.5 * pow((x - mean) / sd, 2.0));
+}
+
+// [[Rcpp::export]]
 double log_unifd_dx(double x, double l, double u) {
   if(x < l | x > u) { return 0.0; }
   double res = 1.0 / (u - l);
   return std::log(res);
+}
+
+// [[Rcpp::export]]
+double unifd_dx(double x, double l, double u) {
+  if(x < l | x > u) { return 0.0; }
+  double res = 1.0 / (u - l);
+  return res;
 }

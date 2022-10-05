@@ -5,12 +5,13 @@ n = 500
 j = 20
 p_reg = 1
 p = 2 * j + n + p_reg
-model_indices = list(0:(j-1), (j):(2*j-1), (2*j):(p-1), p_reg)
+model_indices = list(0:(j-1), (j):(2*j-1), (2*j):(p-p_reg-1), (p-p_reg-1) + p_reg)
 alpha = exp(runif(j, 0, 1.5)) - 0.2
 delta = rnorm(j, 0, 1)
-beta = 0.4
+beta = 0.5
 z = sample(0:1, n, replace = TRUE)
 theta = rnorm(n, z*beta, sqrt(1.5)) #seq(-3, 3, length.out = n)
+summary(lm(theta ~ z))
 true = c(alpha, delta, theta, beta)
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
@@ -22,30 +23,30 @@ for(i in 1:n) {
 colnames(data) = paste0("x", 1:j)
 data = cbind(data, "z1" = z)
 start = c(rep(1, j), rep(0, j), rep(0, n), rep(0, 1))
-iterations = 1000000
-burn = 800000
-greedy_iterations = 500000
+iterations = 4e5
+burn = 3e5
+greedy_iterations = 2e5
 accept = rep(0, iterations)
 iter_save = (iterations - burn)
 iter_save = 1.2 * iter_save
 x = matrix(data = 0, p, iter_save)
-logPostPtr = postFunc("lp2plr")
-indices <- amc(x = x, x_start = start, iter = iterations, burn = burn, greedy_iterations = greedy_iterations, 
-               a = 0.234, data = data, logPostPtr = logPostPtr, accept = accept,
-               validation_indexes = 0:(j-1), validation_lower = rep(0, j), p_reg = 1)
+indices = rep(0, p)
+amc(x = x, x_start = start, iter = iterations, burn = burn, greedy_iterations = greedy_iterations, 
+    a = 0.234, data = data, lp_select = 0, accept = accept, validation_indexes = 0:(j-1), 
+    validation_lower = rep(0, j), gam_correct_iter_post_burn = indices, p_reg = 1)
 get_draws = function(x, param, indices) {
-  y = x[param, 1:indices[param, ]]
+  y = x[param, 1:indices[param]]
   return(y)
 }
-param_id = 5
+param_id = 541
 drws = get_draws(x, param_id, indices)
 pdat = data.frame(it = 1:length(drws), y = drws)
 ggplot(pdat) + aes(it, y) + geom_line()
-mapply(\(row, ind_max) {mean(x[row, 1:ind_max])}, row = 1:nrow(x), ind_max = indices[1:nrow(x)])
-cor(
-  c(alpha, delta, theta),
-  mapply(\(row, ind_max) {mean(x[row, 1:ind_max])}, row = 1:nrow(x), ind_max = indices[1:nrow(x)])
-)
+# mapply(\(row, ind_max) {mean(x[row, 1:ind_max])}, row = 1:nrow(x), ind_max = indices[1:nrow(x)])
+# cor(
+#   c(alpha, delta, theta),
+#   mapply(\(row, ind_max) {mean(x[row, 1:ind_max])}, row = 1:nrow(x), ind_max = indices[1:nrow(x)])
+# )
 
 post_mean = mapply(\(row, ind_max) {mean(x[row, 1:ind_max])}, row = 1:nrow(x), ind_max = indices[1:nrow(x)])
 cor(
@@ -60,7 +61,7 @@ cor(
   theta,
   post_mean[model_indices[[3]] + 1]
 )
-
+post_mean[model_indices[[4]] + 1]
 c(beta0, sd)
 mapply(\(row, ind_max) {mean(x[row, 1:ind_max])}, row = 1:nrow(x), ind_max = indices[1:nrow(x)])
 cor(
