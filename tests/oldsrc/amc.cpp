@@ -147,6 +147,7 @@ arma::vec amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_i
     if(R == 1) {
       x_current(updates) = x_proposal(updates);
       accept(it) = 1.0;
+      Rcpp::Rcout << "accepted: " << it << std::endl;
     } else {
       x_proposal(updates) = x_current(updates);
       accept(it) = 0.0;

@@ -7,7 +7,7 @@
 #include "posteriors.h"
 
 // [[Rcpp::export]]
-SEXP amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, arma::mat & data,
+SEXP amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, double a_greedy, arma::mat & data,
          int lp_select, arma::vec & accept, arma::vec validation_indexes, arma::vec validation_lower, arma::vec validation_upper,
          arma::vec & gam_correct_iter_post_burn, int p_reg) {
   int p = x.n_rows;
@@ -26,9 +26,9 @@ SEXP amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_iterat
   double R = 1;
   double (* lp)(arma::vec &, arma::mat &, int);
   if(lp_select == 0) { // 1-P logit
-    lp = lp_lm; //lp_2pl_logit_reg;
+    lp = lp_2pl_ho2l;//lp_lm; //lp_2pl_logit_reg;
   } else if(lp_select == 1) { // 2-P logit
-    lp = lp_lm; //lp_2pl_logit_reg;
+    lp = lp_2pl_ho2l;//lp_lm; //lp_2pl_logit_reg;
   }
   for(int it = 0; it < iter; it++) {
     arma::uvec updates = arma::randperm(p, p_update_index(it));
@@ -38,10 +38,13 @@ SEXP amc(arma::mat & x, arma::vec x_start, int iter, int burn, int greedy_iterat
     if(it >= greedy_iterations) {
       R = min(std::exp(lp(x_proposal, data, p_reg) - lp(x_current, data, p_reg)), 1.0) > ru_prop_mh(it);
     } else {
-      R = min(std::exp(lp(x_proposal, data, p_reg) - lp(x_current, data, p_reg)), 1.0) > 0.234;
+      R = min(std::exp(lp(x_proposal, data, p_reg) - lp(x_current, data, p_reg)), 1.0) > a_greedy;
     }
     // 2. Select the value for x(t+1) according to MH criterion
     if(R == 1) {
+      // if(it < greedy_iterations) {
+      //   Rcpp::Rcout << "accepted greedy draw: " << it << "\n lp new: " << lp(x_proposal, data, p_reg) << "\n lp old: " << lp(x_current, data, p_reg) <<  std::endl;
+      // }
       x_current(updates) = x_proposal(updates);
       accept(it) = 1.0;
     } else {

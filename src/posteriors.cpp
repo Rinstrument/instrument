@@ -153,7 +153,7 @@ double lp_2pl_ho2l(arma::vec & x, arma::mat & data, int p) {
         theta_prob = 1.0 / (1.0 + std::exp(-((x(jj) * x(i + 2*j + d*n)) - x(jj + j))));
         lp += std::log(((theta_prob * data(i, jj + dim_1order + 1)) + ((1.0 - theta_prob) * (1.0 - data(i, jj + dim_1order + 1)))) + eps);
         if(jj == d_index) {
-          lp += log_normd_dx(x(i + 2*j + d*n) - x(2*j + (dim_1order + 1)*n + d) * x(i + dim_1order*n + 2*j), 0.0, 1.0);
+          lp += log_normd_dx(x(i + 2*j + d*n) - (x(2*j + (dim_1order + 1)*n + d) * x(i + dim_1order*n + 2*j)), 0.0, 1.0);
           if(jj == 0) {
             lp += log_normd_dx(x(i + dim_1order*n + 2*j), 0.0, 1.0);
           }
@@ -163,7 +163,8 @@ double lp_2pl_ho2l(arma::vec & x, arma::mat & data, int p) {
       lp += log_normd_dx(x(jj + j), 0.0, 5.0);
     }
     d_index += dim_lengths(d);
-    lp += log_unifd_dx(x((2*j) + (dim_1order + 1)*n + d), -1.0, 1.0);
+    //lp += log_unifd_dx(x(2*j + (dim_1order + 1)*n + d), -1.0, 1.0);
+    lp += logtruncnorm_dens_dx(x(2*j + (dim_1order + 1)*n + d), 0.0, 10.0, -10.0, 10.0);
   }
   return lp;
 }

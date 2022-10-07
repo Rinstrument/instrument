@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // amc
-SEXP amc(arma::mat& x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, arma::mat& data, int lp_select, arma::vec& accept, arma::vec validation_indexes, arma::vec validation_lower, arma::vec validation_upper, arma::vec& gam_correct_iter_post_burn, int p_reg);
-RcppExport SEXP _lmHOIRT_amc(SEXP xSEXP, SEXP x_startSEXP, SEXP iterSEXP, SEXP burnSEXP, SEXP greedy_iterationsSEXP, SEXP aSEXP, SEXP dataSEXP, SEXP lp_selectSEXP, SEXP acceptSEXP, SEXP validation_indexesSEXP, SEXP validation_lowerSEXP, SEXP validation_upperSEXP, SEXP gam_correct_iter_post_burnSEXP, SEXP p_regSEXP) {
+SEXP amc(arma::mat& x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, double a_greedy, arma::mat& data, int lp_select, arma::vec& accept, arma::vec validation_indexes, arma::vec validation_lower, arma::vec validation_upper, arma::vec& gam_correct_iter_post_burn, int p_reg);
+RcppExport SEXP _lmHOIRT_amc(SEXP xSEXP, SEXP x_startSEXP, SEXP iterSEXP, SEXP burnSEXP, SEXP greedy_iterationsSEXP, SEXP aSEXP, SEXP a_greedySEXP, SEXP dataSEXP, SEXP lp_selectSEXP, SEXP acceptSEXP, SEXP validation_indexesSEXP, SEXP validation_lowerSEXP, SEXP validation_upperSEXP, SEXP gam_correct_iter_post_burnSEXP, SEXP p_regSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -23,6 +23,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type burn(burnSEXP);
     Rcpp::traits::input_parameter< int >::type greedy_iterations(greedy_iterationsSEXP);
     Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type a_greedy(a_greedySEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
     Rcpp::traits::input_parameter< int >::type lp_select(lp_selectSEXP);
     Rcpp::traits::input_parameter< arma::vec& >::type accept(acceptSEXP);
@@ -31,7 +32,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type validation_upper(validation_upperSEXP);
     Rcpp::traits::input_parameter< arma::vec& >::type gam_correct_iter_post_burn(gam_correct_iter_post_burnSEXP);
     Rcpp::traits::input_parameter< int >::type p_reg(p_regSEXP);
-    rcpp_result_gen = Rcpp::wrap(amc(x, x_start, iter, burn, greedy_iterations, a, data, lp_select, accept, validation_indexes, validation_lower, validation_upper, gam_correct_iter_post_burn, p_reg));
+    rcpp_result_gen = Rcpp::wrap(amc(x, x_start, iter, burn, greedy_iterations, a, a_greedy, data, lp_select, accept, validation_indexes, validation_lower, validation_upper, gam_correct_iter_post_burn, p_reg));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -205,7 +206,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_lmHOIRT_amc", (DL_FUNC) &_lmHOIRT_amc, 14},
+    {"_lmHOIRT_amc", (DL_FUNC) &_lmHOIRT_amc, 15},
     {"_lmHOIRT_lognorm_dens_dx", (DL_FUNC) &_lmHOIRT_lognorm_dens_dx, 3},
     {"_lmHOIRT_logtruncnorm_dens_dx", (DL_FUNC) &_lmHOIRT_logtruncnorm_dens_dx, 5},
     {"_lmHOIRT_log_normd_dx", (DL_FUNC) &_lmHOIRT_log_normd_dx, 3},
