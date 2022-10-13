@@ -1,3 +1,6 @@
+# --------------------------------------------------------------
+# With no delta parameters
+
 # library(ggplot2)
 # # library(mirt)
 library(devtools)
@@ -42,3 +45,37 @@ cor(post, rowMeans(data))
 
 
 
+# --------------------------------------------------------------
+# With delta parameters
+library(devtools)
+library(mirt)
+rm(list = ls())
+load_all()
+# set.seed(1234565322)
+n = 200
+j = 20
+p = n + j
+data = matrix(0, nrow = n, ncol = j)
+theta = seq(-1.5, 1.5, length.out = n) #rnorm(n, 0 , 1)
+delta = rnorm(j, 0, 1)
+for(i in 1:n) {
+  for(jj in 1:j) {
+    prb = (1 / (1 + exp(-(theta[i] - delta[jj]))))
+    data[i, jj] = sample(c(1, 0), 1, prob = c(prb, 1 - prb))
+  }
+}
+colnames(data) = paste0("x", 1:j)
+mirt.coefs = coef(mirt(data, itemtype = "Rasch"), simplify = TRUE)$items
+mirt.delta = mirt.coefs[, "d"]
+cor(mirt.delta, delta)
+# cor(rowMeans(data), theta)
+x = sis_theta_model2(data, n = 5000, tol = 2.0e-30)
+x = matrix(as.vector(x), nrow = p, byrow = TRUE)
+post = apply(x, 1, sum)
+length(post)
+post[201:220]
+cor(post[201:220], delta)
+View(cbind(post[201:220], delta))
+cor(post[1:200], theta)
+View(cbind(post[1:200], theta))
+cor(post[201:220], mirt.delta)
