@@ -17,14 +17,14 @@ for(i in 1:n) {
 }
 colnames(data) = paste0("x", 1:j)
 # cor(rowMeans(data), theta)
-x = sis_theta_model(data, n = 2000)
+x = sis_theta_model(data, n = 10000)
 x = matrix(as.vector(x), nrow = n, byrow = TRUE)
 post = apply(x, 1, sum)
 # post
-lm = sapply(as.data.frame(t(data)), function(x) {glm(data.frame(x)[,1] ~ 1, family = binomial())$coef}) 
+# lm = sapply(as.data.frame(t(data)), function(x) {glm(data.frame(x)[,1] ~ 1, family = binomial())$coef}) 
 # lm
 # cor(post, lm)
-View(cbind(post, theta))
+# View(cbind(post, theta))
 # rowMeans(data)
 # theta
 cor(post, theta)
