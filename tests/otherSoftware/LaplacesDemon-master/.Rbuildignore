@@ -1,0 +1,11 @@
+\.gitignore
+.*~
+\#.*\#.
+\.RData
+\.Rhistory
+^.*\.Rproj$
+^\.Rproj\.user$
+development.R
+README.md
+.travis.yml
+

@@ -11,31 +11,6 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// amc
-SEXP amc(arma::mat& x, arma::vec x_start, int iter, int burn, int greedy_iterations, double a, double a_greedy, arma::mat& data, int lp_select, arma::vec& accept, arma::vec validation_indexes, arma::vec validation_lower, arma::vec validation_upper, arma::vec& gam_correct_iter_post_burn, int p_reg);
-RcppExport SEXP _lmHOIRT_amc(SEXP xSEXP, SEXP x_startSEXP, SEXP iterSEXP, SEXP burnSEXP, SEXP greedy_iterationsSEXP, SEXP aSEXP, SEXP a_greedySEXP, SEXP dataSEXP, SEXP lp_selectSEXP, SEXP acceptSEXP, SEXP validation_indexesSEXP, SEXP validation_lowerSEXP, SEXP validation_upperSEXP, SEXP gam_correct_iter_post_burnSEXP, SEXP p_regSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type x_start(x_startSEXP);
-    Rcpp::traits::input_parameter< int >::type iter(iterSEXP);
-    Rcpp::traits::input_parameter< int >::type burn(burnSEXP);
-    Rcpp::traits::input_parameter< int >::type greedy_iterations(greedy_iterationsSEXP);
-    Rcpp::traits::input_parameter< double >::type a(aSEXP);
-    Rcpp::traits::input_parameter< double >::type a_greedy(a_greedySEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type lp_select(lp_selectSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type accept(acceptSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type validation_indexes(validation_indexesSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type validation_lower(validation_lowerSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type validation_upper(validation_upperSEXP);
-    Rcpp::traits::input_parameter< arma::vec& >::type gam_correct_iter_post_burn(gam_correct_iter_post_burnSEXP);
-    Rcpp::traits::input_parameter< int >::type p_reg(p_regSEXP);
-    rcpp_result_gen = Rcpp::wrap(amc(x, x_start, iter, burn, greedy_iterations, a, a_greedy, data, lp_select, accept, validation_indexes, validation_lower, validation_upper, gam_correct_iter_post_burn, p_reg));
-    return rcpp_result_gen;
-END_RCPP
-}
 // lognorm_dens_dx
 double lognorm_dens_dx(double x, double mean, double sd);
 RcppExport SEXP _lmHOIRT_lognorm_dens_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
@@ -116,6 +91,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// logadd
+double logadd(arma::vec x);
+RcppExport SEXP _lmHOIRT_logadd(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(logadd(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // min
 double min(double a, double b);
 RcppExport SEXP _lmHOIRT_min(SEXP aSEXP, SEXP bSEXP) {
@@ -128,65 +114,87 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// lp_2pl_logit
-double lp_2pl_logit(arma::vec& x, arma::mat& data);
-RcppExport SEXP _lmHOIRT_lp_2pl_logit(SEXP xSEXP, SEXP dataSEXP) {
+// r8poly_value_horner
+double r8poly_value_horner(int m, arma::vec c, double x);
+RcppExport SEXP _lmHOIRT_r8poly_value_horner(SEXP mSEXP, SEXP cSEXP, SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
-    rcpp_result_gen = Rcpp::wrap(lp_2pl_logit(x, data));
+    Rcpp::traits::input_parameter< int >::type m(mSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type c(cSEXP);
+    Rcpp::traits::input_parameter< double >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(r8poly_value_horner(m, c, x));
     return rcpp_result_gen;
 END_RCPP
 }
-// add_2
-double add_2(double x);
-RcppExport SEXP _lmHOIRT_add_2(SEXP xSEXP) {
+// r8_uniform_01
+double r8_uniform_01(int& seed);
+RcppExport SEXP _lmHOIRT_r8_uniform_01(SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int& >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(r8_uniform_01(seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// normal_01_sample
+double normal_01_sample(int& seed);
+RcppExport SEXP _lmHOIRT_normal_01_sample(SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int& >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(normal_01_sample(seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// normal_01_cdf
+double normal_01_cdf(double x);
+RcppExport SEXP _lmHOIRT_normal_01_cdf(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< double >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(add_2(x));
+    rcpp_result_gen = Rcpp::wrap(normal_01_cdf(x));
     return rcpp_result_gen;
 END_RCPP
 }
-// lp_2pl_logit_reg
-double lp_2pl_logit_reg(arma::vec& x, arma::mat& data, int p);
-RcppExport SEXP _lmHOIRT_lp_2pl_logit_reg(SEXP xSEXP, SEXP dataSEXP, SEXP pSEXP) {
+// normal_01_cdf_inv
+double normal_01_cdf_inv(double p);
+RcppExport SEXP _lmHOIRT_normal_01_cdf_inv(SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(lp_2pl_logit_reg(x, data, p));
+    Rcpp::traits::input_parameter< double >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(normal_01_cdf_inv(p));
     return rcpp_result_gen;
 END_RCPP
 }
-// lp_lm
-double lp_lm(arma::vec& x, arma::mat& data, int n_mis);
-RcppExport SEXP _lmHOIRT_lp_lm(SEXP xSEXP, SEXP dataSEXP, SEXP n_misSEXP) {
+// truncated_normal_ab_sample
+double truncated_normal_ab_sample(double mu, double sigma, double a, double b, int& seed);
+RcppExport SEXP _lmHOIRT_truncated_normal_ab_sample(SEXP muSEXP, SEXP sigmaSEXP, SEXP aSEXP, SEXP bSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type n_mis(n_misSEXP);
-    rcpp_result_gen = Rcpp::wrap(lp_lm(x, data, n_mis));
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< double >::type a(aSEXP);
+    Rcpp::traits::input_parameter< double >::type b(bSEXP);
+    Rcpp::traits::input_parameter< int& >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(truncated_normal_ab_sample(mu, sigma, a, b, seed));
     return rcpp_result_gen;
 END_RCPP
 }
-// lp_2pl_ho2l
-double lp_2pl_ho2l(arma::vec& x, arma::mat& data, int p);
-RcppExport SEXP _lmHOIRT_lp_2pl_ho2l(SEXP xSEXP, SEXP dataSEXP, SEXP pSEXP) {
+// sis_theta_model
+arma::vec sis_theta_model(arma::mat& data, int n);
+RcppExport SEXP _lmHOIRT_sis_theta_model(SEXP dataSEXP, SEXP nSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type x(xSEXP);
     Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(lp_2pl_ho2l(x, data, p));
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(sis_theta_model(data, n));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -206,19 +214,21 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_lmHOIRT_amc", (DL_FUNC) &_lmHOIRT_amc, 15},
     {"_lmHOIRT_lognorm_dens_dx", (DL_FUNC) &_lmHOIRT_lognorm_dens_dx, 3},
     {"_lmHOIRT_logtruncnorm_dens_dx", (DL_FUNC) &_lmHOIRT_logtruncnorm_dens_dx, 5},
     {"_lmHOIRT_log_normd_dx", (DL_FUNC) &_lmHOIRT_log_normd_dx, 3},
     {"_lmHOIRT_normd_dx", (DL_FUNC) &_lmHOIRT_normd_dx, 3},
     {"_lmHOIRT_log_unifd_dx", (DL_FUNC) &_lmHOIRT_log_unifd_dx, 3},
     {"_lmHOIRT_unifd_dx", (DL_FUNC) &_lmHOIRT_unifd_dx, 3},
+    {"_lmHOIRT_logadd", (DL_FUNC) &_lmHOIRT_logadd, 1},
     {"_lmHOIRT_min", (DL_FUNC) &_lmHOIRT_min, 2},
-    {"_lmHOIRT_lp_2pl_logit", (DL_FUNC) &_lmHOIRT_lp_2pl_logit, 2},
-    {"_lmHOIRT_add_2", (DL_FUNC) &_lmHOIRT_add_2, 1},
-    {"_lmHOIRT_lp_2pl_logit_reg", (DL_FUNC) &_lmHOIRT_lp_2pl_logit_reg, 3},
-    {"_lmHOIRT_lp_lm", (DL_FUNC) &_lmHOIRT_lp_lm, 3},
-    {"_lmHOIRT_lp_2pl_ho2l", (DL_FUNC) &_lmHOIRT_lp_2pl_ho2l, 3},
+    {"_lmHOIRT_r8poly_value_horner", (DL_FUNC) &_lmHOIRT_r8poly_value_horner, 3},
+    {"_lmHOIRT_r8_uniform_01", (DL_FUNC) &_lmHOIRT_r8_uniform_01, 1},
+    {"_lmHOIRT_normal_01_sample", (DL_FUNC) &_lmHOIRT_normal_01_sample, 1},
+    {"_lmHOIRT_normal_01_cdf", (DL_FUNC) &_lmHOIRT_normal_01_cdf, 1},
+    {"_lmHOIRT_normal_01_cdf_inv", (DL_FUNC) &_lmHOIRT_normal_01_cdf_inv, 1},
+    {"_lmHOIRT_truncated_normal_ab_sample", (DL_FUNC) &_lmHOIRT_truncated_normal_ab_sample, 5},
+    {"_lmHOIRT_sis_theta_model", (DL_FUNC) &_lmHOIRT_sis_theta_model, 2},
     {"_lmHOIRT_validate_proposal", (DL_FUNC) &_lmHOIRT_validate_proposal, 4},
     {NULL, NULL, 0}
 };

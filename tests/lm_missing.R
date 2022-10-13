@@ -1,4 +1,6 @@
 library(ggplot2)
+library(devtools)
+load_all()
 set.seed(1234565322)
 n = 500
 data = matrix(rep(0, n), n, 1)
@@ -28,7 +30,7 @@ validation_lower = c(0.001)
 validation_upper = c(Inf)
 lp_lm(start, data, n_miss)
 amc(x = x, x_start = start, iter = iterations, burn = burn, greedy_iterations = greedy_iterations, 
-    a = 0.234, data = data, lp_select = 0, accept = accept, validation_indexes = validation_indexes, 
+    a = 0.234, a_greedy = 1.0, data = data, lp_select = 0, accept = accept, validation_indexes = validation_indexes, 
     validation_lower = validation_lower, validation_upper = validation_upper, 
     gam_correct_iter_post_burn = indices, p_reg = n_miss)
 get_draws = function(x, param, indices) {
@@ -42,3 +44,6 @@ ggplot(pdat) + aes(it, y) + geom_line()
 post_mean = mapply(\(row, ind_max) {mean(x[row, 1:ind_max])}, row = 1:nrow(x), ind_max = indices[1:nrow(x)])
 post_mean
 #cor(post_mean[-(1:2)], true_miss)
+lp_lm(start, data, n_miss)
+lp_lm(c(beta, sd, true_miss), data, n_miss)
+lp_lm(post_mean, data, n_miss)
