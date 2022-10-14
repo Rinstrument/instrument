@@ -211,14 +211,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // sis3
-arma::vec sis3(arma::mat& data, int n);
-RcppExport SEXP _lmHOIRT_sis3(SEXP dataSEXP, SEXP nSEXP) {
+arma::vec sis3(arma::mat& data, int n, double tol);
+RcppExport SEXP _lmHOIRT_sis3(SEXP dataSEXP, SEXP nSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(sis3(data, n));
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(sis3(data, n, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -254,7 +255,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_lmHOIRT_truncated_normal_ab_sample", (DL_FUNC) &_lmHOIRT_truncated_normal_ab_sample, 5},
     {"_lmHOIRT_sis_theta_model", (DL_FUNC) &_lmHOIRT_sis_theta_model, 2},
     {"_lmHOIRT_sis_theta_model2", (DL_FUNC) &_lmHOIRT_sis_theta_model2, 2},
-    {"_lmHOIRT_sis3", (DL_FUNC) &_lmHOIRT_sis3, 2},
+    {"_lmHOIRT_sis3", (DL_FUNC) &_lmHOIRT_sis3, 3},
     {"_lmHOIRT_validate_proposal", (DL_FUNC) &_lmHOIRT_validate_proposal, 4},
     {NULL, NULL, 0}
 };

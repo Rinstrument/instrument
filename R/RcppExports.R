@@ -65,8 +65,8 @@ sis_theta_model2 <- function(data, n) {
     .Call(`_lmHOIRT_sis_theta_model2`, data, n)
 }
 
-sis3 <- function(data, n) {
-    .Call(`_lmHOIRT_sis3`, data, n)
+sis3 <- function(data, n, tol) {
+    .Call(`_lmHOIRT_sis3`, data, n, tol)
 }
 
 validate_proposal <- function(proposal, indexes, lower, upper) {
