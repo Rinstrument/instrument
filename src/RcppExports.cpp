@@ -13,7 +13,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // lognorm_dens_dx
 double lognorm_dens_dx(double x, double mean, double sd);
-RcppExport SEXP _lmHOIRT_lognorm_dens_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
+RcppExport SEXP _inirt_lognorm_dens_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -26,7 +26,7 @@ END_RCPP
 }
 // logtruncnorm_dens_dx
 double logtruncnorm_dens_dx(double x, double mean, double sd, double a, double b);
-RcppExport SEXP _lmHOIRT_logtruncnorm_dens_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP, SEXP aSEXP, SEXP bSEXP) {
+RcppExport SEXP _inirt_logtruncnorm_dens_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP, SEXP aSEXP, SEXP bSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -41,7 +41,7 @@ END_RCPP
 }
 // log_normd_dx
 double log_normd_dx(double x, double mean, double sd);
-RcppExport SEXP _lmHOIRT_log_normd_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
+RcppExport SEXP _inirt_log_normd_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -54,7 +54,7 @@ END_RCPP
 }
 // normd_dx
 double normd_dx(double x, double mean, double sd);
-RcppExport SEXP _lmHOIRT_normd_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
+RcppExport SEXP _inirt_normd_dx(SEXP xSEXP, SEXP meanSEXP, SEXP sdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -67,7 +67,7 @@ END_RCPP
 }
 // log_unifd_dx
 double log_unifd_dx(double x, double l, double u);
-RcppExport SEXP _lmHOIRT_log_unifd_dx(SEXP xSEXP, SEXP lSEXP, SEXP uSEXP) {
+RcppExport SEXP _inirt_log_unifd_dx(SEXP xSEXP, SEXP lSEXP, SEXP uSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -80,7 +80,7 @@ END_RCPP
 }
 // unifd_dx
 double unifd_dx(double x, double l, double u);
-RcppExport SEXP _lmHOIRT_unifd_dx(SEXP xSEXP, SEXP lSEXP, SEXP uSEXP) {
+RcppExport SEXP _inirt_unifd_dx(SEXP xSEXP, SEXP lSEXP, SEXP uSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -93,7 +93,7 @@ END_RCPP
 }
 // logadd
 double logadd(arma::vec x);
-RcppExport SEXP _lmHOIRT_logadd(SEXP xSEXP) {
+RcppExport SEXP _inirt_logadd(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -102,21 +102,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// min
-double min(double a, double b);
-RcppExport SEXP _lmHOIRT_min(SEXP aSEXP, SEXP bSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type a(aSEXP);
-    Rcpp::traits::input_parameter< double >::type b(bSEXP);
-    rcpp_result_gen = Rcpp::wrap(min(a, b));
-    return rcpp_result_gen;
-END_RCPP
-}
 // r8poly_value_horner
 double r8poly_value_horner(int m, arma::vec c, double x);
-RcppExport SEXP _lmHOIRT_r8poly_value_horner(SEXP mSEXP, SEXP cSEXP, SEXP xSEXP) {
+RcppExport SEXP _inirt_r8poly_value_horner(SEXP mSEXP, SEXP cSEXP, SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -129,7 +117,7 @@ END_RCPP
 }
 // r8_uniform_01
 double r8_uniform_01(int& seed);
-RcppExport SEXP _lmHOIRT_r8_uniform_01(SEXP seedSEXP) {
+RcppExport SEXP _inirt_r8_uniform_01(SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -140,7 +128,7 @@ END_RCPP
 }
 // normal_01_sample
 double normal_01_sample(int& seed);
-RcppExport SEXP _lmHOIRT_normal_01_sample(SEXP seedSEXP) {
+RcppExport SEXP _inirt_normal_01_sample(SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -151,7 +139,7 @@ END_RCPP
 }
 // normal_01_cdf
 double normal_01_cdf(double x);
-RcppExport SEXP _lmHOIRT_normal_01_cdf(SEXP xSEXP) {
+RcppExport SEXP _inirt_normal_01_cdf(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -162,7 +150,7 @@ END_RCPP
 }
 // normal_01_cdf_inv
 double normal_01_cdf_inv(double p);
-RcppExport SEXP _lmHOIRT_normal_01_cdf_inv(SEXP pSEXP) {
+RcppExport SEXP _inirt_normal_01_cdf_inv(SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -173,7 +161,7 @@ END_RCPP
 }
 // truncated_normal_ab_sample
 double truncated_normal_ab_sample(double mu, double sigma, double a, double b, int& seed);
-RcppExport SEXP _lmHOIRT_truncated_normal_ab_sample(SEXP muSEXP, SEXP sigmaSEXP, SEXP aSEXP, SEXP bSEXP, SEXP seedSEXP) {
+RcppExport SEXP _inirt_truncated_normal_ab_sample(SEXP muSEXP, SEXP sigmaSEXP, SEXP aSEXP, SEXP bSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -186,81 +174,56 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// sis_theta_model
-arma::vec sis_theta_model(arma::mat& data, int n);
-RcppExport SEXP _lmHOIRT_sis_theta_model(SEXP dataSEXP, SEXP nSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(sis_theta_model(data, n));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sis_theta_model2
-arma::vec sis_theta_model2(arma::mat& data, int n);
-RcppExport SEXP _lmHOIRT_sis_theta_model2(SEXP dataSEXP, SEXP nSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    rcpp_result_gen = Rcpp::wrap(sis_theta_model2(data, n));
-    return rcpp_result_gen;
-END_RCPP
-}
-// sis3
-arma::vec sis3(arma::mat& data, int n, double tol);
-RcppExport SEXP _lmHOIRT_sis3(SEXP dataSEXP, SEXP nSEXP, SEXP tolSEXP) {
+// sis4
+arma::vec sis4(arma::mat& data, int n, double tol);
+RcppExport SEXP _inirt_sis4(SEXP dataSEXP, SEXP nSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(sis3(data, n, tol));
+    rcpp_result_gen = Rcpp::wrap(sis4(data, n, tol));
     return rcpp_result_gen;
 END_RCPP
 }
-// validate_proposal
-arma::vec validate_proposal(arma::vec proposal, arma::vec indexes, arma::vec lower, arma::vec upper);
-RcppExport SEXP _lmHOIRT_validate_proposal(SEXP proposalSEXP, SEXP indexesSEXP, SEXP lowerSEXP, SEXP upperSEXP) {
+// sis5
+arma::vec sis5(arma::mat& data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n, double tol);
+RcppExport SEXP _inirt_sis5(SEXP dataSEXP, SEXP n_dimensionsSEXP, SEXP dimension_startSEXP, SEXP dimension_endSEXP, SEXP nSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type proposal(proposalSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type indexes(indexesSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type lower(lowerSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type upper(upperSEXP);
-    rcpp_result_gen = Rcpp::wrap(validate_proposal(proposal, indexes, lower, upper));
+    Rcpp::traits::input_parameter< arma::mat& >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< int >::type n_dimensions(n_dimensionsSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type dimension_start(dimension_startSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type dimension_end(dimension_endSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    rcpp_result_gen = Rcpp::wrap(sis5(data, n_dimensions, dimension_start, dimension_end, n, tol));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_lmHOIRT_lognorm_dens_dx", (DL_FUNC) &_lmHOIRT_lognorm_dens_dx, 3},
-    {"_lmHOIRT_logtruncnorm_dens_dx", (DL_FUNC) &_lmHOIRT_logtruncnorm_dens_dx, 5},
-    {"_lmHOIRT_log_normd_dx", (DL_FUNC) &_lmHOIRT_log_normd_dx, 3},
-    {"_lmHOIRT_normd_dx", (DL_FUNC) &_lmHOIRT_normd_dx, 3},
-    {"_lmHOIRT_log_unifd_dx", (DL_FUNC) &_lmHOIRT_log_unifd_dx, 3},
-    {"_lmHOIRT_unifd_dx", (DL_FUNC) &_lmHOIRT_unifd_dx, 3},
-    {"_lmHOIRT_logadd", (DL_FUNC) &_lmHOIRT_logadd, 1},
-    {"_lmHOIRT_min", (DL_FUNC) &_lmHOIRT_min, 2},
-    {"_lmHOIRT_r8poly_value_horner", (DL_FUNC) &_lmHOIRT_r8poly_value_horner, 3},
-    {"_lmHOIRT_r8_uniform_01", (DL_FUNC) &_lmHOIRT_r8_uniform_01, 1},
-    {"_lmHOIRT_normal_01_sample", (DL_FUNC) &_lmHOIRT_normal_01_sample, 1},
-    {"_lmHOIRT_normal_01_cdf", (DL_FUNC) &_lmHOIRT_normal_01_cdf, 1},
-    {"_lmHOIRT_normal_01_cdf_inv", (DL_FUNC) &_lmHOIRT_normal_01_cdf_inv, 1},
-    {"_lmHOIRT_truncated_normal_ab_sample", (DL_FUNC) &_lmHOIRT_truncated_normal_ab_sample, 5},
-    {"_lmHOIRT_sis_theta_model", (DL_FUNC) &_lmHOIRT_sis_theta_model, 2},
-    {"_lmHOIRT_sis_theta_model2", (DL_FUNC) &_lmHOIRT_sis_theta_model2, 2},
-    {"_lmHOIRT_sis3", (DL_FUNC) &_lmHOIRT_sis3, 3},
-    {"_lmHOIRT_validate_proposal", (DL_FUNC) &_lmHOIRT_validate_proposal, 4},
+    {"_inirt_lognorm_dens_dx", (DL_FUNC) &_inirt_lognorm_dens_dx, 3},
+    {"_inirt_logtruncnorm_dens_dx", (DL_FUNC) &_inirt_logtruncnorm_dens_dx, 5},
+    {"_inirt_log_normd_dx", (DL_FUNC) &_inirt_log_normd_dx, 3},
+    {"_inirt_normd_dx", (DL_FUNC) &_inirt_normd_dx, 3},
+    {"_inirt_log_unifd_dx", (DL_FUNC) &_inirt_log_unifd_dx, 3},
+    {"_inirt_unifd_dx", (DL_FUNC) &_inirt_unifd_dx, 3},
+    {"_inirt_logadd", (DL_FUNC) &_inirt_logadd, 1},
+    {"_inirt_r8poly_value_horner", (DL_FUNC) &_inirt_r8poly_value_horner, 3},
+    {"_inirt_r8_uniform_01", (DL_FUNC) &_inirt_r8_uniform_01, 1},
+    {"_inirt_normal_01_sample", (DL_FUNC) &_inirt_normal_01_sample, 1},
+    {"_inirt_normal_01_cdf", (DL_FUNC) &_inirt_normal_01_cdf, 1},
+    {"_inirt_normal_01_cdf_inv", (DL_FUNC) &_inirt_normal_01_cdf_inv, 1},
+    {"_inirt_truncated_normal_ab_sample", (DL_FUNC) &_inirt_truncated_normal_ab_sample, 5},
+    {"_inirt_sis4", (DL_FUNC) &_inirt_sis4, 3},
+    {"_inirt_sis5", (DL_FUNC) &_inirt_sis5, 6},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_lmHOIRT(DllInfo *dll) {
+RcppExport void R_init_inirt(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

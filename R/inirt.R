@@ -1,7 +1,7 @@
 
-#' @useDynLib lmHOIRT, .registration=TRUE
+#' @useDynLib inirt, .registration=TRUE
 #' @importFrom Rcpp evalCpp
-lmHOIRT = function(model, data, start, iterations, burn = floor(iterations / 2), greedy_iterations = floor(iterations / 3)) {
+inirt = function(model, data, start, iterations, burn = floor(iterations / 2), greedy_iterations = floor(iterations / 3)) {
   accept = rep(0, iterations)
   iter_save = (iterations - burn)
   iter_save = 1.2 * iter_save

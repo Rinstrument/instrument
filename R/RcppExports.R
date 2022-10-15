@@ -2,74 +2,62 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 lognorm_dens_dx <- function(x, mean, sd) {
-    .Call(`_lmHOIRT_lognorm_dens_dx`, x, mean, sd)
+    .Call(`_inirt_lognorm_dens_dx`, x, mean, sd)
 }
 
 logtruncnorm_dens_dx <- function(x, mean, sd, a, b) {
-    .Call(`_lmHOIRT_logtruncnorm_dens_dx`, x, mean, sd, a, b)
+    .Call(`_inirt_logtruncnorm_dens_dx`, x, mean, sd, a, b)
 }
 
 log_normd_dx <- function(x, mean, sd) {
-    .Call(`_lmHOIRT_log_normd_dx`, x, mean, sd)
+    .Call(`_inirt_log_normd_dx`, x, mean, sd)
 }
 
 normd_dx <- function(x, mean, sd) {
-    .Call(`_lmHOIRT_normd_dx`, x, mean, sd)
+    .Call(`_inirt_normd_dx`, x, mean, sd)
 }
 
 log_unifd_dx <- function(x, l, u) {
-    .Call(`_lmHOIRT_log_unifd_dx`, x, l, u)
+    .Call(`_inirt_log_unifd_dx`, x, l, u)
 }
 
 unifd_dx <- function(x, l, u) {
-    .Call(`_lmHOIRT_unifd_dx`, x, l, u)
+    .Call(`_inirt_unifd_dx`, x, l, u)
 }
 
 logadd <- function(x) {
-    .Call(`_lmHOIRT_logadd`, x)
-}
-
-min <- function(a, b) {
-    .Call(`_lmHOIRT_min`, a, b)
+    .Call(`_inirt_logadd`, x)
 }
 
 r8poly_value_horner <- function(m, c, x) {
-    .Call(`_lmHOIRT_r8poly_value_horner`, m, c, x)
+    .Call(`_inirt_r8poly_value_horner`, m, c, x)
 }
 
 r8_uniform_01 <- function(seed) {
-    .Call(`_lmHOIRT_r8_uniform_01`, seed)
+    .Call(`_inirt_r8_uniform_01`, seed)
 }
 
 normal_01_sample <- function(seed) {
-    .Call(`_lmHOIRT_normal_01_sample`, seed)
+    .Call(`_inirt_normal_01_sample`, seed)
 }
 
 normal_01_cdf <- function(x) {
-    .Call(`_lmHOIRT_normal_01_cdf`, x)
+    .Call(`_inirt_normal_01_cdf`, x)
 }
 
 normal_01_cdf_inv <- function(p) {
-    .Call(`_lmHOIRT_normal_01_cdf_inv`, p)
+    .Call(`_inirt_normal_01_cdf_inv`, p)
 }
 
 truncated_normal_ab_sample <- function(mu, sigma, a, b, seed) {
-    .Call(`_lmHOIRT_truncated_normal_ab_sample`, mu, sigma, a, b, seed)
+    .Call(`_inirt_truncated_normal_ab_sample`, mu, sigma, a, b, seed)
 }
 
-sis_theta_model <- function(data, n) {
-    .Call(`_lmHOIRT_sis_theta_model`, data, n)
+sis4 <- function(data, n, tol) {
+    .Call(`_inirt_sis4`, data, n, tol)
 }
 
-sis_theta_model2 <- function(data, n) {
-    .Call(`_lmHOIRT_sis_theta_model2`, data, n)
-}
-
-sis3 <- function(data, n, tol) {
-    .Call(`_lmHOIRT_sis3`, data, n, tol)
-}
-
-validate_proposal <- function(proposal, indexes, lower, upper) {
-    .Call(`_lmHOIRT_validate_proposal`, proposal, indexes, lower, upper)
+sis5 <- function(data, n_dimensions, dimension_start, dimension_end, n, tol) {
+    .Call(`_inirt_sis5`, data, n_dimensions, dimension_start, dimension_end, n, tol)
 }
 

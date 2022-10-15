@@ -1,22 +1,19 @@
-Package: lmHOIRT
+Package: inirt
 Type: Package
-Title: Latent Regression Models in Higher-Order Item Response Theory
+Title: Multivariate Higher-Order Item Response Theory
 Version: 1.1.2
 Date: 2022-09-23
 Authors@R: person("Michael", "Kleinsasser", role=c("aut","cre"), email="mjkleinsa@gmail.com")
 Maintainer: Michael Kleinsasser <mjkleinsa@gmail.com>
-Description: Higher-order latent trait theory (item response theory). We
-    implement the generalized partial credit model with a second-order latent
-    trait structure. Latent regression can be done on the second-order latent
-    trait. For a pre-print of the methods,
-    see, "Latent Regression in Higher-Order Item Response Theory with the R
-    Package hlt" <https://mkleinsa.github.io/doc/hlt_proof_draft_brmic.pdf>.
+Description: Tools for estimating a wide variety of item response theory models. 
+    Capable of fitting potentially multivariate and/or higher-order latent
+    traits. Latent regression can be performed on the highest order traits.
 License: GPL (>= 2)
 Depends: R (>= 3.5.0)
 Imports: Rcpp (>= 1.0.8), RcppArmadillo, tidyr, ggplot2, foreach, doParallel
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.1
 Encoding: UTF-8
-URL: https://github.com/mkleinsa/hlt
-BugReports: https://github.com/mkleinsa/hlt/issues
+URL: https://github.com/mkleinsa/inirt
+BugReports: https://github.com/mkleinsa/inirt/issues
 LazyData: true

@@ -120,22 +120,79 @@ mirt.alpha = mirt.coefs[, "a1"]
 cor(mirt.delta, delta)
 cor(mirt.alpha, alpha)
 # cor(rowMeans(data), theta)
-x = sis3(data, n = 2000, tol = 20)
+x = sis4(data, n = 2000, tol = 20)
 x = matrix(as.vector(x), nrow = p, byrow = TRUE)
 post = apply(x, 1, sum)
 length(post)
 # post[201:220]
 cor(post[201:220], delta)
-plot(post[201:220], delta)
-abline(a = 0, b = 1)
+# plot(post[201:220], delta)
+# abline(a = 0, b = 1)
 # View(cbind(post[201:220], delta))
 cor(post[1:200], theta)
-plot(post[1:200], theta)
-abline(a = 0, b = 1)
+# plot(post[1:200], theta)
+# abline(a = 0, b = 1)
 # View(cbind(post[1:200], theta))
 # cor(post[201:220], mirt.delta)
 cor(post[221:240], alpha)
 # View(cbind(post[221:240], alpha))
 # cor(mirt.alpha, alpha)
-plot(post[221:240], alpha)
-abline(a = 0, b = 1)
+# plot(post[221:240], alpha)
+# abline(a = 0, b = 1)
+
+
+
+
+
+
+
+
+
+
+
+
+# --------------------------------------------------------------
+# With delta, alpha, second-order theta, lambda (loading) parameters
+library(devtools)
+# library(mirt)
+library(truncnorm)
+rm(list = ls())
+load_all()
+# set.seed(1234565322)
+n = 200
+d = 3
+j = 20
+p = (d + 1)*n + 2*j*d + d
+data = matrix(0, nrow = n, ncol = d*j)
+lambda = c(0.5, 0.7, 0.8)
+thetag = seq(-1.5, 1.5, length.out = n) #rnorm(n, 0 , 1)
+theta = matrix(0, nrow = n, ncol = d)
+for(i in 1:d) {
+  theta[,i] = rnorm(n, lambda[i]*thetag, sqrt(1.5))
+}
+alpha = rtruncnorm(d*j, a = 0, b = 10, mean = 1.5)
+delta = rnorm(d*j, 0, 1)
+jj_d = rep(1:d, each = j)
+for(i in 1:n) {
+  for(jj in 1:(d*j)) {
+    prb = (1 / (1 + exp(-((alpha[jj]*theta[i, jj_d[jj]]) - delta[jj]))))
+    data[i, jj] = sample(c(1, 0), 1, prob = c(prb, 1 - prb))
+  }
+}
+colnames(data) = paste0("x", 1:(d*j))
+apply(data, 2, mean)
+d_index = rep(1:j, d)
+d_start = which(d_index == 1)
+d_end = which(d_index == j)
+x = sis5(data, n_dimensions = d, dimension_start = d_start, dimension_end = d_end, n = 10000, tol = 200)
+x = matrix(as.vector(x), nrow = p, byrow = TRUE)
+post = apply(x, 1, sum)
+length(post)
+# is general (second-order theta correct)?
+cor(post[1:200], thetag)
+  post[c(921, 922, 923)]
+cor(post[201:400], theta[,1])
+cor(post[401:600], theta[,2])
+cor(post[601:800], theta[,3])
+cor(post[801:860], delta)
+cor(post[861:920], alpha)
