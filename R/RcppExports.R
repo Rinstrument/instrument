@@ -53,11 +53,23 @@ truncated_normal_ab_sample <- function(mu, sigma, a, b, seed) {
     .Call(`_inirt_truncated_normal_ab_sample`, mu, sigma, a, b, seed)
 }
 
+normal_cdf_inv <- function(cdf, mu, sigma) {
+    .Call(`_inirt_normal_cdf_inv`, cdf, mu, sigma)
+}
+
+log_normal_cdf_inv <- function(cdf, mu, sigma) {
+    .Call(`_inirt_log_normal_cdf_inv`, cdf, mu, sigma)
+}
+
+log_normal_sample <- function(mu, sigma, seed) {
+    .Call(`_inirt_log_normal_sample`, mu, sigma, seed)
+}
+
 sis4 <- function(data, n, tol) {
     .Call(`_inirt_sis4`, data, n, tol)
 }
 
-sis5 <- function(data, n_dimensions, dimension_start, dimension_end, n, tol) {
-    .Call(`_inirt_sis5`, data, n_dimensions, dimension_start, dimension_end, n, tol)
+sis5 <- function(data, n_dimensions, dimension_start, dimension_end, n_second_order, n, tol) {
+    .Call(`_inirt_sis5`, data, n_dimensions, dimension_start, dimension_end, n_second_order, n, tol)
 }
 

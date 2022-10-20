@@ -174,6 +174,45 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// normal_cdf_inv
+double normal_cdf_inv(double cdf, double mu, double sigma);
+RcppExport SEXP _inirt_normal_cdf_inv(SEXP cdfSEXP, SEXP muSEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type cdf(cdfSEXP);
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(normal_cdf_inv(cdf, mu, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// log_normal_cdf_inv
+double log_normal_cdf_inv(double cdf, double mu, double sigma);
+RcppExport SEXP _inirt_log_normal_cdf_inv(SEXP cdfSEXP, SEXP muSEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type cdf(cdfSEXP);
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_normal_cdf_inv(cdf, mu, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
+// log_normal_sample
+double log_normal_sample(double mu, double sigma, int& seed);
+RcppExport SEXP _inirt_log_normal_sample(SEXP muSEXP, SEXP sigmaSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< int& >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(log_normal_sample(mu, sigma, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
 // sis4
 arma::vec sis4(arma::mat& data, int n, double tol);
 RcppExport SEXP _inirt_sis4(SEXP dataSEXP, SEXP nSEXP, SEXP tolSEXP) {
@@ -188,8 +227,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // sis5
-arma::vec sis5(arma::mat& data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n, double tol);
-RcppExport SEXP _inirt_sis5(SEXP dataSEXP, SEXP n_dimensionsSEXP, SEXP dimension_startSEXP, SEXP dimension_endSEXP, SEXP nSEXP, SEXP tolSEXP) {
+arma::vec sis5(arma::mat& data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n_second_order, int n, double tol);
+RcppExport SEXP _inirt_sis5(SEXP dataSEXP, SEXP n_dimensionsSEXP, SEXP dimension_startSEXP, SEXP dimension_endSEXP, SEXP n_second_orderSEXP, SEXP nSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -197,9 +236,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_dimensions(n_dimensionsSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type dimension_start(dimension_startSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type dimension_end(dimension_endSEXP);
+    Rcpp::traits::input_parameter< int >::type n_second_order(n_second_orderSEXP);
     Rcpp::traits::input_parameter< int >::type n(nSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(sis5(data, n_dimensions, dimension_start, dimension_end, n, tol));
+    rcpp_result_gen = Rcpp::wrap(sis5(data, n_dimensions, dimension_start, dimension_end, n_second_order, n, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -218,8 +258,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_inirt_normal_01_cdf", (DL_FUNC) &_inirt_normal_01_cdf, 1},
     {"_inirt_normal_01_cdf_inv", (DL_FUNC) &_inirt_normal_01_cdf_inv, 1},
     {"_inirt_truncated_normal_ab_sample", (DL_FUNC) &_inirt_truncated_normal_ab_sample, 5},
+    {"_inirt_normal_cdf_inv", (DL_FUNC) &_inirt_normal_cdf_inv, 3},
+    {"_inirt_log_normal_cdf_inv", (DL_FUNC) &_inirt_log_normal_cdf_inv, 3},
+    {"_inirt_log_normal_sample", (DL_FUNC) &_inirt_log_normal_sample, 3},
     {"_inirt_sis4", (DL_FUNC) &_inirt_sis4, 3},
-    {"_inirt_sis5", (DL_FUNC) &_inirt_sis5, 6},
+    {"_inirt_sis5", (DL_FUNC) &_inirt_sis5, 7},
     {NULL, NULL, 0}
 };
 

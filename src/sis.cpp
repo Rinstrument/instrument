@@ -778,8 +778,660 @@ arma::vec sis4(arma::mat & data, int n, double tol) {
 
 
 
+// // [[Rcpp::export]]
+// arma::vec sis5(arma::mat & data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n, double tol) {
+//   // Approximate draw from joint posterior distribution by sequential update with resampling
+//   // using the sequential importance sampling with resampling angorithm 
+//   // Reference: 
+//   // Arguments: 
+//   //  data - input matrix of observations
+//   //  n_dimensions - number of first-order dimensions
+//   //  dimension_start - start index (from 1) of each dimension. The dimension ends at dimension_start(n+1) - 1
+//   //  dimension_end - the end index of each dimension.
+//   //  n - number of resampling iterations
+//   //  tol - tolerance for resampling. If sum of squared weight falls below tol,
+//   //        resampling is performed and weights reset.
+//   // Value:
+//   //  vector of weighted estimates for each parameter over each of the n resampling iterations
+//   double eps = 1e-16;                       // epsilon for log() when performing likelihood calculation
+//   int d_nrow = data.n_rows;                 // number of rows in data
+//   int d_ncol = data.n_cols;                 // number of cols in data
+//   // n_dimensions                           // number of latent (ability) dimensions
+//   int n_theta = d_nrow*(n_dimensions + 1);  // number of theta parameters (theta = latent ability)
+//   int n_delta = d_ncol;                     // number of deltas, difficult parameters
+//   int n_alpha = d_ncol;                     // number of thetas, ability parameters
+//   int n_lambda = n_dimensions;              // number of lambda parameters (loadings for second-order theta on each of the first-order thetas)
+//   int n_param = n_lambda + n_theta + n_delta + n_alpha;  // total number of parameters to estimate
+//   // pre-allocation of memory for model estimation
+//   arma::ivec seeds = arma::randi<arma::ivec>(n_param*n, arma::distr_param(+(1), +(999999999))); // random seeds for every draw of every parameter
+//   arma::vec x = arma::vec(n_param*n, arma::fill::zeros);           // store all draws
+//   arma::vec x_weighted = arma::vec(n_param*n, arma::fill::zeros);  // store all weighted draws
+//   arma::vec w = arma::vec(n, arma::fill::ones);                    // store current weights
+//   arma::vec w_history = arma::vec(n_param*n, arma::fill::ones);    // store all weights
+//   arma::vec u = arma::vec(n, arma::fill::zeros);                   // store updates for current iteration
+//   // pre-allocation of useful values
+//   int t = 1;                 // t indexes parameter during SIS iterations
+//   double theta_prob = 0.0;   // likelihood propability
+//   double n_eff = 0.0;        // pre allocation of memory for tolerance test
+//   // loop over each parameter
+//   //   for each parameter, resample n times
+//   //   update likelihood (weights), save history, check for degeneracy
+//   //   if weights are near degenerate, resample parameters and reset weights
+//   for(int p_ = 0; p_ < n_param; p_++) {   // p_ indexes current parameter to update
+//     for(int n_ = 0; n_ < n; n_++) {         // n_ indexes the resampling iterations (sample each "p_" "n_" times)
+//       if(t <= n_lambda) {                   // if t <= n_lambda, sample lambda prior
+//         x((t-1)*n + n_) = truncated_normal_ab_sample(0.0, 1.0, -5.0, 5.0, seeds((t-1)*n + n_));
+//       } else if(t <= n_lambda + n_theta) {  // if t <= n_lambda + n_theta, sample theta prior
+//         if(t <= n_lambda + d_nrow) {        // if t is first dimension of theta (second-order theta, no prior on the prior's mean)
+//           x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0;
+//         } else {      // second, loop over each first order dimension of theta and set prior mean to second-order theta
+//           // calculate which dimension we are in
+//           int current_dimension = (t-n_lambda-1) / d_nrow;          // locate the current lambda parameter to load on proir 
+//           int thetag_index = ((t-n_lambda-1) % d_nrow) + n_lambda;  // locate the current second-order theta parameter to load on prior
+//           // compute prior draw for the given step (theta step, all first-order dimensions)
+//           // conditional on second-order theta
+//           x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0 + (x((current_dimension)*n + n_) * x((thetag_index)*n + n_));
+//         }
+//       } else if(t <= n_lambda + n_theta + n_delta) {
+//         x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0;
+//       } else { //if(t <= n_lambda + n_theta + n_delta + n_alpha)
+//         //x((t-1)*n + n_) = truncated_normal_ab_sample(1.0, 2.0, 0.0, , seeds((t-1)*n + n_));
+//         double a_samp = normal_01_sample(seeds((t-1)*n + n_))*2.0 + 1.0;
+//         while (a_samp < 0.0) {
+//           a_samp = normal_01_sample(seeds((t-1)*n + n_))*2.0 + 1.0; // Probably switch this back to the truncated normal dist rather than inefficiency of over-sampling
+//         }
+//         x((t-1)*n + n_) = a_samp;
+//       }
+//       double lk = 0.0;  // pre-allocate likelihood memory
+//       // --------------------------
+//       if(t <= n_lambda) {
+//         for(int j_ = dimension_start(t-1) - 1; j_ < dimension_end(t-1) - 1; j_++) {
+//           for(int i_ = 0; i_ < d_nrow; i_++) {
+//             theta_prob = 1.0 / (1.0 + std::exp(-(x((t-1)*n + n_))));
+//             lk += data(i_, j_)*std::log(theta_prob + eps) + (1.0 - data(i_, j_))*std::log(1.0 - theta_prob + eps);
+//           }
+//         }
+//       } else if(t <= n_lambda + n_theta) {
+//         // first, estimate the second order theta
+//         if(t <= n_lambda + d_nrow) {
+//           for(int j_ = 0; j_ < d_ncol; j_++) {  // compute the likelihood for the given step (theta step, second-order dimension)
+//             int theta_current_index = t-n_lambda-1;
+//             theta_prob = 1.0 / (1.0 + std::exp(      -(    x((t-1)*n + n_)   )          ));
+//             lk += data(theta_current_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_current_index, j_))*std::log(1.0 - theta_prob + eps);
+//           }
+//         } else {    // second, loop over each first order dimension of theta
+//           // calculate which dimension we are in
+//           int current_dimension = (t-n_lambda-1) / d_nrow;
+//           int theta_row_index = (t-n_lambda-1) % d_nrow;
+//           for(int j_ = dimension_start(current_dimension - 1) - 1; j_ < dimension_end(current_dimension - 1) - 1; j_++) {  // compute the likelihood for the given step (theta step, all first-order dimensions)
+//             theta_prob = 1.0 / (1.0 + std::exp(      -(    x((t-1)*n + n_)    )             ));
+//             lk += data(theta_row_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_row_index, j_))*std::log(1.0 - theta_prob + eps);
+//           }
+//         }
+//       } else if(t <= n_lambda + n_theta + n_delta) {
+//         for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (delta step)
+//           int d_current_index = t - n_lambda - n_theta;
+//           // loop through dimension indexes to discover which dimension the given question t belongs to
+//           // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+//           int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+//           for(int d_ = 0; d_ < n_dimensions; d_++) { 
+//             if(d_current_index <= dimension_end(d_)) {
+//               theta_dim = d_ + 1;
+//               break;
+//             }
+//           }
+//           theta_prob = 1.0 / (1.0 + std::exp(-(    x((n_lambda + (theta_dim*d_nrow) + i_)*n + n_)    - x((t-1)*n + n_)         )));
+//           lk += data(i_, d_current_index - 1)*std::log(theta_prob + eps) + (1.0 - data(i_, d_current_index - 1))*std::log(1.0 - theta_prob + eps);
+//         }
+//       } else {  // if(t <= n_lambda + n_theta + n_delta + n_alpha)
+//         for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+//           int a_current_index = t - n_lambda - n_theta - n_delta;
+//           // loop through dimension indexes to discover which dimension the given question t belongs to
+//           // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+//           int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+//           for(int d_ = 0; d_ < n_dimensions; d_++) {
+//             if(a_current_index <= dimension_end(d_)) {
+//               theta_dim = d_ + 1;
+//               break;
+//             }
+//           }
+//           theta_prob = 1.0 / (1.0 + std::exp(-(   (x((t-1)*n + n_) * x((n_lambda + (theta_dim*d_nrow) + i_)*n + n_)  )  - x((t-n_delta-1)*n + n_)     ))); //t-n_delta-1???
+//           lk += data(i_, a_current_index - 1)*std::log(theta_prob + eps) + (1.0 - data(i_, a_current_index - 1))*std::log(1.0 - theta_prob + eps);
+//         }
+//       }
+//       u(n_) = lk;   // update using the likelihood at "prior distribution" draw (log scale)
+//       w(n_) = w(n_) + u(n_);  // update weights on the log scale
+//     }
+//     // This section transforms the log weights by exponentiating them.
+//     // We cannot just exponentiate the weights, so we take the 
+//     // difference between weight and max weight,
+//     // and then exponentiate the difference minus logadd.
+//     // The weight adjustment method was taken from the SIR method of LaplacesDemon R package
+//     // -----------------------------------------
+//     double md = arma::max(w);
+//     arma::vec lw = w - md;
+//     arma::vec probs = arma::exp(lw - logadd(lw));
+//     // -----------------------------------------
+//     // End weight scale change
+//     // Update weight history
+//     for(int w_ = 0; w_ < n; w_++) {
+//       w_history((t-1)*n + w_) = probs(w_);
+//     }
+//     double norm_const = arma::accu(probs);   // sum of probs should be 1 since probs are probabilities
+//     // weight observations by their importance. This is the step by which the prior draws
+//     // are weighted by the likelihood, yielding draws from the joint posterior distribution.
+//     for(int n_ = 0; n_ < n; n_++) { 
+//       x_weighted((t-1)*n + n_) = x((t-1)*n + n_) * probs(n_) / norm_const;
+//     }
+//     // This is the stage where weights are checked for degeneracy (and rejuvinated).
+//     // 1) In short this section does the following: compute some measure of "issues" with the weights.
+//     // 2) If "issues" is sufficiently small (indicated by a cutoff value), then we know that the weights are
+//     // degenerate or approaching degeneracy.
+//     // 3) Fix the degeneracy by resampling all parameter draws with probability proportional to weigths and
+//     //    reset all weights to 1 / n. This will be triggered a number of times during runtime to repair
+//     //    weights that are overly concentrated near zero, and keep going. Without this step, the algorithm 
+//     //    will not work.
+//     n_eff = arma::accu(exp(w) % exp(w));     // check weights for issues using sum of squared weights
+//     if(n_eff < tol) {   // if weights are under the minimum that we decide is tolerable, then do 2) and 3).
+//       // update each parameter draw with the resampled values
+//       arma::ivec sindex = arma::regspace<arma::ivec>((t-1)*n, t*n - 1); //0  // vector from 0, ..., t*n - 1 (zero up to current)
+//       arma::vec prev_probs = arma::vec(n, arma::fill::zeros);  //t*n  // get previous probabilities for the resampling step
+//       for(int w_ = (t-1)*n; w_ < t*n; w_++) { //w_=0  // for every previous probability, use the weight which was used earlier 
+//         prev_probs(w_ - (t-1)*n) = w_history(w_);
+//       }
+//       prev_probs = prev_probs / arma::accu(prev_probs);
+//       // Now, we complete 3) by resampling using weight history
+//       arma::ivec samp_indices = Rcpp::RcppArmadillo::sample(sindex, n, true, prev_probs); // t*n
+//       for(int x_t = (t-1)*n; x_t < t*n; x_t++) { //t*n
+//         x(x_t) = x(samp_indices(x_t - (t-1)*n));
+//       }
+//       for(int n_ = 0; n_ < n; n_++) {   // weight = 1.0 / n for each weight. This is a reset of weights with equal value per
+//         w(n_) = 1.0 / n;              // weight. It's like starting the weighting over again.
+//       }
+//     }   // End of the weight rejuvination step.
+//     t += 1;  // That was for one parameter (t = 1), increment t by one and repeat for the rest of the parameters
+//   }
+//   return x_weighted;  // return vector of weighted estimates (will have to sum across draws for the expected value (posterior mean))
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // [[Rcpp::export]]
+// arma::vec sis5(arma::mat & data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n, double tol) {
+//   // Approximate draw from joint posterior distribution by sequential update with resampling
+//   // using the sequential importance sampling with resampling angorithm 
+//   // Reference: 
+//   // Arguments: 
+//   //  data - input matrix of observations
+//   //  n_dimensions - number of first-order dimensions
+//   //  dimension_start - start index (from 1) of each dimension. The dimension ends at dimension_start(n+1) - 1
+//   //  dimension_end - the end index of each dimension.
+//   //  n - number of resampling iterations
+//   //  tol - tolerance for resampling. If sum of squared weight falls below tol,
+//   //        resampling is performed and weights reset.
+//   // Value:
+//   //  vector of weighted estimates for each parameter over each of the n resampling iterations
+//   double eps = 1e-16;                       // epsilon for log() when performing likelihood calculation
+//   int d_nrow = data.n_rows;                 // number of rows in data
+//   int d_ncol = data.n_cols;                 // number of cols in data
+//   // n_dimensions                           // number of latent (ability) dimensions
+//   int n_theta = d_nrow*(n_dimensions + 1);  // number of theta parameters (theta = latent ability)
+//   int n_delta = d_ncol;                     // number of deltas, difficult parameters
+//   int n_alpha = d_ncol;                     // number of thetas, ability parameters
+//   int n_lambda = n_dimensions;              // number of lambda parameters (loadings for second-order theta on each of the first-order thetas)
+//   int n_param = n_lambda + n_theta + n_delta + n_alpha;  // total number of parameters to estimate
+//   // pre-allocation of memory for model estimation
+//   arma::ivec seeds = arma::randi<arma::ivec>(n_param*n, arma::distr_param(+(1), +(999999999))); // random seeds for every draw of every parameter
+//   arma::vec x = arma::vec(n_param*n, arma::fill::zeros);           // store all draws
+//   arma::vec x_weighted = arma::vec(n_param*n, arma::fill::zeros);  // store all weighted draws
+//   arma::vec w = arma::vec(n, arma::fill::ones);                    // store current weights
+//   arma::vec w_history = arma::vec(n_param*n, arma::fill::ones);    // store all weights
+//   arma::vec u = arma::vec(n, arma::fill::zeros);                   // store updates for current iteration
+//   // pre-allocation of useful values
+//   int t = 1;                 // t indexes parameter during SIS iterations
+//   double theta_prob = 0.0;   // likelihood propability
+//   double n_eff = 0.0;        // pre allocation of memory for tolerance test
+//   // loop over each parameter
+//   //   for each parameter, resample n times
+//   //   update likelihood (weights), save history, check for degeneracy
+//   //   if weights are near degenerate, resample parameters and reset weights
+//   for(int p_ = 0; p_ < n_param; p_++) {   // p_ indexes current parameter to update
+//     for(int n_ = 0; n_ < n; n_++) {         // n_ indexes the resampling iterations (sample each "p_" "n_" times)
+//       if(t <= d_nrow) {   // if is in the range of the second-order thetas, sample from their priors 
+//         x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0;
+//       } else if(t <= d_nrow + n_lambda) {  // if t in this range, sample the lambda priors
+//         x((t-1)*n + n_) = truncated_normal_ab_sample(0.0, 1.0, -10.0, 10.0, seeds((t-1)*n + n_));
+//       } else if(t <= n_lambda + n_theta) {  // if t in this range, sample from the first-order theta errors
+//         x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0;
+//       } else if(t <= n_lambda + n_theta + n_alpha) {
+//         x((t-1)*n + n_) = truncated_normal_ab_sample(1.0, 2.0, 0.0, 10.0, seeds((t-1)*n + n_));
+//       } else { // t <= n_lambda + n_theta + n_alpha + n_delta
+//         x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0;
+//       }
+//       double lk = 0.0;  // pre-allocate likelihood memory
+//       // -------------------------- update likekihood at prior given the data and all other parameters
+//       // The likelihood contribution will give us the importance weights
+//       if(t <= d_nrow) {   // if is in the range of the second-order thetas, compute likelihood at prior draw
+//         for(int j_ = 0; j_ < d_ncol; j_++) {  // compute the likelihood for the given step (theta step, second-order dimension)
+//           theta_prob = 1.0 / (1.0 + std::exp(      -(    x((t-1)*n + n_)   )          ));
+//           lk += data(t-1, j_)*std::log(theta_prob + eps) + (1.0 - data(t-1, j_))*std::log(1.0 - theta_prob + eps);
+//         }
+//       } else if(t <= d_nrow + n_lambda) {  // if t in this range, compute likelihood at prior draw
+//         for(int j_ = dimension_start(t-d_nrow-1) - 1; j_ < dimension_end(t-d_nrow-1); j_++) {
+//           for(int i_ = 0; i_ < d_nrow; i_++) {
+//             theta_prob = 1.0 / (1.0 + std::exp(       -(    x((t-1)*n + n_) * x((i_)*n + n_)  )          ));
+//             lk += data(i_, j_)*std::log(theta_prob + eps) + (1.0 - data(i_, j_))*std::log(1.0 - theta_prob + eps);
+//           }
+//         }
+//       } else if(t <= n_lambda + n_theta) {  // if t in this range, compute likelihood at prior draw
+//         // second, loop over each first order dimension of theta
+//         // calculate which dimension we are in
+//         int current_dimension = 1 + ((t-n_lambda-d_nrow-1) / d_nrow);
+//         int theta_row_index = (t-n_lambda-d_nrow-1) % d_nrow;
+//         int lambda_index = d_nrow + current_dimension;
+//         for(int j_ = dimension_start(current_dimension - 1) - 1; j_ < dimension_end(current_dimension - 1); j_++) {  // compute the likelihood for the given step (theta step, all first-order dimensions)
+//           theta_prob = 1.0 / (1.0 + std::exp(      -(     (x((lambda_index-1)*n + n_) * x((theta_row_index)*n + n_))     +     x((t-1)*n + n_)            )             ));
+//           lk += data(theta_row_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_row_index, j_))*std::log(1.0 - theta_prob + eps);
+//         }
+//       } 
+//       // else if(t <= n_lambda + n_theta + n_alpha) {
+//       //   int a_current_index = t - n_lambda - n_theta;
+//       //   // loop through dimension indexes to discover which dimension the given question t belongs to
+//       //   // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+//       //   int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+//       //   for(int d_ = 0; d_ < n_dimensions; d_++) {
+//       //     if(a_current_index <= dimension_end(d_)) {
+//       //       theta_dim = d_ + 1;
+//       //       break;
+//       //     }
+//       //   }
+//       //   int lambda_index = d_nrow + theta_dim;
+//       //   int theta_d_index = (theta_dim)*d_nrow + n_lambda;// ???? 1 + () ?????
+//       //   for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+//       //     //theta_prob = 1.0 / (1.0 + std::exp(      -(     ( x((t-1)*n + n_) * (  (x((lambda_index-1)*n + n_) * x((i_)*n + n_))    +     x((theta_d_index-1+i_)*n + n_)  )       )          )             ));
+//       //     theta_prob = 1.0 / (1.0 + std::exp(      -(     ( x((t-1)*n + n_) * (      x((theta_d_index-1+i_)*n + n_)  )       )          )             ));
+//       //     lk += data(i_, a_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, a_current_index-1))*std::log(1.0 - theta_prob + eps);
+//       //   }
+//       // } 
+//       // else { // t <= n_lambda + n_theta + n_alpha + n_delta
+//       //   int d_current_index = t - n_lambda - n_theta - n_alpha;
+//       //   // loop through dimension indexes to discover which dimension the given question t belongs to
+//       //   // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+//       //   int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+//       //   for(int d_ = 0; d_ < n_dimensions; d_++) {
+//       //     if(d_current_index <= dimension_end(d_)) {
+//       //       theta_dim = d_ + 1;
+//       //       break;
+//       //     }
+//       //   }
+//       //   int lambda_index = d_nrow + theta_dim;
+//       //   int theta_d_index = (theta_dim)*d_nrow + n_lambda; // ???? 1 + () ?????
+//       //   int alpha_index = n_theta + n_lambda + d_current_index; // ???? 1 + () ?????
+//       //   for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+//       //   // -   x((t-1)*n + n_) 
+//       //     theta_prob = 1.0 / (1.0 + std::exp(      -(     ( x((alpha_index-1)*n + n_) * (  (x((lambda_index-1)*n + n_) * x((i_)*n + n_))    +     x((theta_d_index-1+i_)*n + n_)  )       )   -   x((t-1)*n + n_)        )             ));
+//       //     lk += data(i_, d_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, d_current_index-1))*std::log(1.0 - theta_prob + eps);
+//       //   }
+//       // }
+//       u(n_) = lk;   // update using the likelihood at "prior distribution" draw (log scale)
+//       w(n_) = w(n_) + u(n_);  // update weights on the log scale
+//     }
+//     // This section transforms the log weights by exponentiating them.
+//     // We cannot just exponentiate the weights, so we take the 
+//     // difference between weight and max weight,
+//     // and then exponentiate the difference minus logadd.
+//     // The weight adjustment method was taken from the SIR method of LaplacesDemon R package
+//     // -----------------------------------------
+//     double md = arma::max(w);
+//     arma::vec lw = w - md;
+//     arma::vec probs = arma::exp(lw - logadd(lw));
+//     // -----------------------------------------
+//     // End weight scale change
+//     // Update weight history
+//     for(int w_ = 0; w_ < n; w_++) {
+//       w_history((t-1)*n + w_) = probs(w_);
+//     }
+//     double norm_const = arma::accu(probs);   // sum of probs should be 1 since probs are probabilities
+//     // weight observations by their importance. This is the step by which the prior draws
+//     // are weighted by the likelihood, yielding draws from the joint posterior distribution.
+//     for(int n_ = 0; n_ < n; n_++) { 
+//       x_weighted((t-1)*n + n_) = x((t-1)*n + n_) * probs(n_) / norm_const;
+//     }
+//     // This is the stage where weights are checked for degeneracy (and rejuvinated).
+//     // 1) In short this section does the following: compute some measure of "issues" with the weights.
+//     // 2) If "issues" is sufficiently small (indicated by a cutoff value), then we know that the weights are
+//     // degenerate or approaching degeneracy.
+//     // 3) Fix the degeneracy by resampling all parameter draws with probability proportional to weigths and
+//     //    reset all weights to 1 / n. This will be triggered a number of times during runtime to repair
+//     //    weights that are overly concentrated near zero, and keep going. Without this step, the algorithm 
+//     //    will not work.
+//     n_eff = arma::accu(exp(w) % exp(w));     // check weights for issues using sum of squared weights
+//     if(n_eff < tol) {   // if weights are under the minimum that we decide is tolerable, then do 2) and 3).
+//       // update each parameter draw with the resampled values
+//       arma::ivec sindex = arma::regspace<arma::ivec>((t-1)*n, t*n - 1); //0  // vector from 0, ..., t*n - 1 (zero up to current)
+//       arma::vec prev_probs = arma::vec(n, arma::fill::zeros);  //t*n  // get previous probabilities for the resampling step
+//       for(int w_ = (t-1)*n; w_ < t*n; w_++) { //w_=0  // for every previous probability, use the weight which was used earlier 
+//         prev_probs(w_ - (t-1)*n) = w_history(w_);
+//       }
+//       prev_probs = prev_probs / arma::accu(prev_probs);
+//       // Now, we complete 3) by resampling using weight history
+//       arma::ivec samp_indices = Rcpp::RcppArmadillo::sample(sindex, n, true, prev_probs); // t*n
+//       for(int x_t = (t-1)*n; x_t < t*n; x_t++) { //t*n
+//         x(x_t) = x(samp_indices(x_t - (t-1)*n));
+//       }
+//       for(int n_ = 0; n_ < n; n_++) {   // weight = 1.0 / n for each weight. This is a reset of weights with equal value per
+//         w(n_) = 1.0 / n;              // weight. It's like starting the weighting over again.
+//       }
+//     }   // End of the weight rejuvination step.
+//     t += 1;  // That was for one parameter (t = 1), increment t by one and repeat for the rest of the parameters
+//   }
+//   return x_weighted;  // return vector of weighted estimates (will have to sum across draws for the expected value (posterior mean))
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// // first working version of the higher order model with hyperpriors
+
+// // [[Rcpp::export]]
+// arma::vec sis5(arma::mat & data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n, double tol) {
+//   // Approximate draw from joint posterior distribution by sequential update with resampling
+//   // using the sequential importance sampling with resampling angorithm 
+//   // Reference: 
+//   // Arguments: 
+//   //  data - input matrix of observations
+//   //  n_dimensions - number of first-order dimensions
+//   //  dimension_start - start index (from 1) of each dimension. The dimension ends at dimension_start(n+1) - 1
+//   //  dimension_end - the end index of each dimension.
+//   //  n - number of resampling iterations
+//   //  tol - tolerance for resampling. If sum of squared weight falls below tol,
+//   //        resampling is performed and weights reset.
+//   // Value:
+//   //  vector of weighted estimates for each parameter over each of the n resampling iterations
+//   double eps = 1e-16;                       // epsilon for log() when performing likelihood calculation
+//   int d_nrow = data.n_rows;                 // number of rows in data
+//   int d_ncol = data.n_cols;                 // number of cols in data
+//   // n_dimensions                           // number of latent (ability) dimensions
+//   int n_theta = d_nrow*(n_dimensions + 1);  // number of theta parameters (theta = latent ability)
+//   int n_delta = d_ncol;                     // number of deltas, difficult parameters
+//   int n_alpha = d_ncol;                     // number of thetas, ability parameters
+//   int n_lambda = n_dimensions;              // number of lambda parameters (loadings for second-order theta on each of the first-order thetas)
+//   int n_param = n_lambda + n_theta + n_delta + n_alpha;  // total number of parameters to estimate
+//   // pre-allocation of memory for model estimation
+//   arma::ivec seeds = arma::randi<arma::ivec>(n_param*n, arma::distr_param(+(1), +(999999999))); // random seeds for every draw of every parameter
+//   arma::vec x = arma::vec(n_param*n, arma::fill::zeros);           // store all draws
+//   arma::vec x_weighted = arma::vec(n_param*n, arma::fill::zeros);  // store all weighted draws
+//   arma::vec w = arma::vec(n, arma::fill::ones);                    // store current weights
+//   arma::vec w_history = arma::vec(n_param*n, arma::fill::ones);    // store all weights
+//   arma::vec u = arma::vec(n, arma::fill::zeros);                   // store updates for current iteration
+//   // pre-allocation of useful values
+//   int t = 1;                 // t indexes parameter during SIS iterations
+//   double theta_prob = 0.0;   // likelihood propability
+//   double n_eff = 0.0;        // pre allocation of memory for tolerance test
+//   // loop over each parameter
+//   //   for each parameter, resample n times
+//   //   update likelihood (weights), save history, check for degeneracy
+//   //   if weights are near degenerate, resample parameters and reset weights
+//   for(int p_ = 0; p_ < n_param; p_++) {   // p_ indexes current parameter to update
+//     for(int n_ = 0; n_ < n; n_++) {         // n_ indexes the resampling iterations (sample each "p_" "n_" times)
+//       if(t <= d_nrow) {   // if is in the range of the second-order thetas, sample from their priors 
+//         x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0;
+//       } else if(t <= d_nrow + n_lambda) {  // if t in this range, sample the lambda priors
+//         x((t-1)*n + n_) = truncated_normal_ab_sample(0.0, 1.0, -10.0, 10.0, seeds((t-1)*n + n_));
+//       } else if(t <= n_lambda + n_theta) {  // if t in this range, sample from the first-order theta errors
+//         int current_dimension = 1 + ((t-n_lambda-d_nrow-1) / d_nrow);
+//         int theta_row_index = (t-n_lambda-d_nrow-1) % d_nrow;
+//         int lambda_index = d_nrow + current_dimension;
+//         x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0 + (x((lambda_index-1)*n + n_)*x((theta_row_index)*n + n_));
+//       } else if(t <= n_lambda + n_theta + n_alpha) {
+//         x((t-1)*n + n_) = truncated_normal_ab_sample(1.0, 2.0, 0.0, 7.0, seeds((t-1)*n + n_));
+//       } else { // t <= n_lambda + n_theta + n_alpha + n_delta
+//         x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0;
+//       }
+//       double lk = 0.0;  // pre-allocate likelihood memory
+//       // -------------------------- update likekihood at prior given the data and all other parameters
+//       // The likelihood contribution will give us the importance weights
+//       if(t <= d_nrow) {   // if is in the range of the second-order thetas, compute likelihood at prior draw
+//         for(int j_ = 0; j_ < d_ncol; j_++) {  // compute the likelihood for the given step (theta step, second-order dimension)
+//           theta_prob = 1.0 / (1.0 + std::exp(      -(    x((t-1)*n + n_)   )          ));
+//           lk += data(t-1, j_)*std::log(theta_prob + eps) + (1.0 - data(t-1, j_))*std::log(1.0 - theta_prob + eps);
+//         }
+//       } else if(t <= d_nrow + n_lambda) {  // if t in this range, compute likelihood at prior draw
+//         for(int j_ = dimension_start(t-d_nrow-1) - 1; j_ < dimension_end(t-d_nrow-1); j_++) {
+//           for(int i_ = 0; i_ < d_nrow; i_++) {
+//             theta_prob = 1.0 / (1.0 + std::exp(       -(    x((t-1)*n + n_) * x((i_)*n + n_)  )          ));
+//             lk += data(i_, j_)*std::log(theta_prob + eps) + (1.0 - data(i_, j_))*std::log(1.0 - theta_prob + eps);
+//           }
+//         }
+//       } else if(t <= n_lambda + n_theta) {  // if t in this range, compute likelihood at prior draw
+//         // second, loop over each first order dimension of theta
+//         // calculate which dimension we are in
+//         int current_dimension = 1 + ((t-n_lambda-d_nrow-1) / d_nrow);
+//         int theta_row_index = (t-n_lambda-d_nrow-1) % d_nrow;
+//         int lambda_index = d_nrow + current_dimension;
+//         for(int j_ = dimension_start(current_dimension - 1) - 1; j_ < dimension_end(current_dimension - 1); j_++) {  // compute the likelihood for the given step (theta step, all first-order dimensions)
+//           theta_prob = 1.0 / (1.0 + std::exp(      -(        x((t-1)*n + n_)            )             )); // (x((lambda_index-1)*n + n_) * x((theta_row_index)*n + n_))     + 
+//           lk += data(theta_row_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_row_index, j_))*std::log(1.0 - theta_prob + eps);
+//         }
+//       } else if(t <= n_lambda + n_theta + n_alpha) {
+//         int a_current_index = t - n_lambda - n_theta;
+//         // loop through dimension indexes to discover which dimension the given question t belongs to
+//         // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+//         int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+//         for(int d_ = 0; d_ < n_dimensions; d_++) {
+//           if(a_current_index <= dimension_end(d_)) {
+//             theta_dim = d_ + 1;
+//             break;
+//           }
+//         }
+//         int lambda_index = d_nrow + theta_dim;
+//         int theta_d_index = (theta_dim)*d_nrow + n_lambda;// ???? 1 + () ?????
+//         for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+//           //theta_prob = 1.0 / (1.0 + std::exp(      -(     ( x((t-1)*n + n_) * (  (x((lambda_index-1)*n + n_) * x((i_)*n + n_))    +     x((theta_d_index-1+i_)*n + n_)  )       )          )             ));
+//           theta_prob = 1.0 / (1.0 + std::exp(      -(     ( x((t-1)*n + n_) * (      x((theta_d_index-1+i_)*n + n_)  )       )          )             ));
+//           lk += data(i_, a_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, a_current_index-1))*std::log(1.0 - theta_prob + eps);
+//         }
+//       } else { // t <= n_lambda + n_theta + n_alpha + n_delta
+//         int d_current_index = t - n_lambda - n_theta - n_alpha;
+//         // loop through dimension indexes to discover which dimension the given question t belongs to
+//         // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+//         int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+//         for(int d_ = 0; d_ < n_dimensions; d_++) {
+//           if(d_current_index <= dimension_end(d_)) {
+//             theta_dim = d_ + 1;
+//             break;
+//           }
+//         }
+//         int lambda_index = d_nrow + theta_dim;
+//         int theta_d_index = (theta_dim)*d_nrow + n_lambda; // ???? 1 + () ?????
+//         int alpha_index = n_theta + n_lambda + d_current_index; // ???? 1 + () ?????
+//         for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+//         // -   x((t-1)*n + n_) 
+//           theta_prob = 1.0 / (1.0 + std::exp(      -(   (x((alpha_index-1)*n + n_)*x((theta_d_index-1+i_)*n + n_)) -  x((t-1)*n + n_)     )             )); // ( x((alpha_index-1)*n + n_) * (  (x((lambda_index-1)*n + n_) * x((i_)*n + n_))    +     x((theta_d_index-1+i_)*n + n_)  )       )   -   x((t-1)*n + n_)   
+//           lk += data(i_, d_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, d_current_index-1))*std::log(1.0 - theta_prob + eps);
+//         }
+//       }
+//       u(n_) = lk;   // update using the likelihood at "prior distribution" draw (log scale)
+//       w(n_) = w(n_) + u(n_);  // update weights on the log scale
+//     }
+//     // This section transforms the log weights by exponentiating them.
+//     // We cannot just exponentiate the weights, so we take the 
+//     // difference between weight and max weight,
+//     // and then exponentiate the difference minus logadd.
+//     // The weight adjustment method was taken from the SIR method of LaplacesDemon R package
+//     // -----------------------------------------
+//     double md = arma::max(w);
+//     arma::vec lw = w - md;
+//     arma::vec probs = arma::exp(lw - logadd(lw));
+//     // -----------------------------------------
+//     // End weight scale change
+//     // Update weight history
+//     for(int w_ = 0; w_ < n; w_++) {
+//       w_history((t-1)*n + w_) = probs(w_);
+//     }
+//     double norm_const = arma::accu(probs);   // sum of probs should be 1 since probs are probabilities
+//     // weight observations by their importance. This is the step by which the prior draws
+//     // are weighted by the likelihood, yielding draws from the joint posterior distribution.
+//     for(int n_ = 0; n_ < n; n_++) { 
+//       x_weighted((t-1)*n + n_) = x((t-1)*n + n_) * probs(n_) / norm_const;
+//     }
+//     // This is the stage where weights are checked for degeneracy (and rejuvinated).
+//     // 1) In short this section does the following: compute some measure of "issues" with the weights.
+//     // 2) If "issues" is sufficiently small (indicated by a cutoff value), then we know that the weights are
+//     // degenerate or approaching degeneracy.
+//     // 3) Fix the degeneracy by resampling all parameter draws with probability proportional to weigths and
+//     //    reset all weights to 1 / n. This will be triggered a number of times during runtime to repair
+//     //    weights that are overly concentrated near zero, and keep going. Without this step, the algorithm 
+//     //    will not work.
+//     n_eff = arma::accu(exp(w) % exp(w));     // check weights for issues using sum of squared weights
+//     if(n_eff < tol) {   // if weights are under the minimum that we decide is tolerable, then do 2) and 3).
+//       // update each parameter draw with the resampled values
+//       arma::ivec sindex = arma::regspace<arma::ivec>((t-1)*n, t*n - 1); //0  // vector from 0, ..., t*n - 1 (zero up to current)
+//       arma::vec prev_probs = arma::vec(n, arma::fill::zeros);  //t*n  // get previous probabilities for the resampling step
+//       for(int w_ = (t-1)*n; w_ < t*n; w_++) { //w_=0  // for every previous probability, use the weight which was used earlier 
+//         prev_probs(w_ - (t-1)*n) = w_history(w_);
+//       }
+//       prev_probs = prev_probs / arma::accu(prev_probs);
+//       // Now, we complete 3) by resampling using weight history
+//       arma::ivec samp_indices = Rcpp::RcppArmadillo::sample(sindex, n, true, prev_probs); // t*n
+//       for(int x_t = (t-1)*n; x_t < t*n; x_t++) { //t*n
+//         x(x_t) = x(samp_indices(x_t - (t-1)*n));
+//       }
+//       for(int n_ = 0; n_ < n; n_++) {   // weight = 1.0 / n for each weight. This is a reset of weights with equal value per
+//         w(n_) = 1.0 / n;              // weight. It's like starting the weighting over again.
+//       }
+//     }   // End of the weight rejuvination step.
+//     t += 1;  // That was for one parameter (t = 1), increment t by one and repeat for the rest of the parameters
+//   }
+//   return x_weighted;  // return vector of weighted estimates (will have to sum across draws for the expected value (posterior mean))
+// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// current cleaned version
+// now we are reversing the process so that the simpler models can be fitted as well
+// We have second-order IRT model (with a single higher-order trait)
+// We want the simple univariate model
+// and the correlated multivariate model
+
+
 // [[Rcpp::export]]
-arma::vec sis5(arma::mat & data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n, double tol) {
+arma::vec sis5(arma::mat & data, int n_dimensions, arma::vec dimension_start, arma::vec dimension_end, int n_second_order, int n, double tol) {
   // Approximate draw from joint posterior distribution by sequential update with resampling
   // using the sequential importance sampling with resampling angorithm 
   // Reference: 
@@ -788,20 +1440,41 @@ arma::vec sis5(arma::mat & data, int n_dimensions, arma::vec dimension_start, ar
   //  n_dimensions - number of first-order dimensions
   //  dimension_start - start index (from 1) of each dimension. The dimension ends at dimension_start(n+1) - 1
   //  dimension_end - the end index of each dimension.
+  //  n_second_order - the number of second-order dimensions (currently 0 or 1)
   //  n - number of resampling iterations
   //  tol - tolerance for resampling. If sum of squared weight falls below tol,
   //        resampling is performed and weights reset.
   // Value:
   //  vector of weighted estimates for each parameter over each of the n resampling iterations
+  int model_id = 0;                         // model ID variable to switch between list of candidate possibilities
   double eps = 1e-16;                       // epsilon for log() when performing likelihood calculation
   int d_nrow = data.n_rows;                 // number of rows in data
   int d_ncol = data.n_cols;                 // number of cols in data
   // n_dimensions                           // number of latent (ability) dimensions
-  int n_theta = d_nrow*(n_dimensions + 1);  // number of theta parameters (theta = latent ability)
+  int n_theta = 0;
+  int n_lambda = 0;
+  int n_alpha = 0;                     // number of thetas, ability parameters
+  if(n_second_order == 0) {
+    n_theta = d_nrow*n_dimensions;  // number of theta parameters (theta = latent ability)
+    if(n_dimensions > 1) {
+      //Rcpp::stop("Error: currently only n_dimensions == 1 if n_second_order == 0. no multivariate model implemented yet.");
+      n_alpha = d_ncol*n_dimensions;                     // number of thetas, ability parameters
+      model_id = 1;     // Model ID = 1 is the Multivariate IRT model
+    } else {
+      n_alpha = d_ncol;                     // number of thetas, ability parameters
+      model_id = 0;     // Model ID = 0 is the simple univariate IRT model
+    }
+  } else if(n_second_order == 1) {
+    n_theta = d_nrow*(n_dimensions + 1);  // number of theta parameters (theta = latent ability)
+    n_lambda = n_dimensions;              // number of lambda parameters (loadings for second-order theta on each of the first-order thetas)
+    n_alpha = d_ncol;                     // number of thetas, ability parameters
+    model_id = 2;       // Model ID = 2 is the second-order IRT model
+  } else {
+    Rcpp::stop("Error: currently only n_second_order == 1 or 0");
+  }
   int n_delta = d_ncol;                     // number of deltas, difficult parameters
-  int n_alpha = d_ncol;                     // number of thetas, ability parameters
-  int n_lambda = n_dimensions;              // number of lambda parameters (loadings for second-order theta on each of the first-order thetas)
   int n_param = n_lambda + n_theta + n_delta + n_alpha;  // total number of parameters to estimate
+  Rcpp::Rcout << "n_param: " << n_param  << std::endl;
   // pre-allocation of memory for model estimation
   arma::ivec seeds = arma::randi<arma::ivec>(n_param*n, arma::distr_param(+(1), +(999999999))); // random seeds for every draw of every parameter
   arma::vec x = arma::vec(n_param*n, arma::fill::zeros);           // store all draws
@@ -819,86 +1492,225 @@ arma::vec sis5(arma::mat & data, int n_dimensions, arma::vec dimension_start, ar
   //   if weights are near degenerate, resample parameters and reset weights
   for(int p_ = 0; p_ < n_param; p_++) {   // p_ indexes current parameter to update
     for(int n_ = 0; n_ < n; n_++) {         // n_ indexes the resampling iterations (sample each "p_" "n_" times)
-      if(t <= n_lambda) {                   // if t <= n_lambda, sample lambda prior
-        x((t-1)*n + n_) = truncated_normal_ab_sample(0.0, 2.0, -5.0, 5.0, seeds((t-1)*n + n_));
-      } else if(t <= n_lambda + n_theta) {  // if t <= n_lambda + n_theta, sample theta prior
-        if(t <= n_lambda + d_nrow) {        // if t is first dimension of theta (second-order theta, no prior on the prior's mean)
-          x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0;
-        } else {      // second, loop over each first order dimension of theta and set prior mean to second-order theta
-          // calculate which dimension we are in
-          int current_dimension = (t-n_lambda-1) / d_nrow;          // locate the current lambda parameter to load on proir 
-          int thetag_index = ((t-n_lambda-1) % d_nrow) + n_lambda;  // locate the current second-order theta parameter to load on prior
-          // compute prior draw for the given step (theta step, all first-order dimensions)
-          // conditional on second-order theta
-          x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0 + (x((current_dimension)*n + n_) * x((thetag_index)*n + n_));
-        }
-      } else if(t <= n_lambda + n_theta + n_delta) {
-        x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0;
-      } else { //if(t <= n_lambda + n_theta + n_delta + n_alpha)
-        //x((t-1)*n + n_) = truncated_normal_ab_sample(1.0, 2.0, 0.0, , seeds((t-1)*n + n_));
-        double a_samp = normal_01_sample(seeds((t-1)*n + n_))*2.0 + 1.0;
-        while (a_samp < 0.0) {
-          a_samp = normal_01_sample(seeds((t-1)*n + n_))*2.0 + 1.0; // Probably switch this back to the truncated normal dist rather than inefficiency of over-sampling
-        }
-        x((t-1)*n + n_) = a_samp;
+      // -----------------------------------------------------------------------------------------------------------------------
+      // In this section, we choose the right prior for the given model from a list of possible models, then 
+      // we sample from the prior
+      switch(model_id) {
+        case 0:
+          // Model 0: Univariate IRT
+          if(t <= d_nrow) {   // if is in the range of the second-order thetas, sample from their priors 
+            x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0;
+          } else if(t <= d_nrow + n_alpha) {
+            x((t-1)*n + n_) = truncated_normal_ab_sample(1.0, 2.0, 0.0, 10.0, seeds((t-1)*n + n_));
+          } else { // t <= d_nrow + n_alpha + n_delta
+            x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0;
+          }
+          break;
+        case 1:
+          // Model 1: Multidimensional IRT (MIRT)
+          if(t <= n_theta) {  // if t in this range, sample from the theta priors
+            x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_));
+          } else if(t <= n_theta + n_alpha) {
+            // Certain restrictions apply to estimate the multidimensional model.
+            // For the first set of alphas (loading on the first latent dimension), estimate all d_ncol alphas
+            // On the second, fix the first; on the third, fix the first two, etc, ect.
+            // int current_dimension = (t-d_ncol-1) / d_ncol;
+            // int alpha_current_index = (t-d_ncol-1) % d_ncol;
+            int current_dimension = (t-n_theta-1) / d_ncol;
+            int alpha_current_index = (t-n_theta-1) % d_ncol;
+            if(((d_ncol-1) - alpha_current_index) < current_dimension) { //alpha_current_index < current_dimension
+              //Rcpp::Rcout << "triggered: " << alpha_current_index << ", " << current_dimension << std::endl;
+              x((t-1)*n + n_) = 0.0;
+            } else {
+              //x((t-1)*n + n_) = log_normal_sample(0.0, 2.0, seeds((t-1)*n + n_));
+              //x((t-1)*n + n_) = truncated_normal_ab_sample(1.0, 1.0, 0.0, 10.0, seeds((t-1)*n + n_));
+              //x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0 + 0.75;
+            }
+          } else { // t <= n_theta + n_alpha + n_delta
+            x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0;
+          }
+          break;
+        case 2:
+          // Model 2: second-order IRT
+          if(t <= d_nrow) {   // if is in the range of the second-order thetas, sample from their priors 
+            x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0;
+          } else if(t <= d_nrow + n_lambda) {  // if t in this range, sample the lambda priors
+            x((t-1)*n + n_) = truncated_normal_ab_sample(0.0, 1.0, -10.0, 10.0, seeds((t-1)*n + n_));
+          } else if(t <= n_lambda + n_theta) {  // if t in this range, sample from the first-order theta errors
+            int current_dimension = 1 + ((t-n_lambda-d_nrow-1) / d_nrow);
+            int theta_row_index = (t-n_lambda-d_nrow-1) % d_nrow;
+            int lambda_index = d_nrow + current_dimension;
+            x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*1.0 + (x((lambda_index-1)*n + n_)*x((theta_row_index)*n + n_));
+          } else if(t <= n_lambda + n_theta + n_alpha) {
+            x((t-1)*n + n_) = truncated_normal_ab_sample(1.0, 2.0, 0.0, 7.0, seeds((t-1)*n + n_));
+          } else { // t <= n_lambda + n_theta + n_alpha + n_delta
+            x((t-1)*n + n_) = normal_01_sample(seeds((t-1)*n + n_))*2.0;
+          }
+          break;
+        default:
+          Rcpp::stop("Model ID is invalid.");
+          break;
       }
+      // END
+      // -----------------------------------------------------------------------------------------------------------------------
       double lk = 0.0;  // pre-allocate likelihood memory
-      // --------------------------
-      if(t <= n_lambda) {
-        for(int j_ = dimension_start(t-1) - 1; j_ < dimension_end(t-1) - 1; j_++) {
-          for(int i_ = 0; i_ < d_nrow; i_++) {
-            theta_prob = 1.0 / (1.0 + std::exp(-(x((t-1)*n + n_))));
-            lk += data(i_, j_)*std::log(theta_prob + eps) + (1.0 - data(i_, j_))*std::log(1.0 - theta_prob + eps);
-          }
-        }
-      } else if(t <= n_lambda + n_theta) {
-        // first, estimate the second order theta
-        if(t <= n_lambda + d_nrow) {
-          for(int j_ = 0; j_ < d_ncol; j_++) {  // compute the likelihood for the given step (theta step, second-order dimension)
-            int theta_current_index = t-n_lambda-1;
-            theta_prob = 1.0 / (1.0 + std::exp(      -(    x((t-1)*n + n_)   )          ));
-            lk += data(theta_current_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_current_index, j_))*std::log(1.0 - theta_prob + eps);
-          }
-        } else {    // second, loop over each first order dimension of theta
-          // calculate which dimension we are in
-          int current_dimension = (t-n_lambda-1) / d_nrow;
-          int theta_row_index = (t-n_lambda-1) % d_nrow;
-          for(int j_ = dimension_start(current_dimension - 1) - 1; j_ < dimension_end(current_dimension - 1) - 1; j_++) {  // compute the likelihood for the given step (theta step, all first-order dimensions)
-            theta_prob = 1.0 / (1.0 + std::exp(      -(    x((t-1)*n + n_)    )             ));
-            lk += data(theta_row_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_row_index, j_))*std::log(1.0 - theta_prob + eps);
-          }
-        }
-      } else if(t <= n_lambda + n_theta + n_delta) {
-        for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (delta step)
-          int d_current_index = t - n_lambda - n_theta;
-          // loop through dimension indexes to discover which dimension the given question t belongs to
-          // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
-          int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
-          for(int d_ = 0; d_ < n_dimensions; d_++) { 
-            if(d_current_index <= dimension_end(d_)) {
-              theta_dim = d_ + 1;
-              break;
+      // -----------------------------------------------------------------------------------------------------------------------
+      // -------------------------- update likekihood at prior given the data and all other parameters
+      // The likelihood contribution will give us the importance weights
+      // In this section, we switch between different likelihoods given the model we want to fit
+      switch(1) { //model_id
+        case 0:
+          // Model 0: Univariate IRT
+          if(t <= d_nrow) {   // if is in the range of the second-order thetas, compute likelihood at prior draw
+            for(int j_ = 0; j_ < d_ncol; j_++) {  // compute the likelihood for the given step (theta step, second-order dimension)
+              theta_prob = 1.0 / (1.0 + std::exp(-(x((t-1)*n + n_))));
+              lk += data(t-1, j_)*std::log(theta_prob + eps) + (1.0 - data(t-1, j_))*std::log(1.0 - theta_prob + eps);
+            }
+          } else if(t <= d_nrow + n_alpha) {
+            int a_current_index = t - d_nrow;
+            for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+              theta_prob = 1.0 / (1.0 + std::exp(-(x((t-1)*n + n_)*x((i_)*n + n_))));
+              lk += data(i_, a_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, a_current_index-1))*std::log(1.0 - theta_prob + eps);
+            }
+          } else { // t <= d_nrow + n_alpha + n_delta
+            int d_current_index = t - d_nrow - n_alpha;
+            int alpha_index = d_nrow + d_current_index;
+            for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+              theta_prob = 1.0 / (1.0 + std::exp(-((x((alpha_index-1)*n + n_)*x((i_)*n + n_)) - x((t-1)*n + n_))));
+              lk += data(i_, d_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, d_current_index-1))*std::log(1.0 - theta_prob + eps);
             }
           }
-          theta_prob = 1.0 / (1.0 + std::exp(-(    x((n_lambda + (theta_dim*d_nrow) + i_)*n + n_)    - x((t-1)*n + n_)         ));
-          lk += data(i_, d_current_index - 1)*std::log(theta_prob + eps) + (1.0 - data(i_, d_current_index - 1))*std::log(1.0 - theta_prob + eps);
-        }
-      } else {  // if(t <= n_lambda + n_theta + n_delta + n_alpha)
-        for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
-          int a_current_index = t - n_lambda - n_theta - n_delta;
-          // loop through dimension indexes to discover which dimension the given question t belongs to
-          // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
-          int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
-          for(int d_ = 0; d_ < n_dimensions; d_++) {
-            if(a_current_index <= dimension_end(d_)) {
-              theta_dim = d_ + 1;
-              break;
+          break;
+        case 1:
+          // Model 1: Multidimensional IRT (MIRT)
+          if(t <= n_theta) {  // if t in this range, sample from the theta priors
+            int current_dimension = (t-1) / d_nrow;
+            int theta_current_index = (t-1) % d_nrow;
+            for(int j_ = 0; j_ < d_ncol; j_++) {  // compute the likelihood for the given step (theta step)
+              double cum_theta = 0.0;
+              for(int a_ = 0; a_ <= current_dimension; a_++) {
+                cum_theta = x(((a_*d_nrow)+theta_current_index)*n + n_); //+=
+              }
+              theta_prob = 1.0 / (1.0 + std::exp(-(cum_theta)));
+              lk += data(theta_current_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_current_index, j_))*std::log(1.0 - theta_prob + eps);
             }
           }
-          theta_prob = 1.0 / (1.0 + std::exp(-(   (x((t-1)*n + n_) * x((n_lambda + (theta_dim*d_nrow) + i_)*n + n_)  )  - x((t-n_delta-1)*n + n_)     ))); //t-n_delta-1???
-          lk += data(i_, a_current_index - 1)*std::log(theta_prob + eps) + (1.0 - data(i_, a_current_index - 1))*std::log(1.0 - theta_prob + eps);
-        }
+          else if(t <= n_theta + n_alpha) {
+            // Certain restrictions apply to estimate the multidimensional model.
+            // For the first set of alphas (loading on the first latent dimension), estimate all d_ncol alphas
+            // On the second, fix the first; on the third, fix the first two, etc, ect.
+            int current_dimension = (t-n_theta-1) / d_ncol;
+            int a_current_index = (t-n_theta-1) % d_ncol;
+            // if(a_current_index < current_dimension) {
+            //   lk += 0.0;
+            // } else {
+            for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+              double cum_a_theta = 0.0;
+              for(int a_ = 0; a_ < n_dimensions; a_++) {
+                if(a_ <= current_dimension) {
+                  cum_a_theta = x((n_theta + (a_*d_ncol) + a_current_index)*n + n_)*x(((a_*d_nrow)+i_)*n + n_);
+                }
+                else {
+                  cum_a_theta += x(((a_*d_nrow)+i_)*n + n_);
+                }
+              }
+              // for(int a_ = 0; a_ < current_dimension + 1; a_++) {
+              //   cum_a_theta += x((n_theta + (a_*d_ncol) + a_current_index)*n + n_)*x(((a_*d_nrow)+i_)*n + n_);
+              //   cum_a_theta += x(((a_*d_nrow)+i_)*n + n_);
+              // }
+              // for(int a_ = current_dimension; a_ < current_dimension; a_++) {
+              //   cum_a_theta += x((n_theta + (a_*d_ncol) + a_current_index)*n + n_)*x(((a_*d_nrow)+i_)*n + n_);
+              //   cum_a_theta += x(((a_*d_nrow)+i_)*n + n_);
+              // }
+              //x((t-1)*n + n_)*x(((current_dimension*d_nrow)+i_)*n + n_)
+              // cum_a_theta = x((n_theta + (current_dimension*d_ncol) + a_current_index)*n + n_)*x(((current_dimension*d_nrow)+i_)*n + n_);
+              theta_prob = 1.0 / (1.0 + std::exp(-(cum_a_theta)));
+              lk += data(i_, a_current_index)*std::log(theta_prob + eps) + (1.0 - data(i_, a_current_index))*std::log(1.0 - theta_prob + eps);
+            }
+            // }
+          }
+          // else { // t <= n_theta + n_alpha + n_delta
+          //   int d_current_index = t - n_theta - n_alpha - 1;
+          //   // int current_dimension = d_current_index / d_ncol;
+          //   int alpha_index = n_theta + d_current_index;
+          //   for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (delta step)
+          //     double cum_a_theta = 0.0;
+          //     for(int a_ = 0; a_ < n_dimensions; a_++) {
+          //       cum_a_theta += x((n_theta + (a_*d_ncol) + d_current_index)*n + n_)*x(((a_*d_nrow)+i_)*n + n_);
+          //     }
+          //     theta_prob = 1.0 / (1.0 + std::exp(-(cum_a_theta - x((t-1)*n + n_))));
+          //     lk += data(i_, d_current_index)*std::log(theta_prob + eps) + (1.0 - data(i_, d_current_index))*std::log(1.0 - theta_prob + eps);
+          //   }
+          // }
+          break;
+        case 2:
+          // Model 2: second-order IRT
+          if(t <= d_nrow) {   // if is in the range of the second-order thetas, compute likelihood at prior draw
+            for(int j_ = 0; j_ < d_ncol; j_++) {  // compute the likelihood for the given step (theta step, second-order dimension)
+              theta_prob = 1.0 / (1.0 + std::exp(-(x((t-1)*n + n_))));
+              lk += data(t-1, j_)*std::log(theta_prob + eps) + (1.0 - data(t-1, j_))*std::log(1.0 - theta_prob + eps);
+            }
+          } else if(t <= d_nrow + n_lambda) {  // if t in this range, compute likelihood at prior draw
+            for(int j_ = dimension_start(t-d_nrow-1) - 1; j_ < dimension_end(t-d_nrow-1); j_++) {
+              for(int i_ = 0; i_ < d_nrow; i_++) {
+                theta_prob = 1.0 / (1.0 + std::exp(-(x((t-1)*n + n_) * x((i_)*n + n_))));
+                lk += data(i_, j_)*std::log(theta_prob + eps) + (1.0 - data(i_, j_))*std::log(1.0 - theta_prob + eps);
+              }
+            }
+          } else if(t <= n_lambda + n_theta) {  // if t in this range, compute likelihood at prior draw
+            // second, loop over each first order dimension of theta
+            // calculate which dimension we are in
+            int current_dimension = 1 + ((t-n_lambda-d_nrow-1) / d_nrow);
+            int theta_row_index = (t-n_lambda-d_nrow-1) % d_nrow;
+            int lambda_index = d_nrow + current_dimension;
+            // compute the likelihood for the given step (theta step, all first-order dimensions)
+            for(int j_ = dimension_start(current_dimension - 1) - 1; j_ < dimension_end(current_dimension - 1); j_++) {
+              theta_prob = 1.0 / (1.0 + std::exp(-(x((t-1)*n + n_))));
+              lk += data(theta_row_index, j_)*std::log(theta_prob + eps) + (1.0 - data(theta_row_index, j_))*std::log(1.0 - theta_prob + eps);
+            }
+          } else if(t <= n_lambda + n_theta + n_alpha) {
+            int a_current_index = t - n_lambda - n_theta;
+            // loop through dimension indexes to discover which dimension the given question t belongs to
+            // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+            int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+            for(int d_ = 0; d_ < n_dimensions; d_++) {
+              if(a_current_index <= dimension_end(d_)) {
+                theta_dim = d_ + 1;
+                break;
+              }
+            }
+            int lambda_index = d_nrow + theta_dim;
+            int theta_d_index = (theta_dim)*d_nrow + n_lambda;
+            for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+              theta_prob = 1.0 / (1.0 + std::exp(-((x((t-1)*n + n_)*(x((theta_d_index-1+i_)*n + n_))))));
+              lk += data(i_, a_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, a_current_index-1))*std::log(1.0 - theta_prob + eps);
+            }
+          } else { // t <= n_lambda + n_theta + n_alpha + n_delta
+            int d_current_index = t - n_lambda - n_theta - n_alpha;
+            // loop through dimension indexes to discover which dimension the given question t belongs to
+            // store the dimension d_ for calling up the right theta to condition the alpha likelihood on it
+            int theta_dim = 0; // theta_dim is the dimension of theta (at the first-order, i.e. the order that directly affects item responses for an individual)
+            for(int d_ = 0; d_ < n_dimensions; d_++) {
+              if(d_current_index <= dimension_end(d_)) {
+                theta_dim = d_ + 1;
+                break;
+              }
+            }
+            int lambda_index = d_nrow + theta_dim;
+            int theta_d_index = (theta_dim)*d_nrow + n_lambda;
+            int alpha_index = n_theta + n_lambda + d_current_index;
+            for(int i_ = 0; i_ < d_nrow; i_++) {  // compute the likelihood for the given step (alpha step)
+              theta_prob = 1.0 / (1.0 + std::exp(-((x((alpha_index-1)*n + n_)*x((theta_d_index-1+i_)*n + n_)) - x((t-1)*n + n_))));
+              lk += data(i_, d_current_index-1)*std::log(theta_prob + eps) + (1.0 - data(i_, d_current_index-1))*std::log(1.0 - theta_prob + eps);
+            }
+          }
+          break;
+        default: // here for completeness
+          Rcpp::stop("Model ID is invalid.");
+          break;
       }
+      // END
+      // -----------------------------------------------------------------------------------------------------------------------
       u(n_) = lk;   // update using the likelihood at "prior distribution" draw (log scale)
       w(n_) = w(n_) + u(n_);  // update weights on the log scale
     }

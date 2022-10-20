@@ -258,3 +258,56 @@ double truncated_normal_ab_sample ( double mu, double sigma, double a, double b,
 
   return x;
 }
+
+// [[Rcpp::export]]
+double normal_cdf_inv ( double cdf, double mu, double sigma ) {
+  // https://people.sc.fsu.edu/~jburkardt/cpp_src/log_normal/log_normal.cpp
+  double x;
+  double x2;
+
+  if ( cdf < 0.0 || 1.0 < cdf )
+  {
+    Rcpp::Rcerr << "\n";
+    Rcpp::Rcerr << "NORMAL_CDF_INV - Fatal error!\n";
+    Rcpp::Rcerr << "  CDF < 0 or 1 < CDF.\n";
+    exit ( 1 );
+  }
+
+  x2 = normal_01_cdf_inv ( cdf );
+
+  x = mu + sigma * x2;
+
+  return x;
+}
+
+// [[Rcpp::export]]
+double log_normal_cdf_inv ( double cdf, double mu, double sigma ) {
+  // https://people.sc.fsu.edu/~jburkardt/cpp_src/log_normal/log_normal.cpp
+  double logx;
+  double x;
+
+  if ( cdf < 0.0 || 1.0 < cdf )
+  {
+    Rcpp::Rcerr << "\n";
+    Rcpp::Rcerr << "LOG_NORMAL_CDF_INV - Fatal error!\n";
+    Rcpp::Rcerr << "  CDF < 0 or 1 < CDF.\n";
+    exit ( 1 );
+  }
+
+  logx = normal_cdf_inv ( cdf, mu, sigma );
+  x = exp ( logx );
+
+  return x;
+}
+
+// [[Rcpp::export]]
+double log_normal_sample ( double mu, double sigma, int &seed ) {
+  // https://people.sc.fsu.edu/~jburkardt/cpp_src/log_normal/log_normal.cpp
+  double cdf;
+  double x;
+
+  cdf = r8_uniform_01 ( seed );
+  x = log_normal_cdf_inv ( cdf, mu, sigma );
+
+  return x;
+}
