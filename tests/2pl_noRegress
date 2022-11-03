@@ -1,0 +1,62 @@
+# 2 Parameter IRT with single latent dimension (no latent regression)
+devtools::install()
+n = 800
+j = 25
+ncateg = 6
+d = 1
+alpha = matrix(0, d, j)
+for(dd in 1:d) {
+  alpha[dd, ] = sort(runif(j, 0.2, 1.5))
+}
+delta = matrix(nrow = j, ncol = ncateg - 1)
+for(jj in 1:j) {
+  delta[jj, ] = sort(rnorm(ncateg - 1, 0, 1))
+}
+delta = cbind(0, delta)
+theta = matrix(0, nrow = n, ncol = d)
+for(dd in 1:d) {
+  theta[, dd] = rnorm(n, 0, 1)
+}
+data = matrix(0, nrow = n, ncol = j)
+for(i in 1:n) {
+  for(jj in 1:j) {
+    prb = (1 / (1 + exp(-(sum(alpha[, jj]*(theta[i, ])) - delta[jj, ]))))
+    prb[1] = 1.0
+    prb = c(prb, 0)
+    prb = prb[-length(prb)] - prb[2:length(prb)]
+    # prb = c(1-sum(prb), prb)
+    data[i, jj] = sample(1:ncateg, 1, prob = prb)
+  }
+}
+colnames(data) = c(paste0("x", 1:j))
+fit = inirt::inirt(data, dims = d, method = "vb", tol_rel_obj = 0.0001, iter = 2e3, init = 0)
+fit = inirt::inirt(data, dims = d, method = "hmc", chains = 1, iter = 300, init = 0)
+rstan::summary(fit, pars = "alpha")$summary[,1]
+alpha
+cor(rstan::summary(fit, pars = c("theta"))$summary[,1], theta)
+dest = matrix(rstan::summary(fit, pars = c("delta"))$summary[,1], nrow = 25, byrow = TRUE)
+cor(dest[,5], delta[,6])
+cor(rstan::summary(fit, pars = c("alpha"))$summary[,1], alpha[1,])
+
+# for the documentation file
+library(inirt)
+data("d2plnr")
+fit = inirt(data = d2plnr, dims = 1, method = "vb", tol_rel_obj = 0.0001, iter = 2e3, init = 0)
+fit = inirt(data, dims = 1, method = "hmc", chains = 1, iter = 300, init = 0)
+library(rstan)
+summary(fit) # full summary
+summary(fit, pars = "alpha")$summary[,1]    # alpha (slope) params
+summary(fit, pars = c("delta"))$summary[,1] # difficulty params
+summary(fit, pars = c("theta"))$summary[,1] # ability params
+
+library(inirt)
+data("d2plnrNcat")
+fit = inirt(data = d2plnrNcat, dims = 1, method = "vb", tol_rel_obj = 0.0001, iter = 2e3, init = 0)
+fit = inirt(data, dims = 1, method = "hmc", chains = 1, iter = 300, init = 0)
+library(rstan)
+summary(fit) # full summary
+summary(fit, pars = "alpha")$summary[,1]    # alpha (slope) params
+summary(fit, pars = c("delta"))$summary[,1] # difficulty params
+summary(fit, pars = c("theta"))$summary[,1] # ability params
+dest = matrix(rstan::summary(fit, pars = c("delta"))$summary[,1], nrow = 25, byrow = TRUE)
+dest
