@@ -1,4 +1,4 @@
-# `R` package: `inirt` <img src="https://github.com/inirt/.github/blob/master/images/hex-inirt.png" align="right" width="120" />
+# inirt (R package) <img src="https://github.com/inirt/.github/blob/master/images/hex-inirt.png" align="right" width="120" />
 
 An R package for latent regression modeling in the context of multivariate and higher-order item response theory.
 
