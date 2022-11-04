@@ -6,7 +6,7 @@ data {
   int<lower=1> N_long_obs;          // number of long observations (non-missing)
   int<lower=1,upper=N> nn[N_long_obs];  // participant for observation n (non-missing)
   int<lower=1,upper=J> jj[N_long_obs];  // question for observation n (non-missing)
-  int<lower=1,upper=Ncateg> y[N_long_obs];   // correctness for observation n (non-missing)
+  int<lower=1,upper=Ncateg_max> y[N_long_obs];   // correctness for observation n (non-missing)
   int<lower=1> D;        // number of first-order dimensions
   int<lower=1> nDelta;        // total number of delta parameters
   int<lower=1> L;        // number of non-zero loadings

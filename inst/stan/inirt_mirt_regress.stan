@@ -7,7 +7,7 @@ data {
   int<lower=1> N_long;              // number of long observations
   int<lower=1,upper=N> nn[N_long];  // participant for observation n
   int<lower=1,upper=J> jj[N_long];  // question for observation n
-  int<lower=0,upper=Ncateg> y[N_long];   // correctness for observation n
+  int<lower=0,upper=Ncateg_max> y[N_long];   // correctness for observation n
   matrix[N_long, K] x;   // correctness for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=1> nDelta;        // total number of delta parameters
