@@ -14,13 +14,12 @@ data {
 }
 parameters {
   matrix[N, D] theta;              // ability
-  // ordered[Ncateg_max-1] delta[J];      // difficulty for k old: vector[J] delta;  
-  vector[nDelta] delta_l;
+  vector[nDelta] delta_l;          // difficulty
   vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
 }
 transformed parameters {
   matrix[D, J] alpha; // connstrain the upper traingular elements to zero 
-  ordered[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
+  vector[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
 
   {
     int index = 0;
@@ -36,9 +35,10 @@ transformed parameters {
     int idx = 0;
     int d_index = 0;
     for(j in 1:J) {
+      vector[Ncategi[j]-1] ds_ind = sort_asc(delta_l[(d_index+1):(d_index+Ncategi[j]-1)]);
       for(i in 1:(Ncategi[j]-1)) {
         d_index = d_index + 1;
-        delta_trans[j][i] = delta_l[d_index];
+        delta_trans[j][i] = ds_ind[i];
       }
       for(i in (Ncategi[j]):(Ncateg_max-1)) {
         delta_trans[j][i] = 1e7 + idx;
@@ -46,18 +46,9 @@ transformed parameters {
       }
     }
   }
-
 }
 model {
   to_vector(theta) ~ normal(0, 1);
-  // for(j in 1:J) {
-  //   for(i in 1:(Ncategi[j]-1)) {
-  //     delta[j][i] ~ normal(0, 1);
-  //   }
-  //   for(i in (Ncategi[j]):(Ncateg_max-1)) {
-  //     delta[j][i] ~ normal(0, 1e-100);
-  //   }
-  // }
   delta_l ~ normal(0, 1);
   alpha_l ~ lognormal(0, 0.3);
   {

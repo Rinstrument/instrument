@@ -29,8 +29,8 @@ for(i in 1:n) {
   }
 }
 colnames(data) = c(paste0("x", 1:j))
-fit = inirt::inirt(data, dims = d, method = "vb", tol_rel_obj = 0.0001, iter = 2e3, init = 0)
-fit = inirt::inirt(data, dims = d, method = "hmc", chains = 1, iter = 300, init = 0)
+fit = inirt::inirt(data, dims = d, method = "vb", tol_rel_obj = 0.0001, iter = 2e3, init = "random")
+fit = inirt::inirt(data, dims = d, method = "hmc", chains = 1, iter = 300, init = "random")
 rstan::summary(fit, pars = "alpha")$summary[,1]
 alpha
 cor(rstan::summary(fit, pars = c("theta"))$summary[,1], theta)
