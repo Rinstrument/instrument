@@ -11,13 +11,13 @@
 #' 
 #'
 inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "hmc"), weights = NULL, ...) {
-  if(any(is.na(data))) {
-    model_missing = 1
-  } else {
-    model_missing = 0
-  }
   if(is.null(predictors)) {
     irt_data = data[, drop = FALSE]
+    if(any(is.na(irt_data))) {
+      model_missing_y = 1
+    } else {
+      model_missing_y = 0
+    }
   } else {
     predictor_ulist = unlist(predictors)
     irt_data = data[, -predictor_ulist, drop = FALSE]
@@ -25,14 +25,24 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
     K = ncol(reg_data)
     x = matrix(rep(t(reg_data), J), ncol = K, byrow = TRUE)
     Lbeta = length(predictor_ulist)
+    if(any(is.na(irt_data))) {
+      model_missing_y = 1
+    } else {
+      model_missing_y = 0
+    }
+    if(any(is.na(reg_data))) {
+      model_missing_x = 1
+    } else {
+      model_missing_x = 0
+    }
   }
   N = nrow(irt_data)
   J = ncol(irt_data)
-  if(model_missing == 0) {
+  if(model_missin_y == 0) {
     Ncateg_max = max(irt_data)
     Ncategi = apply(irt_data, 2, max)
     names(Ncategi) = NULL
-  } else if(model_missing == 1) {
+  } else if(model_missing_y == 1) {
     Ncateg_max = max(as.vector(irt_data)[!is.na(as.vector(irt_data))])
     Ncategi = apply(irt_data, 2, max) # neex to update this to account for missingness!
     names(Ncategi) = NULL
@@ -76,7 +86,7 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
     nobeta_dstart = array(nobeta_dstart, dim = d)
     nobeta_dend = array(nobeta_dend, dim = d)
   }
-  if(model_missing == 1) {
+  if(model_missing_y == 1) {
     N_miss = sum(is.na(irt_data))
     N_long_obs = N_long - N_miss
     nn = nn[!is.na(y)]
@@ -92,10 +102,10 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
   }
   if(D == 1) { # Data input for unidimensional model
     if(regress == 0) { # No Regression
-      if(model_missing == 0) {
+      if(model_missing_y == 0) {
         standata = list(N = N, J = J, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, 
                       D = D, nDelta = nDelta, L = L, weights = weights)
-      } else if(model_missing == 1) {
+      } else if(model_missing_y == 1) {
         standata = list(N = N, J = J, Ncateg = Ncateg, N_long_obs = N_long_obs, nn = nn, jj = jj, 
           y = y, D = D, L = L, weights = weights)
       }
@@ -111,7 +121,7 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
   # Select the correct inirt implementation based on input parameters
   if(D == 1) {
     if(regress == 0) {
-      if(model_missing == 0) {
+      if(model_missing_y == 0) {
         modl = stanmodels$inirt_mirt_unidim_noRegress
       } else {
         modl = stanmodels$inirt_mirt_unidim_noRegress_ymiss

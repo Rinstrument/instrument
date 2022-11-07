@@ -56,7 +56,12 @@ fit = inirt(data, dims = 1, method = "hmc", chains = 1, iter = 300, init = 0)
 library(rstan)
 summary(fit) # full summary
 summary(fit, pars = "alpha")$summary[,1]    # alpha (slope) params
+cor(summary(fit, pars = "alpha")$summary[,1], alpha[1,])
 summary(fit, pars = c("delta"))$summary[,1] # difficulty params
 summary(fit, pars = c("theta"))$summary[,1] # ability params
-dest = matrix(rstan::summary(fit, pars = c("delta"))$summary[,1], nrow = 25, byrow = TRUE)
+cor(summary(fit, pars = c("theta"))$summary[,1], theta[,1])
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 25, byrow = TRUE)
 dest
+dest[dest > 1e6] = NA
+dest
+cor(dest[,1], delta[,2])
