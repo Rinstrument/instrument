@@ -17,19 +17,21 @@ data {
   int<lower=1> beta_dend[D];   // beta end index for each dimension
   real weights[N_long]; // weights for each observation
   int<lower=1> Lxmiss;         // number of missing x values
+  // int<lower=1> xmind[N_long];  // id for missing x value at the given position in the long data set
   matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
-  int<lower=1,upper=N_long> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
+  int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
+  int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
 }
 parameters {
   matrix[N, D] theta;              // ability
   vector[nDelta] delta_l;          // difficulty
   vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
   vector[Lbeta] beta_l;            // regression parameters for each dimension
-  vector[Lxmiss] x_l;
+  // vector[Lxmiss] x_l;              // missing x values
 }
 transformed parameters {
-  matrix[D, J] alpha; // connstrain the upper traingular elements to zero 
-  matrix[Lbeta, D] beta; // organize regression parameters into a matrix
+  matrix[D, J] alpha;                  // connstrain the upper traingular elements to zero 
+  matrix[Lbeta, D] beta;               // organize regression parameters into a matrix
   vector[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
 
   for(j in 1:J) {
@@ -82,23 +84,22 @@ model {
   alpha_l ~ lognormal(0, 0.3);
   delta_l ~ normal(0, 1);
   beta_l ~ normal(0, 5);
-  x_l ~ normal(0, 100);
+  // x_l ~ normal(0, 2);
   {
     vector[N_long] nu;
-    int xmind = 0;
     for (i in 1:N_long) {
-      real xb;
+      real xb = 0.0;
       if(x_in_row_is_missing[i]) {
         for(k in 1:K) {
-          if(x_miss[nn[i], k]) {
-            xmind += 1;
-            xb += x_l[xmind] * beta[k];
+          if(x_miss[i, k]) {
+            xb += 0.0;
+            // xb += x_l[reg_miss[nn[i], k]] * beta[k,1];
           } else {
-            xb += x[nn[i], k] * beta[k];
+            xb += x[nn[i], k] * beta[k,1];
           }
         }
       } else {
-        xb = x[nn[i], ] * beta;
+        xb = x[nn[i], ] * beta[,1];
       }
       nu[i] = ((theta[nn[i], ] + xb)*col(alpha, jj[i]));
       target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]]) * weights[i];

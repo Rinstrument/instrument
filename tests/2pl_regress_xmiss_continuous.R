@@ -3,7 +3,8 @@ rm(list = ls())
 devtools::install()
 n = 800
 j = 25
-ncateg = 4
+ncategi = c(rep(4, 25))
+ncateg_max = max(ncategi)
 k = 6
 uk = 6
 d = 1
@@ -13,19 +14,16 @@ alpha = matrix(0, d, j)
 for(dd in 1:d) {
   alpha[dd, ] = sort(runif(j, 0.2, 1.5))
 }
-delta = matrix(nrow = j, ncol = ncateg - 1)
+delta = matrix(nrow = j, ncol = ncateg_max - 1)
 for(jj in 1:j) {
-  delta[jj, ] = sort(rnorm(ncateg - 1, 0, 1))
+  delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
 }
 delta = cbind(0, delta)
-# theta = rnorm(n, 0.0, sqrt(1.5))
-# theta = rnorm(n, 0, 1)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
   theta[, dd] = rnorm(n, 0, 1)
 }
 beta = c(-0.3, 0.2, 1, -0.6, -0.4, 0.6)
-# predictors = list(c(1:3), c(1,2,4))
 predictors = list(c(1:3,4:6))
 start_index = 1
 beta_dstart = numeric(d)
@@ -44,18 +42,18 @@ for(dd in 1:d) {
   }
 }
 x = matrix(data = runif(uk*n,-1,1), nrow = n, ncol = uk)
-# xrp = x[,c(1,2,3,1,2,4)]
-# true = c(alpha, delta, theta)
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
   for(jj in 1:j) {
-    prb = (1 / (1 + exp(-(sum(alpha[, jj]*(theta[i, ] + x[i,] %*% beta_mat)) - delta[jj, ]))))
-    prb = prb / sum(prb)
-    data[i, jj] = sample(1:ncateg, 1, prob = prb)
+    prb = (1 / (1 + exp(-(sum(alpha[, jj]*(theta[i, ] + x[i, ] %*% beta_mat)) - delta[jj, 1:ncategi[jj]]))))
+    prb[1] = 1.0
+    prb = c(prb, 0)
+    prb = prb[-length(prb)] - prb[2:length(prb)]
+    data[i, jj] = sample(1:ncategi[jj], 1, prob = prb)
   }
 }
 # randomly place some missing values
-x_to_remove = sample(1:prod(dim(x)), size = 20)
+x_to_remove = sample(1:prod(dim(x)), size = 25)
 x_removed_true = x[x_to_remove]
 x[x_to_remove] = NA
 data = cbind(data, x)
@@ -66,26 +64,32 @@ colnames(data) = c(paste0("x", 1:j), paste0("k", 1:uk))
 for(dd in 1:d) {
   predictors[[dd]] = predictors[[dd]] + j
 }
-fit = inirt::inirt(data, predictors = predictors, dims = d, method = "vb", tol_rel_obj = 0.0001, iter = 1e4, init = 0)
-fit = inirt::inirt(data, predictors = predictors, dims = d, method = "hmc", chains = 1, iter = 300, init = 0)
+# fit = inirt::inirt(data, predictors = predictors, dims = d, method = "vb", tol_rel_obj = 0.0001, iter = 1e4, init = 0)
+fit = inirt::inirt(data, model = NULL, predictors = predictors, dims = 1, method = "vb", weights = NULL, tol_rel_obj = 0.0005, iter = 1e4, init = "random")
+fit = inirt::inirt(data, model = NULL, predictors = predictors, dims = 1, method = "hmc", chains = 1, iter = 100, init = "random")
 
+summary(fit, pars = "alpha")$summary[,"mean"]
+cor(summary(fit, pars = "alpha")$summary[,"mean"], alpha[1,])
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,"mean"], nrow = 25, byrow = TRUE)
+cor(dest[,1], delta[,2])
 
-fit = inirt::inirt(data, predictors = predictors, dims = 1, method = "vb", tol_rel_obj = 0.0001, iter = 1e4)
-fit = inirt::inirt(data, predictors = predictors, dims = 1, method = "hmc", chains = 1, iter = 300)
-# smry = rstan::summary(fit)
-# hist(smry[[1]][1:100,"mean"])
-# hist(smry[[1]][101:120,"mean"])
-# hist(smry[[1]][121:140,"mean"])
-# cor(smry[[1]][1:500,"mean"], theta)
-ttas = summary(fit, pars = c("theta"))[[1]][,1]
-ttas1 = ttas[c(T, F)]
-ttas2 = ttas[c(F, T)]
-plot(ttas, theta[,1])
-plot(ttas2, theta[,2])
-cor(summary(fit, pars = c("theta"))[[1]][,1], theta)
-tal = matrix(summary(fit, pars = c("alpha"))[[1]][,1], nrow = 2, byrow = TRUE)
-plot(tal[1,], alpha[1,])
-plot(tal[2,], alpha[2,])
-cor(summary(fit, pars = c("delta"))[[1]][,1], delta)
-btas = summary(fit, pars = c("beta"))[[1]][,1]
-btas = matrix(btas, nrow = k, byrow = TRUE)
+cor(summary(fit, pars = c("theta"))$summary[,"mean"], theta[,1])
+summary(fit, pars = c("x_l"))
+x_removed_true
+cor(summary(fit, pars = c("x_l"))$summary[,"mean"], x_removed_true)
+ords = unique(as.vector((standata$reg_miss)))[-1]
+cor(summary(fit, pars = c("x_l"))$summary[,"mean"], x_removed_true[ords])
+
+summary(fit, pars = c("beta"))
+beta
+
+x2 = x
+x2[is.na(x)] = 1:20
+x2[!is.na(x)] = 0
+
+x_miss_id = 1:20
+reg_miss = is.na(x) * 1
+reg_miss = as.vector(t(reg_miss))
+reg_miss[reg_miss == 1] = x_miss_id
+reg_miss = matrix(reg_miss, nrow = nrow(x), byrow = TRUE)
+ord = reg_miss[reg_miss != 0]

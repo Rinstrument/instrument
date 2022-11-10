@@ -13,6 +13,8 @@
 inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "hmc"), weights = NULL, ...) {
   if(is.null(predictors)) {
     irt_data = data[, drop = FALSE]
+    N = nrow(irt_data)
+    J = ncol(irt_data)
     if(any(is.na(irt_data))) {
       model_missing_y = 1
     } else {
@@ -22,6 +24,8 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
     predictor_ulist = unlist(predictors)
     irt_data = data[, -predictor_ulist, drop = FALSE]
     reg_data = data[, predictor_ulist, drop = FALSE]
+    N = nrow(irt_data)
+    J = ncol(irt_data)
     K = ncol(reg_data)
     x = matrix(rep(t(reg_data), J), ncol = K, byrow = TRUE)
     Lbeta = length(predictor_ulist)
@@ -36,9 +40,8 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
       model_missing_x = 0
     }
   }
-  N = nrow(irt_data)
-  J = ncol(irt_data)
-  if(model_missin_y == 0) {
+  
+  if(model_missing_y == 0) {
     Ncateg_max = max(irt_data)
     Ncategi = apply(irt_data, 2, max)
     names(Ncategi) = NULL
@@ -85,6 +88,20 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
     beta_dend = array(beta_dend, dim = d)
     nobeta_dstart = array(nobeta_dstart, dim = d)
     nobeta_dend = array(nobeta_dend, dim = d)
+
+    if(model_missing_x == 0) {
+
+    } else {
+      Lxmiss = sum(is.na(reg_data))
+      x_miss_id = 1:Lxmiss
+      reg_miss = is.na(reg_data) * 1
+      reg_miss = as.vector(t(reg_miss))
+      reg_miss[reg_miss == 1] = x_miss_id
+      reg_miss = matrix(reg_miss, nrow = N, byrow = TRUE)
+      x_miss = is.na(x) * 1
+      x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
+      x[is.na(x)] = 0
+    }
   }
   if(model_missing_y == 1) {
     N_miss = sum(is.na(irt_data))
@@ -103,6 +120,11 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
   if(D == 1) { # Data input for unidimensional model
     if(regress == 0) { # No Regression
       if(model_missing_y == 0) {
+        if(model_missing_x == 0) {
+
+        } else {
+
+        }
         standata = list(N = N, J = J, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, 
                       D = D, nDelta = nDelta, L = L, weights = weights)
       } else if(model_missing_y == 1) {
@@ -110,8 +132,14 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
           y = y, D = D, L = L, weights = weights)
       }
     } else { # Regression
-      standata = list(N = N, J = J, K = K, Ncateg = Ncateg, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
+      if(model_missing_x == 0) {
+        standata = list(N = N, J = J, K = K, Ncateg = Ncateg, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
           D = D, L = L, Lbeta = Lbeta, beta_dstart = beta_dstart, beta_dend = beta_dend)
+      } else {
+        standata = list(N = N, J = J, K = K, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
+          D = D, L = L, Lbeta = Lbeta, beta_dstart = beta_dstart, beta_dend = beta_dend, Lxmiss = Lxmiss,
+          x_miss = x_miss, reg_miss = reg_miss, x_in_row_is_missing = x_in_row_is_missing)
+      }
     }
   } else { # Data input for multidimensional model
     standata = list(N = N, J = J, K = K, Ncateg = Ncateg, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
@@ -127,7 +155,11 @@ inirt = function(data, model = NULL, predictors = NULL, dims, method = c("vb", "
         modl = stanmodels$inirt_mirt_unidim_noRegress_ymiss
       }
     } else {
-      modl = stanmodels$inirt_mirt_unidim
+      if(model_missing_x == 0) {
+        modl = stanmodels$inirt_mirt_unidim
+      } else {
+        modl = stanmodels$inirt_mirt_unidim_regress_xmiss
+      }
     }
   } else if (D > 1){
     modl = stanmodels$inirt_mirt
