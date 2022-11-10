@@ -1,6 +1,6 @@
 Package: inirt
 Title: Item Response Theory Tools
-Version: 1.0.1
+Version: 1.5
 Authors@R: 
     person("Michael", "Kleinsasser", , "mjkleinsa@gmail.com", role = c("aut", "cre"))
 Description: Item Response Theory Tools

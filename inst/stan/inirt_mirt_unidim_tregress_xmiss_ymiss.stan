@@ -4,23 +4,23 @@ data {
   int<lower=1> K;              // number of regression parameters
   int<lower=2> Ncateg_max;         // Max Number of categories in ordered logistic responses
   int<lower=2,upper=Ncateg_max> Ncategi[J]; // Number of categories for each item
-  int<lower=1> N_long;              // number of long observations
-  int<lower=1,upper=N> nn[N_long];  // participant for observation n
-  int<lower=1,upper=J> jj[N_long];  // question for observation n
-  int<lower=0,upper=Ncateg_max> y[N_long];   // correctness for observation n
-  matrix[N_long, K] x;   // correctness for observation n
+  int<lower=1> N_long_obs;              // number of long observations
+  int<lower=1,upper=N> nn[N_long_obs];  // participant for observation n
+  int<lower=1,upper=J> jj[N_long_obs];  // question for observation n
+  int<lower=0,upper=Ncateg_max> y[N_long_obs];   // correctness for observation n
+  matrix[N_long_obs, K] x;   // correctness for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=1> nDelta;        // total number of delta parameters
   int<lower=1> L;        // number of non-zero loadings
   int<lower=1> Lbeta;    // number of regression parameters
   int<lower=1> beta_dstart[D]; // beta start index for each dimension
   int<lower=1> beta_dend[D];   // beta end index for each dimension
-  real weights[N_long]; // weights for each observation
+  real weights[N_long_obs]; // weights for each observation
   int<lower=1> Lxmiss;         // number of missing x values
   // int<lower=1> xmind[N_long];  // id for missing x value at the given position in the long data set
-  matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
+  matrix[N_long_obs, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
   int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
-  int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
+  int<lower=0,upper=1> x_in_row_is_missing[N_long_obs]; // any missing x's in given row? for efficiency
 }
 parameters {
   matrix[N, D] theta;              // ability
@@ -84,16 +84,14 @@ model {
   alpha_l ~ lognormal(0, 0.3);
   delta_l ~ normal(0, 1);
   beta_l ~ normal(0, 5);
-  // x_l ~ normal(0, 2);
   {
-    vector[N_long] nu;
-    for (i in 1:N_long) {
+    vector[N_long_obs] nu;
+    for (i in 1:N_long_obs) {
       real xb = 0.0;
       if(x_in_row_is_missing[i]) {
         for(k in 1:K) {
           if(x_miss[i, k]) {
             xb += 0.0;
-            // xb += x_l[reg_miss[nn[i], k]] * beta[k,1];
           } else {
             xb += x[nn[i], k] * beta[k,1];
           }
