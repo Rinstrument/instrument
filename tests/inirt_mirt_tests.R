@@ -1,5 +1,5 @@
 # INIRT higher-order IRT tests
-devtools::install()
+devtools::install(dependencies = FALSE)
 n = 800
 d = 3
 j = 40
@@ -76,7 +76,7 @@ h2_dim_id = NULL
 sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta)
 fit_data = list(data = data, model = NULL, predictors = predictors, dims = dims, h2_dims = h2_dims, h2_dim_id = h2_dim_id, 
     structural_design = list(alpha = a_design, delta = d_design), method = "vb", weights = NULL, 
-    tol_rel_obj = 0.0002, iter = 5e3, init = "random")
+    tol_rel_obj = 0.0002, iter = 5e3, init = "random") 
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
 fit = inirt::inirt(data = fit_data$data, model = fit_data$model, predictors = fit_data$predictors, dims = fit_data$dims, 
@@ -91,27 +91,26 @@ fit = inirt::inirt(data = fit_data$data, model = fit_data$model, predictors = fi
 
 
 # summary(fit, pars = "alpha")$summary[,"mean"]
-aest = matrix(summary(fit, pars = "alpha")$summary[,"mean"], nrow = dims, byrow = TRUE)
+aest = matrix(rstan::summary(fit, pars = "alpha")$summary[,"mean"], nrow = fit_data$dims, byrow = TRUE)
 aest
-cor(aest[1,1:20], alpha[1,1:20])
-cor(aest[2,21:40], alpha[2,21:40])
-cor(aest[3,41:60], alpha[3,41:60])
+# 1:15, 16:27, 28:40
+cor(aest[1,1:15], sim_data$alpha[1,1:15])
+cor(aest[2,16:27], sim_data$alpha[2,16:27])
+cor(aest[3,28:40], sim_data$alpha[3,28:40])
 
-dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,"mean"], nrow = 60, byrow = TRUE)
-cor(dest[,1], delta[,2])
-cor(dest[,2], delta[,3])
-cor(dest[,3], delta[,4])
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,"mean"], nrow = nrow(sim_data$delta), byrow = TRUE)
+cor(dest[,1], sim_data$delta[,2])
+cor(dest[,2], sim_data$delta[,3])
+cor(dest[,3], sim_data$delta[,4])
 
-tgest = summary(fit, pars = c("theta_g"))$summary[,"mean"]
-cor(tgest, theta_g)
-plot(tgest, theta_g)
-test = matrix(summary(fit, pars = c("theta_resid"))$summary[,"mean"], nrow = n, byrow = TRUE)
+test = matrix(rstan::summary(fit, pars = c("theta"))$summary[,"mean"], nrow = nrow(sim_data$theta), byrow = TRUE)
 cor(tgest + test[,1], theta[,1])
-cor(test[,1], theta[,1])
-cor(test[,2], theta[,2])
-cor(test[,3], theta[,3])
+cor(test[,1], sim_data$theta[,1])
+cor(test[,2], sim_data$theta[,2])
+cor(test[,3], sim_data$theta[,3])
 
 cor(tgest + test[,2], theta[,2])
 cor(tgest + test[,3], theta[,3])
 
-summary(fit, pars = c("lambda"))$summary[,"mean"]
+matrix(rstan::summary(fit, pars = c("beta"))$summary[,"mean"], nrow = 6, ncol = 3, byrow = TRUE)
+sim_data$beta

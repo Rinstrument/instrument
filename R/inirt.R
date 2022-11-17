@@ -10,37 +10,43 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
 #'
-inirt = function(data, model = NULL, predictors = NULL, dims, h2_dims = 0, h2_dim_id = NULL, 
-    structural_design = NULL, method = c("vb", "hmc"), weights = NULL, ...) {
-  if(is.null(predictors)) {
-    irt_data = data[, drop = FALSE]
-    N = nrow(irt_data)
-    J = ncol(irt_data)
-    if(any(is.na(irt_data))) {
-      model_missing_y = 1
-    } else {
-      model_missing_y = 0
-    }
-    model_missing_x = 0
+inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_ranef = NULL, ranef_id = NULL, dims, h2_dims = 0, 
+    h2_dim_id = NULL, structural_design = NULL, method = c("vb", "hmc"), weights = NULL, ...) {
+  irt_data = data[, item_id, drop = FALSE]
+  N = nrow(irt_data)
+  J = ncol(irt_data)
+  if(any(is.na(irt_data))) {
+    model_missing_y = 1
   } else {
-    has_treg = 1
-    predictor_ulist = unlist(predictors)
-    irt_data = data[, -predictor_ulist, drop = FALSE]
-    reg_data = data[, predictor_ulist, drop = FALSE]
-    N = nrow(irt_data)
-    J = ncol(irt_data)
-    K = ncol(reg_data)
-    x = matrix(rep(t(reg_data), J), ncol = K, byrow = TRUE)
-    Lbeta = length(predictor_ulist)
-    if(any(is.na(irt_data))) {
-      model_missing_y = 1
+    model_missing_y = 0
+  }
+  if(is.null(predictors) & is.null(predictors_ranef)) {
+    model_missing_x = 0
+    has_treg = 0
+    any_rand = 0
+  } else {
+    if(!is.null(predictors) & !is.null(predictors_ranef)) {
+      has_treg = 1
+      any_rand = 1
+      predictor_ulist = unlist(predictors)
+      predictor_ranef_ulist = unlist(predictors_ranef)
+      reg_data = data[, predictor_ulist, drop = FALSE]
+      reg_data_ranef = data[, predictor_ranef_ulist, drop = FALSE]
+      K = ncol(reg_data)
+      Lzeta = ncol(reg_data_ranef)
+      x = matrix(rep(t(reg_data), J), ncol = K, byrow = TRUE)
+      z = matrix(rep(t(reg_data_ranef), J), ncol = Lzeta, byrow = TRUE)
+      if(any(is.na(reg_data)) | any(is.na(reg_data_ranef))) {
+        model_missing_x = 1
+      } else {
+        model_missing_x = 0
+      }
+    } else if(!is.null(predictors_ranef) & is.null(predictors)) {
+      any_rand = 1
+      predictor_ranef_ulist = unlist(predictors_ranef)
+      reg_data = data[, predictor_ulist, drop = FALSE]
     } else {
-      model_missing_y = 0
-    }
-    if(any(is.na(reg_data))) {
-      model_missing_x = 1
-    } else {
-      model_missing_x = 0
+      any_rand = 0
     }
   }
   
@@ -67,46 +73,66 @@ inirt = function(data, model = NULL, predictors = NULL, dims, h2_dims = 0, h2_di
   }
   nDelta = sum(Ncategi - 1)
 
-  if(is.null(predictors)) {
+  if(is.null(predictors) & is.null(predictors_ranef)) {
     regress = 0
   } else {
-    regress = 1
-    start_index = 1
-    if(h2_dims > 0) {
-      beta_dstart = numeric(1)
-      beta_dend = numeric(1)
-      beta_dstart[1] = start_index
-      beta_dend[1] = start_index + length(predictors[[1]]) - 1
-      start_index = start_index + length(predictors[[1]])
-      # beta_dstart = array(beta_dstart, dim = 1)
-      # beta_dend = array(beta_dend, dim = 1)
-    } else {
+    if(!is.null(predictors) & !is.null(predictors_ranef)) {
+      regress = 1
       start_index = 1
-      beta_dstart = numeric(D)
-      beta_dend = numeric(D)
-      for(d in 1:D) {
-        beta_dstart[d] = start_index
-        beta_dend[d] = start_index + length(predictors[[d]]) - 1
-        start_index = start_index + length(predictors[[d]])
-      }
-      beta_dstart = array(beta_dstart, dim = D)
-      beta_dend = array(beta_dend, dim = D)
-    }
+      if(h2_dims > 0) {
+        beta_dstart = numeric(1)
+        beta_dend = numeric(1)
+        beta_dstart[1] = start_index
+        beta_dend[1] = start_index + length(predictors[[1]]) - 1
+        start_index = start_index + length(predictors[[1]])
+        # beta_dstart = array(beta_dstart, dim = 1)
+        # beta_dend = array(beta_dend, dim = 1)
+      } else {
+        start_index = 1
+        beta_dstart = numeric(D)
+        beta_dend = numeric(D)
+        for(d in 1:D) {
+          beta_dstart[d] = start_index
+          beta_dend[d] = start_index + length(predictors[[d]]) - 1
+          start_index = start_index + length(predictors[[d]])
+        }
+        beta_dstart = array(beta_dstart, dim = D)
+        beta_dend = array(beta_dend, dim = D)
 
-    if(model_missing_x == 0) {
-      reg_miss = is.na(reg_data) * 1
-      x_miss = matrix(rep(t(reg_miss), J), ncol = K, byrow = TRUE)
-      x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
+        start_index = 1
+        zeta_dstart = numeric(D)
+        zeta_dend = numeric(D)
+        for(d in 1:D) {
+          zeta_dstart[d] = start_index
+          zeta_dend[d] = start_index + length(predictors_ranef[[d]]) - 1
+          start_index = start_index + length(predictors_ranef[[d]])
+        }
+        zeta_dstart = array(zeta_dstart, dim = D)
+        zeta_dend = array(zeta_dend, dim = D)
+
+        Lzeta_sd = length(unique(ranef_id))
+        zeta_sd_ind = ranef_id
+      }
+
+      if(model_missing_x == 0) {
+        reg_miss = is.na(reg_data) * 1
+        x_miss = matrix(rep(t(reg_miss), J), ncol = K, byrow = TRUE)
+        x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
+      } else {
+        Lxmiss = sum(is.na(reg_data))
+        x_miss_id = 1:Lxmiss
+        reg_miss = is.na(reg_data) * 1
+        reg_miss = as.vector(t(reg_miss))
+        reg_miss[reg_miss == 1] = x_miss_id
+        reg_miss = matrix(reg_miss, nrow = N, byrow = TRUE)
+        x_miss = is.na(x) * 1
+        x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
+        x[is.na(x)] = 0
+      }
+    } else if(!is.null(predictors_ranef) & is.null(predictors)) {
+
     } else {
-      Lxmiss = sum(is.na(reg_data))
-      x_miss_id = 1:Lxmiss
-      reg_miss = is.na(reg_data) * 1
-      reg_miss = as.vector(t(reg_miss))
-      reg_miss[reg_miss == 1] = x_miss_id
-      reg_miss = matrix(reg_miss, nrow = N, byrow = TRUE)
-      x_miss = is.na(x) * 1
-      x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
-      x[is.na(x)] = 0
+
     }
   }
 
@@ -163,10 +189,10 @@ inirt = function(data, model = NULL, predictors = NULL, dims, h2_dims = 0, h2_di
   }
 
   if(D == 1) {
-    standata = list(N = N, J = J, K = K, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
-        D = D, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, weights = weights,
-        x_miss = x_miss, reg_miss = reg_miss, x_in_row_is_missing = x_in_row_is_missing, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r,
-        d_design = d_design, a_design = a_design)
+    standata = list(N = N, J = J, K = K, any_rand = any_rand, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
+        D = D, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, zeta_dstart = zeta_dstart, zeta_dend = zeta_dend, 
+        weights = weights, x_miss = x_miss, reg_miss = reg_miss, x_in_row_is_missing = x_in_row_is_missing, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r,
+        d_design = d_design, a_design = a_design, Lzeta = Lzeta, z = z, Lzeta_sd = Lzeta_sd, zeta_sd_ind = zeta_sd_ind)
   } else if(D > 1 & h2_dims == 0) {
     standata = list(N = N, J = J, K = K, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
         D = D, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, weights = weights, x_miss = x_miss, 
@@ -179,46 +205,6 @@ inirt = function(data, model = NULL, predictors = NULL, dims, h2_dims = 0, h2_di
         x_in_row_is_missing = x_in_row_is_missing, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r, d_design = d_design, a_design = a_design)
   }
 
-  # if(D == 1) { # Data input for unidimensional model
-  #   if(regress == 0) { # No Regression
-  #     if(model_missing_y == 0) {
-  #       if(model_missing_x == 0) {
-  #         if(model_structural_design == 1) {
-  #             standata = list(N = N, J = J, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, 
-  #                 jj = jj, y = y, D = D, nDelta = nDelta, L = L, weights = weights, nDelta_r = nDelta_r, 
-  #                 nAlpha_r = nAlpha_r, d_design = d_design, a_design = a_design)
-  #         } else {
-
-  #         }
-  #       } else {
-
-  #       }
-  #       # standata = list(N = N, J = J, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, 
-  #       #               D = D, nDelta = nDelta, L = L, weights = weights)
-  #     } else if(model_missing_y == 1) {
-  #       standata = list(N = N, J = J, Ncateg = Ncateg, N_long_obs = N_long_obs, nn = nn, jj = jj, 
-  #         y = y, D = D, L = L, weights = weights)
-  #     }
-  #   } else { # Regression
-  #     if(model_missing_x == 0) {
-  #       standata = list(N = N, J = J, K = K, Ncateg = Ncateg, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
-  #         D = D, L = L, Lbeta = Lbeta, beta_dstart = beta_dstart, beta_dend = beta_dend)
-  #     } else {
-  #       standata = list(N = N, J = J, K = K, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
-  #         D = D, L = L, Lbeta = Lbeta, beta_dstart = beta_dstart, beta_dend = beta_dend, Lxmiss = Lxmiss,
-  #         x_miss = x_miss, reg_miss = reg_miss, x_in_row_is_missing = x_in_row_is_missing)
-  #     }
-  #   }
-  # } else if(D > 1 & h2_dims == 0) { # Data input for multidimensional model
-  #   standata = list(N = N, J = J, Ncateg = Ncateg, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
-  #       D = D, L = L, Lbeta = Lbeta, beta_dstart = beta_dstart, beta_dend = beta_dend, 
-  #       nobeta_dstart = nobeta_dstart, nobeta_dend = nobeta_dend)
-  # } else if(D > 1 & h2_dims > 0) { # second-order HO-IRT model (single second-order dimension)
-  #   standata = list(N = N, J = J, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, 
-  #       y = y, D = D, nDelta = nDelta, L = L, alpha_dstart = alpha_dstart, alpha_dend = alpha_dend, 
-  #       lambda_ind = lambda_ind, weights = weights)
-  # }
-
   # Select the correct inirt implementation based on input parameters
   if(D == 1) {
     modl = stanmodels$inirt_unidim
@@ -228,79 +214,6 @@ inirt = function(data, model = NULL, predictors = NULL, dims, h2_dims = 0, h2_di
     modl = stanmodels$inirt_hoirt
   }
 
-  # # Select the correct inirt implementation based on input parameters
-  # if(D == 1) { # unidimensional analysis
-  #   if(regress == 0) {
-  #     if(model_missing_y == 0) {
-  #       if(model_structural_design == 1) {
-  #         modl = stanmodels$inirt_mirt_unidim_no_tregress_structural_regress
-  #       } else {
-  #         modl = stanmodels$inirt_mirt_unidim_no_tregress
-  #       }
-        
-  #     } else {
-  #       modl = stanmodels$inirt_mirt_unidim_no_tregress_ymiss
-  #     }
-  #   } else if(regress == 1) {
-  #     if(model_missing_y == 0) {
-  #       if(model_missing_x == 0) {
-  #         modl = stanmodels$inirt_mirt_unidim_tregress
-  #       } else {
-  #         modl = stanmodels$inirt_mirt_unidim_tregress_xmiss
-  #       }
-  #     } else {
-  #       if(model_missing_x == 0) {
-  #         modl = stanmodels$inirt_mirt_unidim_tregress_ymiss
-  #       } else {
-  #         modl = stanmodels$inirt_mirt_unidim_tregress_xmiss_ymiss
-  #       }
-  #     }
-  #   } 
-  # } else if(D > 1 & h2_dims == 0) { # multidimensional analysis with no higher-order trait
-  #   if(regress == 0) {
-  #     if(model_missing_y == 0) {
-  #       modl = stanmodels$inirt_mirt_no_tregress
-  #     } else {
-  #       modl = stanmodels$inirt_mirt_no_tregress_ymiss
-  #     }
-  #   } else {
-  #     if(model_missing_y == 0) {
-  #       if(model_missing_x == 0) {
-  #         modl = stanmodels$inirt_mirt_tregress
-  #       } else {
-  #         modl = stanmodels$inirt_mirt_tregress_xmiss
-  #       }
-  #     } else {
-  #       if(model_missing_x == 0) {
-  #         modl = stanmodels$inirt_mirt_tregress_ymiss
-  #       } else {
-  #         modl = stanmodels$inirt_mirt_tregress_xmiss_ymiss
-  #       }
-  #     }
-  #   }
-  # } else if (D > 1 & h2_dims > 0){ # second order analysis
-  #   if(regress == 0) {
-  #     if(model_missing_y == 0) {
-  #       modl = stanmodels$inirt_hoirt_2ord_unidim_no_tregress
-  #     } else {
-
-  #     }
-  #   } else {
-  #     if(model_missing_y == 0) {
-  #       if(model_missing_x == 0) {
-
-  #       } else {
-
-  #       }
-  #     } else {
-  #       if(model_missing_x == 0) {
-
-  #       } else {
-          
-  #       }
-  #     }
-  #   }
-  # }
   # Choose a model estimateion method: variational inference or HMC
   if(method[1] == "vb") {
     out = rstan::vb(modl, data = standata, ...)
@@ -309,7 +222,6 @@ inirt = function(data, model = NULL, predictors = NULL, dims, h2_dims = 0, h2_di
   } else {
     stop("Method not yet implemeted.")
   }
-  # Return the output
-  # class(out) = c("inirt", class(out))
+
   return(out)
 }

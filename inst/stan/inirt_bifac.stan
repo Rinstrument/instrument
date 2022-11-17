@@ -8,15 +8,16 @@ data {
   int<lower=1,upper=N> nn[N_long];  // participant for observation n
   int<lower=1,upper=J> jj[N_long];  // question for observation n
   int<lower=0,upper=Ncateg_max> y[N_long];   // correctness for observation n
-  matrix[N_long, K] x;   // design matrix for predictors in latent regression model
+  matrix[N_long, K] x;   // correctness for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=1> nDelta;        // total number of delta parameters
   int<lower=1> L;        // number of non-zero loadings (alpha parameters)
   int<lower=0,upper=1> has_treg;  // do theta regression?
-  int<lower=1> beta_dstart[D]; // beta start index for each dimension
-  int<lower=1> beta_dend[D];   // beta end index for each dimension
-  // int<lower=1> nobeta_dstart[D]; // beta start index for each dimension
-  // int<lower=1> nobeta_dend[D];   // beta end index for each dimension
+  int<lower=1> alpha_dstart[D]; // alpha start index for each dimension
+  int<lower=1> alpha_dend[D];   // alpha end index for each dimension
+  int<lower=1,upper=D> lambda_ind[N_long]; // which 1st order dim does each obs. belong to? 
+  int<lower=1> beta_dstart; // beta start index for each dimension
+  int<lower=1> beta_dend;   // beta end index for each dimension
   real weights[N_long]; // weights for each observation
   matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
   int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
@@ -27,8 +28,9 @@ data {
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
 }
 parameters {
-  matrix[N, D] theta;              // ability
-  vector[nDelta] delta_l;          // difficulty
+  matrix[N, D] theta_resid;        // residual 1st order ability
+  vector[N] theta_g;               // general ability
+  vector[nDelta] delta_l;          // difficulty 
   vector[nDelta_r] delta_r_l;      // structural regression, delta
   vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
@@ -36,47 +38,44 @@ parameters {
 }
 transformed parameters {
   matrix[D, J] alpha; // connstrain the upper traingular elements to zero 
-  matrix[D, J] alpha_zero; // ID's for the zero indicators
-  matrix[K, D] beta; // organize regression parameters into a matrix
+  matrix[K, 1] beta; // organize regression parameters into a matrix
   vector[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
 
-  for(j in 1:J) {
-    for(d in (j+1):D) {
-      alpha[d, j] = 0;
-    }
-  } 
   {
-    int index = 0;
     for(d in 1:D) {
-      for(j in 1:(d-1)) {
-        alpha_zero[d, j] = 0.0;
-      }
-      for(j in d:J) {
-        index = index + 1;
-        alpha[d, j] = alpha_l[index];
-        alpha_zero[d, j] = 1.0;
+      for(j in 1:J) {
+        alpha[d, j] = 0;
       }
     }
   }
-    
   {
+    int aindex = 0;
+    int a_lower = 0;
+    int a_upper = 0;
     for(d in 1:D) {
-      for(i in 1:K) {
-        beta[i, d] = 0;
+      a_lower = alpha_dstart[d];
+      a_upper = alpha_dend[d];
+      for(i in a_lower:a_upper) {
+        aindex += 1;
+        alpha[d, i] = alpha_l[aindex];
       }
+    }
+  }
+
+  {
+    for(i in 1:K) {
+      beta[i, 1] = 0;
     }
   }
   {
     int bindex = 0;
     int b_lower = 0;
     int b_upper = 0;
-    for(d in 1:D) {
-      b_lower = beta_dstart[d];
-      b_upper = beta_dend[d];
-      for(i in b_lower:b_upper) {
-        bindex = bindex + 1;
-        beta[i, d] = beta_l[bindex];
-      }
+    b_lower = beta_dstart;
+    b_upper = beta_dend;
+    for(i in b_lower:b_upper) {
+      bindex = bindex + 1;
+      beta[i, 1] = beta_l[bindex];
     }
   }
 
@@ -97,37 +96,34 @@ transformed parameters {
   }
 }
 model {
-  to_vector(theta) ~ normal(0, 1);
+  to_vector(theta_resid) ~ normal(0, 1);
+  theta_g ~ normal(0, 1);
   alpha_l ~ lognormal(0, 0.3);
-  alpha_r_l ~ normal(0, 1);
   delta_l ~ normal(0, 1);
-  delta_r_l ~ normal(0, 1);
 
   if(has_treg) {
     beta_l ~ normal(0, 5);
   }
-  
+
   {
     vector[N_long] nu;
     for (i in 1:N_long) {
+      real xb = 0.0;
       if(has_treg) {
-        row_vector[D] xb;
         if(x_in_row_is_missing[i]) {
           for(k in 1:K) {
-            for(d in 1:D) {
-              if(x_miss[i, k]) {
-                xb[d] += 0.0;
-              } else {
-                xb[d] += x[nn[i], k] * beta[k,d];
-              }
+            if(x_miss[i, k]) {
+              xb += 0.0;
+            } else {
+              xb += x[nn[i], k] * beta[k,1];
             }
           }
         } else {
-          xb = x[nn[i], ] * beta;
+          xb = x[nn[i], ] * beta[,1];
         }
-        nu[i] = (theta[nn[i], ] + xb)*(col(alpha, jj[i]) + (a_design[nn[i], ]*alpha_r_l)*(col(alpha_zero, jj[i])));
+        nu[i] = (theta_g[nn[i]] + xb + theta_resid[nn[i], lambda_ind[i]])*(alpha[lambda_ind[i], jj[i]] + a_design[nn[i], ]*alpha_r_l);
       } else {
-        nu[i] = (theta[nn[i], ])*(col(alpha, jj[i]) + (a_design[nn[i], ]*alpha_r_l)*(col(alpha_zero, jj[i])));
+        nu[i] = (theta_g[nn[i]] + theta_resid[nn[i], lambda_ind[i]])*(alpha[lambda_ind[i], jj[i]] + a_design[nn[i], ]*alpha_r_l);
       }
       target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + d_design[nn[i], ]*delta_r_l) * weights[i];
     }
