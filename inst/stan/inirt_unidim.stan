@@ -1,8 +1,14 @@
+// Unidimensional IRT with latent regression (inirt package)
+// Author: Michael Kleinsasser
+// Description:
+// Stan program meant to be used by the inirt::inirt() R function
+// Example (test if it compiles to c++):
+// mod = rstan::stan_model(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 data {
   int<lower=1> N;              // number of participants
   int<lower=1> J;              // number of questions
   int<lower=0> K;              // number of regression parameters
-  int<lower=0,upper=1> any_rand; // any random effects?
+  // int<lower=0,upper=1> any_rand; // any random effects?
   int<lower=0,upper=1> any_rand_ind; // any independent random effects?
   int<lower=0,upper=1> any_rand_cor; // any correlated random effects?
   int<lower=0,upper=1> any_rand_ind_a; // any independent random effects?
@@ -20,24 +26,31 @@ data {
   int<lower=1> nDelta;        // total number of delta parameters
   int<lower=1> L;        // number of non-zero loadings
   int<lower=0,upper=1> has_treg;  // do theta regression?
-  int<lower=1> beta_dstart[D]; // beta start index for each dimension
-  int<lower=1> beta_dend[D];   // beta end index for each dimension
-  int<lower=1> zeta_dstart[D]; // zeta start index for each dimension
-  int<lower=1> zeta_dend[D];   // zeta end index for each dimension
+  int<lower=1> beta_dstart[has_treg ? D : 0]; // beta start index for each dimension
+  int<lower=1> beta_dend[has_treg ? D : 0];   // beta end index for each dimension
+  int<lower=1> zeta_dstart[has_treg ? D : 0]; // zeta start index for each dimension
+  int<lower=1> zeta_dend[has_treg ? D : 0];   // zeta end index for each dimension
   real weights[N_long]; // weights for each observation
   matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
-  int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
-  int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
+  // int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
+  // int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
   int<lower=1> nDelta_r;            // number of delta structural regression parameters
   int<lower=1> nAlpha_r;            // number of alpha structural regression parameters
   matrix[N, nDelta_r] d_design;     // delta structural design matrix
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
+  
   int<lower=0> Lzeta;        // Number of uncorrelated random eff. parms
   int<lower=0> Laeta;
   int<lower=0> Ldeta;
-  int<lower=0> u_Lzeta_cor;  //40      // number of corr ranef par vectors
-  int<lower=0> l_Lzeta_cor;  //2      // length of corr ranef par vectors
-  int<lower=0> Lzeta_cor;    //2*40=80    // total number of correlated random eff. parms
+  
+  int<lower=0> u_Lzeta_cor;      // number of corr ranef par vectors
+  int<lower=0> l_Lzeta_cor;      // length of corr ranef par vectors
+  int<lower=0> u_Laeta_cor;
+  int<lower=0> l_Laeta_cor; 
+  int<lower=0> u_Ldeta_cor;
+  int<lower=0> l_Ldeta_cor; 
+  
+  int<lower=0> Lzeta_cor;    // total number of correlated random eff. parms
   int<lower=0> Laeta_cor;
   int<lower=0> Ldeta_cor;
   matrix[N_long, Lzeta] z;   // design matrix for the uncorrelated random effects
@@ -46,6 +59,19 @@ data {
   int<lower=0> zeta_sd_ind[Lzeta]; // sd index for each column of z
   int<lower=0> cor_z_item_ind[Lzeta_cor]; // item index for each column of z for correlated random effs.
   int<lower=0> cor_z_item_elem_ind[Lzeta_cor]; // element within item index for each column of z for correlated random effs.
+
+  int<lower=0> Laeta_sd;
+  int<lower=0> alindex[Laeta];
+  int<lower=0> aeta_sd_ind[Laeta];
+  int<lower=0> cor_a_item_ind[Laeta_cor];
+  int<lower=0> cor_a_item_elem_ind[Laeta_cor];
+
+  int<lower=0> Ldeta_sd;
+  int<lower=0> dlindex[Ldeta];
+  int<lower=0> deta_sd_ind[Ldeta];
+  int<lower=0> cor_d_item_ind[Ldeta_cor];
+  int<lower=0> cor_d_item_elem_ind[Ldeta_cor];
+
   matrix[N_long, Lzeta_cor] z_c;   // design matrix for the correlated random effects
   matrix[N_long, Laeta_cor] a_c;
   matrix[N_long, Ldeta_cor] d_c;
@@ -53,19 +79,39 @@ data {
 transformed data {
   vector[l_Lzeta_cor] zeros_Lzeta_cor;
   zeros_Lzeta_cor = rep_vector(0, l_Lzeta_cor);
+
+  vector[l_Laeta_cor] zeros_Laeta_cor;
+  zeros_Laeta_cor = rep_vector(0, l_Laeta_cor);
+
+  vector[l_Ldeta_cor] zeros_Ldeta_cor;
+  zeros_Ldeta_cor = rep_vector(0, l_Ldeta_cor);
 }
 parameters {
   matrix[N, D] theta;              // ability
+
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
   vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
   vector[K] beta_l;            // regression parameters for each dimension
+
   vector[Lzeta] zeta_l;          // random regression pars
   vector<lower=0>[Lzeta_sd] zeta_l_sd;          // random regression pars
+  vector[Laeta] aeta_l;
+  vector<lower=0>[Laeta_sd] aeta_l_sd; 
+  vector[Ldeta] deta_l;
+  vector<lower=0>[Ldeta_sd] deta_l_sd; 
+
   corr_matrix[l_Lzeta_cor] Omega;        // prior correlation
   vector<lower=0>[l_Lzeta_cor] tau;              // prior scale
+  corr_matrix[l_Laeta_cor] Omega_a;     
+  vector<lower=0>[l_Laeta_cor] tau_a;
+  corr_matrix[l_Ldeta_cor] Omega_d;     
+  vector<lower=0>[l_Ldeta_cor] tau_d;
+
   vector[l_Lzeta_cor] zeta_c[u_Lzeta_cor];          // random regression pars
+  vector[l_Laeta_cor] aeta_c[u_Laeta_cor];
+  vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
 }
 transformed parameters {
   matrix[D, J] alpha;                  // connstrain the upper traingular elements to zero 
@@ -193,18 +239,18 @@ model {
           xb += x[nn[i], k] * beta[k,1];
         }
       }
-      if(any_rand) { // handle random effects
-        if(any_rand_cor) {
-          for(k in 1:Lzeta_cor) {
-            xb += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
-          }
-        }
-        if(any_rand_ind) {
-          for(k in 1:Lzeta) {
-            xb += z[nn[i], k] * zeta[k,1];
-          }
+      // // if(any_rand) { // handle random effects
+      if(any_rand_cor) {
+        for(k in 1:Lzeta_cor) {
+          xb += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
         }
       }
+      if(any_rand_ind) {
+        for(k in 1:Lzeta) {
+          xb += z[nn[i], k] * zeta[k,1];
+        }
+      }
+      // // }
       if(any_rand_ind_a) {
         for(k in 1:Laeta) {
           ab += aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
@@ -217,7 +263,7 @@ model {
       }
       if(any_rand_ind_d) {
         for(k in 1:Ldeta) {
-          db += deta_l[dlindex]*deta_l_sd[deta_sd_ind[k]];
+          db += deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
         }
       }
       if(any_rand_cor_d) {
