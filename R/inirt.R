@@ -92,18 +92,63 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
   cor_a_item_elem_ind = array(0, dim = c(0))
   a_c = 0 #matrix(0, nrow = N_long, ncol = )
 
-  if(!is.null(predictors_ranef_corr)) {
-    has_treg = 1
-    any_rand = 1
-    any_rand_cor = 1
-    predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
-    reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
-    Laeta_cor = ncol(reg_data_ranef_cor)
-    a_c = matrix(rep(t(reg_data_ranef_cor), J), ncol = Laeta_cor, byrow = TRUE)
-    l_Laeta_cor = n_pranef_cor
-    u_Laeta_cor = Laeta_cor / l_Laeta_cor
-    cor_a_item_ind = rep(1:u_Laeta_cor, l_Laeta_cor)
-    cor_a_item_elem_ind = rep(1:l_Laeta_cor, each = u_Laeta_cor)
+
+  # ----------------------- borrowed from bottom of function
+  # any_rand_ind_a = 0
+  # any_rand_ind_d = 0
+  # any_rand_cor_a = 0
+  # any_rand_cor_d = 0
+  # a_c = array(0, dim = c(N_long, 0))
+  # d_c = array(0, dim = c(N_long, 0))
+  # Laeta_sd = 0
+  # alindex = array(0, dim = c(0))
+  # aeta_sd_ind = array(0, dim = c(0))
+  # cor_a_item_ind = array(0, dim = c(0))
+  # cor_a_item_elem_ind = array(0, dim = c(0))
+  # Ldeta_sd = 0
+  # dlindex = array(0, dim = c(0))
+  # deta_sd_ind = array(0, dim = c(0))
+  # cor_d_item_ind = array(0, dim = c(0))
+  # cor_d_item_elem_ind = array(0, dim = c(0))
+  # Laeta_cor = 0
+  # Ldeta_cor = 0
+  # u_Laeta_cor = 0
+  # l_Laeta_cor = 0
+  # u_Ldeta_cor = 0
+  # l_Ldeta_cor = 0
+  # Laeta = 0
+  # Ldeta = 0
+  # ----------------------- borrowed
+
+  any_rand_ind_a = 0
+  any_rand_cor_a = 0
+  a_c = array(0, dim = c(N_long, 0))
+  Laeta_sd = 0
+  alindex = array(0, dim = c(0))
+  aeta_sd_ind = array(0, dim = c(0))
+  cor_a_item_ind = array(0, dim = c(0))
+  cor_a_item_elem_ind = array(0, dim = c(0))
+  Laeta_cor = 0
+  u_Laeta_cor = 0
+  l_Laeta_cor = 0
+  Laeta = 0
+
+  if(!is.null(structural_design_ranef$a_predictors_ranef_corr) | !is.null(structural_design_ranef$a_predictors_ranef)) {
+
+    if(!is.null(structural_design_ranef$a_predictors_ranef_corr)) {
+      any_rand = 1                           # this needs to be worked through
+      any_rand_cor_a = 1
+      a_c = structural_design_ranef$a_predictors_ranef_corr
+      predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
+      reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
+      Laeta_cor = ncol(reg_data_ranef_cor)
+      a_c = matrix(rep(t(reg_data_ranef_cor), J), ncol = Laeta_cor, byrow = TRUE)
+      l_Laeta_cor = n_pranef_cor
+      u_Laeta_cor = Laeta_cor / l_Laeta_cor
+      cor_a_item_ind = rep(1:u_Laeta_cor, l_Laeta_cor)
+      cor_a_item_elem_ind = rep(1:l_Laeta_cor, each = u_Laeta_cor)
+    }
+
   }
 
   # if(is.null(predictors) & is.null(predictors_ranef) & is.null(predictors_ranef_corr)) {
@@ -447,6 +492,11 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
       d_design = as.matrix(structural_design[["delta"]])
       nDelta_r = ncol(d_design)
     }
+  } else {
+    a_design = matrix(1, nrow = N, ncol = 1)
+    nAlpha_r = 1
+    d_design = matrix(1, nrow = N, ncol = 1)
+    nDelta_r = 1
   }
 
   # structural_design_ranef = list(a_predictors = NULL, a_predictors_ranef = NULL, a_ranef_id = NULL, a_predictors_ranef_corr = NULL, a_n_pranef_cor = NULL,
@@ -478,7 +528,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
   Ldeta = 0
 
   if(D == 1) {
-    standata = list(N = N, J = J, K = K, any_rand_ind = any_rand_ind, any_rand_cor = any_rand_cor, 
+    standata = list(N = N, J = J, K = K, any_rand = any_rand, any_rand_ind = any_rand_ind, any_rand_cor = any_rand_cor, 
         any_rand_ind_a = any_rand_ind_a, any_rand_cor_a = any_rand_cor_a, any_rand_ind_d = any_rand_ind_d, any_rand_cor_d = any_rand_cor_d,
         Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
         D = D, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, zeta_dstart = zeta_dstart, zeta_dend = zeta_dend, 

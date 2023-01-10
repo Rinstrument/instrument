@@ -8,7 +8,7 @@ data {
   int<lower=1> N;              // number of participants
   int<lower=1> J;              // number of questions
   int<lower=0> K;              // number of regression parameters
-  // int<lower=0,upper=1> any_rand; // any random effects?
+  int<lower=0,upper=1> any_rand; // any random effects?
   int<lower=0,upper=1> any_rand_ind; // any independent random effects?
   int<lower=0,upper=1> any_rand_cor; // any correlated random effects?
   int<lower=0,upper=1> any_rand_ind_a; // any independent random effects?
@@ -28,8 +28,8 @@ data {
   int<lower=0,upper=1> has_treg;  // do theta regression?
   int<lower=1> beta_dstart[has_treg ? D : 0]; // beta start index for each dimension
   int<lower=1> beta_dend[has_treg ? D : 0];   // beta end index for each dimension
-  int<lower=1> zeta_dstart[has_treg ? D : 0]; // zeta start index for each dimension
-  int<lower=1> zeta_dend[has_treg ? D : 0];   // zeta end index for each dimension
+  int<lower=1> zeta_dstart[any_rand_ind ? D : 0]; // zeta start index for each dimension
+  int<lower=1> zeta_dend[any_rand_ind ? D : 0];   // zeta end index for each dimension
   real weights[N_long]; // weights for each observation
   matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
   // int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
@@ -179,8 +179,9 @@ transformed parameters {
 }
 model {
   to_vector(theta) ~ normal(0, 1);
-  alpha_l ~ lognormal(0, 0.3);
-  alpha_r_l ~ normal(0, 1);
+  // alpha_l ~ lognormal(0, 0.3);
+  alpha_l ~ cauchy(0, 5);
+  alpha_r_l ~ cauchy(0, 5);
   delta_l ~ normal(0, 1);
   delta_r_l ~ normal(0, 1);
 
