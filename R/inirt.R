@@ -15,10 +15,10 @@
 #' 
 #'
 inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_ranef = NULL, ranef_id = NULL, 
-    predictors_ranef_corr = NULL, n_pranef_cor = NULL, dims, h2_dims = 0, h2_dim_id = NULL, structural_design = NULL, 
+    predictors_ranef_corr = NULL, n_pranef_cor = NULL, dims = 1, h2_dims = 0, h2_dim_id = NULL, structural_design = NULL, 
     structural_design_ranef = list(a_predictors = NULL, a_predictors_ranef = NULL, a_ranef_id = NULL, a_predictors_ranef_corr = NULL, a_n_pranef_cor = NULL,
                                    d_predictors = NULL, d_predictors_ranef = NULL, d_ranef_id = NULL, d_predictors_ranef_corr = NULL, d_n_pranef_cor = NULL),
-    method = c("vb", "hmc"), weights = NULL, ...) {
+    method = c("vb", "hmc"), weights = NULL, vb_algorithm = "fullrank", ...) {
   
   irt_data = data[, item_id, drop = FALSE]
   N = nrow(irt_data)
@@ -85,12 +85,12 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     cor_z_item_elem_ind = rep(1:l_Lzeta_cor, each = u_Lzeta_cor)
   }
 
-  u_Laeta_cor = 0
-  l_Laeta_cor = 0
-  Laeta_cor = 0
-  cor_a_item_ind = array(0, dim = c(0))
-  cor_a_item_elem_ind = array(0, dim = c(0))
-  a_c = 0 #matrix(0, nrow = N_long, ncol = )
+  # u_Laeta_cor = 0
+  # l_Laeta_cor = 0
+  # Laeta_cor = 0
+  # cor_a_item_ind = array(0, dim = c(0))
+  # cor_a_item_elem_ind = array(0, dim = c(0))
+  # a_c = 0 #matrix(0, nrow = N_long, ncol = )
 
 
   # ----------------------- borrowed from bottom of function
@@ -139,11 +139,11 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
       any_rand = 1                           # this needs to be worked through
       any_rand_cor_a = 1
       a_c = structural_design_ranef$a_predictors_ranef_corr
-      predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
-      reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
-      Laeta_cor = ncol(reg_data_ranef_cor)
-      a_c = matrix(rep(t(reg_data_ranef_cor), J), ncol = Laeta_cor, byrow = TRUE)
-      l_Laeta_cor = n_pranef_cor
+      # a_predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
+      # reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
+      Laeta_cor = ncol(structural_design_ranef$a_predictors_ranef_corr)
+      a_c = matrix(rep(t(structural_design_ranef$a_predictors_ranef_corr), J), ncol = Laeta_cor, byrow = TRUE)
+      l_Laeta_cor = structural_design_ranef$a_n_pranef_cor
       u_Laeta_cor = Laeta_cor / l_Laeta_cor
       cor_a_item_ind = rep(1:u_Laeta_cor, l_Laeta_cor)
       cor_a_item_elem_ind = rep(1:l_Laeta_cor, each = u_Laeta_cor)
@@ -504,24 +504,24 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
   
   any_rand_ind_a = 0
   any_rand_ind_d = 0
-  any_rand_cor_a = 0
+  # any_rand_cor_a = 0
   any_rand_cor_d = 0
-  a_c = array(0, dim = c(N_long, 0))
+  # a_c = array(0, dim = c(N_long, 0))
   d_c = array(0, dim = c(N_long, 0))
   Laeta_sd = 0
   alindex = array(0, dim = c(0))
   aeta_sd_ind = array(0, dim = c(0))
-  cor_a_item_ind = array(0, dim = c(0))
-  cor_a_item_elem_ind = array(0, dim = c(0))
+  # cor_a_item_ind = array(0, dim = c(0))
+  # cor_a_item_elem_ind = array(0, dim = c(0))
   Ldeta_sd = 0
   dlindex = array(0, dim = c(0))
   deta_sd_ind = array(0, dim = c(0))
   cor_d_item_ind = array(0, dim = c(0))
   cor_d_item_elem_ind = array(0, dim = c(0))
-  Laeta_cor = 0
+  # Laeta_cor = 0
   Ldeta_cor = 0
-  u_Laeta_cor = 0
-  l_Laeta_cor = 0
+  # u_Laeta_cor = 0
+  # l_Laeta_cor = 0
   u_Ldeta_cor = 0
   l_Ldeta_cor = 0
   Laeta = 0
@@ -570,7 +570,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
 
   # Choose a model estimateion method: variational inference or HMC
   if(method[1] == "vb") {
-    out = rstan::vb(modl, data = standata, ...)
+    out = rstan::vb(modl, data = standata, algorithm = vb_algorithm, ...)
   } else if(method[1] == "hmc") {
     out = rstan::sampling(modl, data = standata, ...)
   } else {

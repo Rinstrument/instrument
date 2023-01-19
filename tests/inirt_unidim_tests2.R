@@ -608,10 +608,15 @@ z_c_slope = matrix(rep(diag(40), each = 20), nrow = Lz*20)
 z_c_slope[z_c_slope == 1] = runif(40*20)
 zc_is = zc_is + z_c_slope %*% int_slope[,2]
 z_c = cbind(z_c_int, z_c_slope)
+
+sigma_a = matrix(c(3.1, 2.9, 2.9, 4), nrow = 2)
+int_slope_a = mvtnorm::rmvnorm(Lz, mean = c(0, 0), sigma = sigma_a)
+zc_is_a = z_c_int %*% int_slope_a[,1] + z_c_slope %*% int_slope_a[,2]
+
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
-  for(jj in 1:j) {
-    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha %*% a_design[i,] + zc_is[i,])*(theta[i, ] + x[i, ] %*% beta_mat + zc_is[i,])) - (delta[jj, ] + as.vector(b_delta %*% d_design[i,]) + zc_is[i,])))))
+  for(jj in 1:j) {                                                                                   #  + zc_is[i,]
+    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha %*% a_design[i,] + zc_is_a[i,])*(theta[i, ] + x[i, ] %*% beta_mat)) - (delta[jj, ] + as.vector(b_delta %*% d_design[i,]))))))
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -625,7 +630,7 @@ item_id = 1:j
 predictors_ranef = list(1:ncol(z_c) + j + k)
 
 sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, 
-  beta = beta, theta = theta, int_slope = int_slope)
+  beta = beta, theta = theta, int_slope = int_slope, int_slope_a = int_slope_a)
 fit_data = list(data = data, item_id = item_id, predictors = predictors, 
   predictors_ranef = predictors_ranef, alpha_data = a_design, delta_data = d_design)
 
@@ -636,11 +641,18 @@ data = fit_data$data
 alpha_data = fit_data$alpha_data
 delta_data = fit_data$delta_data
 a_predictors_ranef_corr = data[, 28:107]
+
+# data = data; item_id = 1:25; dims = 1; predictors = list(c(26, 27)) 
+# predictors_ranef_corr = list(28:107); n_pranef_cor = 2;
+# structural_design = list(alpha = alpha_data, delta = delta_data); 
+# structural_design_ranef = list(a_predictors_ranef_corr = a_predictors_ranef_corr, a_n_pranef_cor = 2)
+# method = "vb"; iter = 7000; tol_rel_obj = 2e-4
+
 fit = inirt::inirt(data = data, item_id = 1:25, dims = 1, predictors = list(c(26, 27)), 
-  predictors_ranef_corr = list(28:107), n_pranef_cor = 2,
+ #predictors_ranef_corr = list(28:107), n_pranef_cor = 2,
   structural_design = list(alpha = alpha_data, delta = delta_data), 
-  structural_design_ranef = list(a_predictors_ranef_corr = a_predictors_ranef_corr, a_n_pranef_cor = 2)
-  method = "vb", iter = 7000, tol_rel_obj = 2e-4)
+  structural_design_ranef = list(a_predictors_ranef_corr = a_predictors_ranef_corr, a_n_pranef_cor = 2),
+  method = "vb", iter = 7000, tol_rel_obj = 2e-4, vb_algorithm = "meanfield")
 
 fit@model_pars
 rstan::summary(fit, pars = "delta_r_l")$summary
@@ -656,6 +668,16 @@ betas = matrix(rstan::summary(fit, pars = "zeta_c")$summary[,1], ncol = 2, byrow
 sim_data$int_slope
 cor(sim_data$int_slope[,1], betas[,1])
 cor(sim_data$int_slope[,2], betas[,2])
+
+aetas = matrix(rstan::summary(fit, pars = "aeta_c")$summary[,1], ncol = 2, byrow = TRUE)
+sim_data$int_slope
+cor(sim_data$int_slope_a[,1], aetas[,1])
+cor(sim_data$int_slope_a[,2], aetas[,2])
+
+omega_a = matrix(rstan::summary(fit, pars = "Omega_a")$summary[,1], nrow = 2)
+tau_a = diag(rstan::summary(fit, pars = "tau_a")$summary[,1])
+vcov_a = tau_a %*% omega_a %*% tau_a
+vcov_a
 
 omega = matrix(rstan::summary(fit, pars = "Omega")$summary[,1], nrow = 2)
 tau = diag(rstan::summary(fit, pars = "tau")$summary[,1])
