@@ -21,7 +21,7 @@ data {
   int<lower=1,upper=N> nn[N_long];  // participant for observation n
   int<lower=1,upper=J> jj[N_long];  // question for observation n
   int<lower=0,upper=Ncateg_max> y[N_long];   // correctness for observation n
-  matrix[N_long, K] x;   // fixed effect design matrix for observation n
+  matrix[N, K] x;   // fixed effect design matrix for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=1> nDelta;        // total number of delta parameters
   int<lower=1> L;        // number of non-zero loadings
@@ -53,7 +53,7 @@ data {
   int<lower=0> Lzeta_cor;    // total number of correlated random eff. parms
   int<lower=0> Laeta_cor;
   int<lower=0> Ldeta_cor;
-  matrix[N_long, Lzeta] z;   // design matrix for the uncorrelated random effects
+  matrix[N, Lzeta] z;   // design matrix for the uncorrelated random effects
 
   int<lower=0> Lzeta_sd;     // number of sd pars
   int<lower=0> zeta_sd_ind[Lzeta]; // sd index for each column of z
@@ -72,9 +72,9 @@ data {
   int<lower=0> cor_d_item_ind[Ldeta_cor];
   int<lower=0> cor_d_item_elem_ind[Ldeta_cor];
 
-  matrix[N_long, Lzeta_cor] z_c;   // design matrix for the correlated random effects
-  matrix[N_long, Laeta_cor] a_c;
-  matrix[N_long, Ldeta_cor] d_c;
+  matrix[N, Lzeta_cor] z_c;   // design matrix for the correlated random effects
+  matrix[N, Laeta_cor] a_c;
+  matrix[N, Ldeta_cor] d_c;
 }
 transformed data {
   vector[l_Lzeta_cor] zeros_Lzeta_cor;

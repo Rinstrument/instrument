@@ -33,7 +33,8 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
   
   has_treg = 0
   K = 0
-  x = array(0, dim = c(N_long, 0))
+
+  x = array(0, dim = c(N, 0))
   any_rand = 0
   any_rand_ind = 0
   any_rand_cor = 0
@@ -45,7 +46,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     predictor_ulist = unlist(predictors)
     reg_data = data[, predictor_ulist, drop = FALSE]
     K = ncol(reg_data)
-    x = matrix(rep(t(reg_data), J), ncol = K, byrow = TRUE)
+    x = reg_data
     if(any(is.na(reg_data))) {
         model_missing_x = 1
     }
@@ -58,7 +59,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     predictor_ranef_ulist = unlist(predictors_ranef)
     reg_data_ranef = data[, predictor_ranef_ulist, drop = FALSE]
     Lzeta = ncol(reg_data_ranef)
-    z = matrix(rep(t(reg_data_ranef), J), ncol = Lzeta, byrow = TRUE)
+    z = reg_data_ranef
     if(any(is.na(reg_data_ranef))) {
         model_missing_x_rand = 1
     }
@@ -69,7 +70,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
   Lzeta_cor = 0
   cor_z_item_ind = array(0, dim = c(0))
   cor_z_item_elem_ind = array(0, dim = c(0))
-  z_c = array(0, dim = c(N_long, 0))
+  z_c = array(0, dim = c(N, 0))
 
   if(!is.null(predictors_ranef_corr)) {
     has_treg = 1
@@ -78,51 +79,17 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
     reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
     Lzeta_cor = ncol(reg_data_ranef_cor)
-    z_c = matrix(rep(t(reg_data_ranef_cor), J), ncol = Lzeta_cor, byrow = TRUE)
+    z_c = reg_data_ranef_cor
     l_Lzeta_cor = n_pranef_cor
     u_Lzeta_cor = Lzeta_cor / l_Lzeta_cor
     cor_z_item_ind = rep(1:u_Lzeta_cor, l_Lzeta_cor)
     cor_z_item_elem_ind = rep(1:l_Lzeta_cor, each = u_Lzeta_cor)
   }
 
-  # u_Laeta_cor = 0
-  # l_Laeta_cor = 0
-  # Laeta_cor = 0
-  # cor_a_item_ind = array(0, dim = c(0))
-  # cor_a_item_elem_ind = array(0, dim = c(0))
-  # a_c = 0 #matrix(0, nrow = N_long, ncol = )
-
-
-  # ----------------------- borrowed from bottom of function
-  # any_rand_ind_a = 0
-  # any_rand_ind_d = 0
-  # any_rand_cor_a = 0
-  # any_rand_cor_d = 0
-  # a_c = array(0, dim = c(N_long, 0))
-  # d_c = array(0, dim = c(N_long, 0))
-  # Laeta_sd = 0
-  # alindex = array(0, dim = c(0))
-  # aeta_sd_ind = array(0, dim = c(0))
-  # cor_a_item_ind = array(0, dim = c(0))
-  # cor_a_item_elem_ind = array(0, dim = c(0))
-  # Ldeta_sd = 0
-  # dlindex = array(0, dim = c(0))
-  # deta_sd_ind = array(0, dim = c(0))
-  # cor_d_item_ind = array(0, dim = c(0))
-  # cor_d_item_elem_ind = array(0, dim = c(0))
-  # Laeta_cor = 0
-  # Ldeta_cor = 0
-  # u_Laeta_cor = 0
-  # l_Laeta_cor = 0
-  # u_Ldeta_cor = 0
-  # l_Ldeta_cor = 0
-  # Laeta = 0
-  # Ldeta = 0
-  # ----------------------- borrowed
-
+  # alpha set-up
   any_rand_ind_a = 0
   any_rand_cor_a = 0
-  a_c = array(0, dim = c(N_long, 0))
+  a_c = array(0, dim = c(N, 0))
   Laeta_sd = 0
   alindex = array(0, dim = c(0))
   aeta_sd_ind = array(0, dim = c(0))
@@ -133,92 +100,46 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
   l_Laeta_cor = 0
   Laeta = 0
 
-  if(!is.null(structural_design_ranef$a_predictors_ranef_corr) | !is.null(structural_design_ranef$a_predictors_ranef)) {
+  # delta set-up
+  any_rand_ind_d = 0
+  any_rand_cor_d = 0
+  d_c = array(0, dim = c(N, 0))
+  Ldeta_sd = 0
+  dlindex = array(0, dim = c(0))
+  deta_sd_ind = array(0, dim = c(0))
+  cor_d_item_ind = array(0, dim = c(0))
+  cor_d_item_elem_ind = array(0, dim = c(0))
+  Ldeta_cor = 0
+  u_Ldeta_cor = 0
+  l_Ldeta_cor = 0
+  Ldeta = 0
+
+  if(!is.null(structural_design_ranef$a_predictors_ranef_corr) | !is.null(structural_design_ranef$d_predictors_ranef)) {
 
     if(!is.null(structural_design_ranef$a_predictors_ranef_corr)) {
-      any_rand = 1                           # this needs to be worked through
+      any_rand = 1
       any_rand_cor_a = 1
       a_c = structural_design_ranef$a_predictors_ranef_corr
-      # a_predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
-      # reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
       Laeta_cor = ncol(structural_design_ranef$a_predictors_ranef_corr)
-      a_c = matrix(rep(t(structural_design_ranef$a_predictors_ranef_corr), J), ncol = Laeta_cor, byrow = TRUE)
       l_Laeta_cor = structural_design_ranef$a_n_pranef_cor
       u_Laeta_cor = Laeta_cor / l_Laeta_cor
       cor_a_item_ind = rep(1:u_Laeta_cor, l_Laeta_cor)
       cor_a_item_elem_ind = rep(1:l_Laeta_cor, each = u_Laeta_cor)
     }
 
+    if(!is.null(structural_design_ranef$d_predictors_ranef_corr)) {
+      any_rand = 1
+      any_rand_cor_d = 1
+      d_c = structural_design_ranef$d_predictors_ranef_corr
+      Ldeta_cor = ncol(structural_design_ranef$d_predictors_ranef_corr)
+      l_Ldeta_cor = structural_design_ranef$d_n_pranef_cor
+      u_Ldeta_cor = Ldeta_cor / l_Ldeta_cor
+      cor_d_item_ind = rep(1:u_Ldeta_cor, l_Ldeta_cor)
+      cor_d_item_elem_ind = rep(1:l_Ldeta_cor, each = u_Ldeta_cor)
+    }
+
   }
 
-  # if(is.null(predictors) & is.null(predictors_ranef) & is.null(predictors_ranef_corr)) {
-  #   model_missing_x = 0
-  #   has_treg = 0
-  #   any_rand = 0
-  #   any_rand_ind = 0
-  #   any_rand_cor = 0
-  #   Lzeta_cor = 0
-  # } else {
-  #   if(!is.null(predictors) & !is.null(predictors_ranef) & !is.null(predictors_ranef_corr)) {
-
-  #   } else if(
-
-  #   )
-  #   if(!is.null(predictors) & !is.null(predictors_ranef)) {
-  #     has_treg = 1
-  #     any_rand = 1
-  #     any_rand_ind = 1
-  #     any_rand_cor = 0
-  #     predictor_ulist = unlist(predictors)
-  #     predictor_ranef_ulist = unlist(predictors_ranef)
-  #     reg_data = data[, predictor_ulist, drop = FALSE]
-  #     reg_data_ranef = data[, predictor_ranef_ulist, drop = FALSE]
-  #     K = ncol(reg_data)
-  #     Lzeta = ncol(reg_data_ranef)
-  #     x = matrix(rep(t(reg_data), J), ncol = K, byrow = TRUE)
-  #     z = matrix(rep(t(reg_data_ranef), J), ncol = Lzeta, byrow = TRUE)
-  #     if(any(is.na(reg_data)) | any(is.na(reg_data_ranef))) {
-  #       model_missing_x = 1
-  #     } else {
-  #       model_missing_x = 0
-  #     }
-  #   } else if(!is.null(predictors) & !is.null(predictors_ranef_corr)) {
-  #     has_treg = 1
-  #     any_rand = 1
-  #     any_rand_ind = 0
-  #     any_rand_cor = 1
-  #     predictor_ulist = unlist(predictors)
-  #     predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
-  #     reg_data = data[, predictor_ulist, drop = FALSE]
-  #     reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
-  #     K = ncol(reg_data)
-  #     Lzeta_cor = ncol(reg_data_ranef_cor)
-  #     x = matrix(rep(t(reg_data), J), ncol = K, byrow = TRUE)
-  #     z_c = matrix(rep(t(reg_data_ranef_cor), J), ncol = Lzeta_cor, byrow = TRUE)
-  #     l_Lzeta_cor = n_pranef_cor
-  #     u_Lzeta_cor = Lzeta_cor / l_Lzeta_cor
-  #     cor_z_item_ind = rep(1:u_Lzeta_cor, l_Lzeta_cor)
-  #     cor_z_item_elem_ind = rep(1:l_Lzeta_cor, each = u_Lzeta_cor)
-  #     # if(any(is.na(reg_data)) | any(is.na(reg_data_ranef))) {
-  #     #   model_missing_x = 1
-  #     # } else {
-  #     #   model_missing_x = 0
-  #     # } missing data in the random effect design?
-  #     model_missing_x = 0
-
-  #   } else if(!is.null(predictors_ranef) & is.null(predictors)) {
-  #     any_rand = 1
-  #     any_rand_ind = 1
-  #     any_rand_cor = 0
-  #     predictor_ranef_ulist = unlist(predictors_ranef)
-  #     reg_data = data[, predictor_ulist, drop = FALSE]
-  #   } else {
-  #     any_rand = 0
-  #     any_rand_ind = 0
-  #     any_rand_cor = 0
-  #   }
-  # }
-  
   if(model_missing_y == 0) {
     Ncateg_max = max(irt_data)
     Ncategi = as.integer(apply(irt_data, 2, max))
@@ -315,133 +236,13 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     Lzeta = 0
     Lzeta_sd = 0
     zeta_sd_ind = array(0, dim = c(0))
-    z = matrix(0, nrow = N_long, ncol = Lzeta)
+    z = matrix(0, nrow = N, ncol = Lzeta)
     zeta_dstart = array(0, dim = c(0))
     zeta_dend = array(0, dim = c(0))
   }
   if(!is.null(predictors_ranef_corr)) {
     regress = 1
   }
-
-  # if(is.null(predictors) & is.null(predictors_ranef) & is.null(predictors_ranef_corr)) {
-  #   regress = 0
-  # } else {
-  #   if(!is.null(predictors) & !is.null(predictors_ranef)) {
-  #     regress = 1
-  #     start_index = 1
-  #     if(h2_dims > 0) {
-  #       beta_dstart = numeric(1)
-  #       beta_dend = numeric(1)
-  #       beta_dstart[1] = start_index
-  #       beta_dend[1] = start_index + length(predictors[[1]]) - 1
-  #       start_index = start_index + length(predictors[[1]])
-  #       # beta_dstart = array(beta_dstart, dim = 1)
-  #       # beta_dend = array(beta_dend, dim = 1)
-  #     } else {
-  #       start_index = 1
-  #       beta_dstart = numeric(D)
-  #       beta_dend = numeric(D)
-  #       for(d in 1:D) {
-  #         beta_dstart[d] = start_index
-  #         beta_dend[d] = start_index + length(predictors[[d]]) - 1
-  #         start_index = start_index + length(predictors[[d]])
-  #       }
-  #       beta_dstart = array(beta_dstart, dim = D)
-  #       beta_dend = array(beta_dend, dim = D)
-
-  #       start_index = 1
-  #       zeta_dstart = numeric(D)
-  #       zeta_dend = numeric(D)
-  #       for(d in 1:D) {
-  #         zeta_dstart[d] = start_index
-  #         zeta_dend[d] = start_index + length(predictors_ranef[[d]]) - 1
-  #         start_index = start_index + length(predictors_ranef[[d]])
-  #       }
-  #       zeta_dstart = array(zeta_dstart, dim = D)
-  #       zeta_dend = array(zeta_dend, dim = D)
-
-  #       Lzeta_sd = length(unique(ranef_id))
-  #       zeta_sd_ind = ranef_id
-  #     }
-
-  #     if(model_missing_x == 0) {
-  #       reg_miss = is.na(reg_data) * 1
-  #       x_miss = matrix(rep(t(reg_miss), J), ncol = K, byrow = TRUE)
-  #       x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
-  #     } else {
-  #       Lxmiss = sum(is.na(reg_data))
-  #       x_miss_id = 1:Lxmiss
-  #       reg_miss = is.na(reg_data) * 1
-  #       reg_miss = as.vector(t(reg_miss))
-  #       reg_miss[reg_miss == 1] = x_miss_id
-  #       reg_miss = matrix(reg_miss, nrow = N, byrow = TRUE)
-  #       x_miss = is.na(x) * 1
-  #       x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
-  #       x[is.na(x)] = 0
-  #     }
-  #   } else if(!is.null(predictors) & !is.null(predictors_ranef_corr)) {
-  #     regress = 1
-  #     Lzeta = 1
-  #     Lzeta_sd = 0
-  #     zeta_sd_ind = array(0, dim = 1)
-  #     z = matrix(0, nrow = N_long, ncol = Lzeta)
-  #     start_index = 1
-  #     if(h2_dims > 0) {
-  #       # beta_dstart = numeric(1)
-  #       # beta_dend = numeric(1)
-  #       # beta_dstart[1] = start_index
-  #       # beta_dend[1] = start_index + length(predictors[[1]]) - 1
-  #       # start_index = start_index + length(predictors[[1]])
-  #       # # beta_dstart = array(beta_dstart, dim = 1)
-  #       # # beta_dend = array(beta_dend, dim = 1)
-  #     } else {
-  #       beta_dstart = numeric(D)
-  #       beta_dend = numeric(D)
-  #       for(d in 1:D) {
-  #         beta_dstart[d] = start_index
-  #         beta_dend[d] = start_index + length(predictors[[d]]) - 1
-  #         start_index = start_index + length(predictors[[d]])
-  #       }
-  #       beta_dstart = array(beta_dstart, dim = D)
-  #       beta_dend = array(beta_dend, dim = D)
-
-  #       # for multiple dimensions
-  #       start_index = 1
-  #       # zeta_dstart = numeric(D)
-  #       # zeta_dend = numeric(D)
-  #       # for(d in 1:D) {
-  #         # zeta_dstart[d] = start_index
-  #         # zeta_dend[d] = start_index + length(predictors_ranef[[d]]) - 1
-  #         # start_index = start_index + length(predictors_ranef[[d]])
-  #       # }
-  #       # zeta_dstart = array(zeta_dstart, dim = D)
-  #       # zeta_dend = array(zeta_dend, dim = D)
-  #       zeta_dstart = array(1, dim = D)
-  #       zeta_dend = array(1, dim = D)
-  #     }
-
-  #     # if(model_missing_x == 0) {
-  #     #   reg_miss = is.na(reg_data) * 1
-  #     #   x_miss = matrix(rep(t(reg_miss), J), ncol = K, byrow = TRUE)
-  #     #   x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
-  #     # } else {
-  #     #   Lxmiss = sum(is.na(reg_data))
-  #     #   x_miss_id = 1:Lxmiss
-  #     #   reg_miss = is.na(reg_data) * 1
-  #     #   reg_miss = as.vector(t(reg_miss))
-  #     #   reg_miss[reg_miss == 1] = x_miss_id
-  #     #   reg_miss = matrix(reg_miss, nrow = N, byrow = TRUE)
-  #     #   x_miss = is.na(x) * 1
-  #     #   x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
-  #     #   x[is.na(x)] = 0
-  #     # }
-  #   } 
-  #   # else if(!is.null(predictors_ranef) & is.null(predictors)) {
-      
-  #   # } else {
-      
-  #   # }
-  # }
 
   # sample weights
   if(is.null(weights)) {
@@ -498,34 +299,6 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     d_design = matrix(1, nrow = N, ncol = 1)
     nDelta_r = 1
   }
-
-  # structural_design_ranef = list(a_predictors = NULL, a_predictors_ranef = NULL, a_ranef_id = NULL, a_predictors_ranef_corr = NULL, a_n_pranef_cor = NULL,
-  #                                  d_predictors = NULL, d_predictors_ranef = NULL, d_ranef_id = NULL, d_predictors_ranef_corr = NULL, d_n_pranef_cor = NULL)
-  
-  any_rand_ind_a = 0
-  any_rand_ind_d = 0
-  # any_rand_cor_a = 0
-  any_rand_cor_d = 0
-  # a_c = array(0, dim = c(N_long, 0))
-  d_c = array(0, dim = c(N_long, 0))
-  Laeta_sd = 0
-  alindex = array(0, dim = c(0))
-  aeta_sd_ind = array(0, dim = c(0))
-  # cor_a_item_ind = array(0, dim = c(0))
-  # cor_a_item_elem_ind = array(0, dim = c(0))
-  Ldeta_sd = 0
-  dlindex = array(0, dim = c(0))
-  deta_sd_ind = array(0, dim = c(0))
-  cor_d_item_ind = array(0, dim = c(0))
-  cor_d_item_elem_ind = array(0, dim = c(0))
-  # Laeta_cor = 0
-  Ldeta_cor = 0
-  # u_Laeta_cor = 0
-  # l_Laeta_cor = 0
-  u_Ldeta_cor = 0
-  l_Ldeta_cor = 0
-  Laeta = 0
-  Ldeta = 0
 
   if(D == 1) {
     standata = list(N = N, J = J, K = K, any_rand = any_rand, any_rand_ind = any_rand_ind, any_rand_cor = any_rand_cor, 
