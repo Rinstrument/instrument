@@ -54,6 +54,8 @@ data {
   int<lower=0> Laeta_cor;
   int<lower=0> Ldeta_cor;
   matrix[N, Lzeta] z;   // design matrix for the uncorrelated random effects
+  matrix[N, Laeta] ar;
+  matrix[N, Ldeta] dr;
 
   int<lower=0> Lzeta_sd;     // number of sd pars
   int<lower=0> zeta_sd_ind[Lzeta]; // sd index for each column of z
@@ -254,7 +256,7 @@ model {
       // // }
       if(any_rand_ind_a) {
         for(k in 1:Laeta) {
-          ab += aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
+          ab += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
         }
       }
       if(any_rand_cor_a) {
@@ -264,7 +266,7 @@ model {
       }
       if(any_rand_ind_d) {
         for(k in 1:Ldeta) {
-          db += deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
+          db += dr[nn[i], k] * deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
         }
       }
       if(any_rand_cor_d) {

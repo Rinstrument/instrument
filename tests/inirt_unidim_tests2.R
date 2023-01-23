@@ -417,6 +417,156 @@ sim_data$delta[,2]
 # --------------------------
 devtools::install(dependencies = FALSE)
 
+# Test 4: beta regression, fixed effects, alpha fixed effects + one random effects (with 20 levels), delta fixed effects
+n = 800
+ncat = 4
+j = 25
+d = 1
+k = 2
+uk = 2
+ncategi = c(rep(ncat, j))
+ncateg_max = max(ncategi)
+alpha = matrix(0, d, j)
+a_design = as.matrix(data.frame(x1 = rep(1, n), x2 = runif(n,-1,1)))
+b_alpha = c(0.8, -0.6)
+for(dd in 1:d) {
+  alpha[dd, ] = sort(runif(j, 0.2, 1.5))
+}
+delta = matrix(nrow = j, ncol = ncateg_max - 1)
+d_design = as.matrix(data.frame(x1 = rep(1, n), x2 = runif(n,-1,1)))
+b_delta = c(-1.3, 0.4)
+for(jj in 1:j) {
+  delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
+}
+delta = cbind(0, delta)
+theta = matrix(0, nrow = n, ncol = d)
+for(dd in 1:d) {
+  theta[, dd] = rnorm(n, 0, 1)
+}
+beta = c(1.0, 0.4)
+predictors = list(c(1, 2))
+start_index = 1
+beta_dstart = numeric(d)
+beta_dend = numeric(d)
+for(dd in 1:d) {
+  beta_dstart[dd] = start_index
+  beta_dend[dd] = start_index + length(predictors[[dd]]) - 1
+  start_index = start_index + length(predictors[[dd]])
+}
+beta_mat = matrix(0, nrow = k, ncol = d)
+index = 1
+for(dd in 1:d) {
+  for(i in beta_dstart[dd]:beta_dend[dd]) {
+    beta_mat[i, dd] = beta[index]
+    index = index + 1
+  }
+}
+x = matrix(data = runif(uk*n,-1,1), nrow = n, ncol = uk)
+Lz = 40
+z = matrix(rep(diag(40), each = 20), nrow = Lz*20)
+# z = cbind(z, z[gtools::permute(1:nrow(z)), ])
+zeta_sd = 2
+# zeta = rnorm(Lz*2, 0, sd = zeta_sd)
+zeta = rnorm(Lz, 0, sd = zeta_sd)
+data = matrix(0, nrow = n, ncol = j)
+for(i in 1:n) {
+  for(jj in 1:j) {
+    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha %*% a_design[i,])*(theta[i, ] + x[i, ] %*% beta_mat)) - (delta[jj, ] + as.vector(b_delta %*% d_design[i,]) + z[i, ] %*% zeta)))))
+    prb[1] = 1.0
+    prb = c(prb, 0)
+    prb = prb[-length(prb)] - prb[2:length(prb)]
+    data[i, jj] = sample(1:ncategi[[jj]], 1, prob = prb)
+  }
+}
+data = cbind(data, x, z)
+# colnames(data) = c(paste0("x", 1:j), paste0("pred", 1:2), paste0("z", 1:(2*Lz)))
+colnames(data) = c(paste0("x", 1:j), paste0("pred", 1:2), paste0("z", 1:(Lz)))
+# ranef_id = c(rep(1, ncol(z)/2), rep(2, ncol(z)/2))
+ranef_id = c(rep(1, ncol(z)))
+dims = 1
+item_id = 1:j
+predictors_ranef = list(1:ncol(z) + j + k)
+
+sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, 
+  beta = beta, theta = theta, zeta = zeta)
+fit_data = list(data = data, item_id = item_id, predictors = predictors, 
+  predictors_ranef = predictors_ranef, alpha_data = a_design, delta_data = d_design)
+
+rm(list = setdiff(ls(), c("fit_data", "sim_data")))
+ls()
+
+data = fit_data$data
+alpha_data = fit_data$alpha_data
+delta_data = fit_data$delta_data
+
+# data = data; item_id = 1:25; dims = 1; predictors = list(c(26, 27)); 
+# structural_design = list(alpha = alpha_data, delta = delta_data);
+# structural_design_ranef = list(a_predictors_ranef = data[, 28:67], a_ranef_id = c(rep(1, 40)));
+# method = "vb"; iter = 7000; tol_rel_obj = 2e-4
+
+fit = inirt::inirt(data = data, item_id = 1:25, dims = 1, predictors = list(c(26, 27)), 
+  structural_design = list(alpha = alpha_data, delta = delta_data),
+  structural_design_ranef = list(d_predictors_ranef = data[, 28:67], d_ranef_id = c(rep(1, 40))),
+  method = "vb", iter = 7000, tol_rel_obj = 2e-4)
+# fit = inirt::inirt(data = data, item_id = 1:25, dims = 1, predictors = list(c(26, 27)), 
+#   predictors_ranef = list(28:107), ranef_id = c(rep(1, 40), rep(2, 40)),
+#   structural_design = list(alpha = alpha_data, delta = delta_data), method = "vb", 
+#   iter = 7000, tol_rel_obj = 2e-4)
+
+fit@model_pars
+rstan::summary(fit, pars = "delta_r_l")$summary
+rstan::summary(fit, pars = "delta_l")$summary
+rstan::summary(fit, pars = "alpha_r_l")$summary
+rstan::summary(fit, pars = "alpha_l")$summary
+
+rstan::summary(fit, pars = "beta")$summary
+rstan::summary(fit, pars = "beta_l")$summary
+
+rstan::summary(fit, pars = "aeta_l")$summary[,1]
+rstan::summary(fit, pars = "aeta_l_sd")$summary[,1]
+
+
+
+cor(sim_data$zeta[1:40], rstan::summary(fit, pars = "deta_l")$summary[,1])
+plot(sim_data$zeta[1:40], rstan::summary(fit, pars = "deta_l")$summary[,1])
+
+rstan::summary(fit, pars = "deta_l_sd")$summary[,1]
+
+cor(sim_data$zeta[1:40], rstan::summary(fit, pars = "zeta")$summary[1:40,1])
+cor(sim_data$zeta[41:80], rstan::summary(fit, pars = "zeta")$summary[41:80,1])
+plot(sim_data$zeta[1:40], rstan::summary(fit, pars = "zeta")$summary[1:40,1])
+plot(sim_data$zeta[1:40], rstan::summary(fit, pars = "zeta")$summary[1:40,1])
+rstan::summary(fit, pars = "zeta_l_sd")$summary
+
+
+fit@model_pars
+cor(sim_data$alpha[1,], rstan::summary(fit, pars = "alpha")$summary[,1])
+rstan::summary(fit, pars = "alpha_r_l")$summary[,1]
+mean(sim_data$b_alpha)
+mean(rstan::summary(fit, pars = "alpha_r_l")$summary[,1] + rstan::summary(fit, pars = "alpha")$summary[,1])
+
+
+plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
+cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
+
+
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 25, byrow = TRUE)
+cor(dest[,1], sim_data$delta[,2])
+
+mean(dest)
+mean(sim_data$delta[,-1])
+rstan::summary(fit, pars = c("delta_r_l"))$summary[,1]
+dest[,1] + sim_data$b_delta
+sim_data$delta[,2]
+
+
+
+
+
+
+# --------------------------
+devtools::install(dependencies = FALSE)
+
 # Test 5: beta regression, fixed effects + two correlated random effects (intercept, slope), alpha fixed effects, delta fixed effects
 n = 800
 ncat = 4

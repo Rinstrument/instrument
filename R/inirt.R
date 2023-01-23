@@ -18,7 +18,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     predictors_ranef_corr = NULL, n_pranef_cor = NULL, dims = 1, h2_dims = 0, h2_dim_id = NULL, structural_design = NULL, 
     structural_design_ranef = list(a_predictors = NULL, a_predictors_ranef = NULL, a_ranef_id = NULL, a_predictors_ranef_corr = NULL, a_n_pranef_cor = NULL,
                                    d_predictors = NULL, d_predictors_ranef = NULL, d_ranef_id = NULL, d_predictors_ranef_corr = NULL, d_n_pranef_cor = NULL),
-    method = c("vb", "hmc"), weights = NULL, vb_algorithm = "fullrank", ...) {
+    method = c("vb", "hmc"), weights = NULL, ...) {
   
   irt_data = data[, item_id, drop = FALSE]
   N = nrow(irt_data)
@@ -86,33 +86,70 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     cor_z_item_elem_ind = rep(1:l_Lzeta_cor, each = u_Lzeta_cor)
   }
 
-  # alpha set-up
+  # ar = array(0, dim = c(N, 0))
+  # dr = array(0, dim = c(N, 0))
+
+  # uncorrelate random effect input quantities for the alpha, delta regression models
+  alindex = array(0, dim = c(0))
   any_rand_ind_a = 0
+  Laeta = 0
+  Laeta_sd = 0
+  aeta_sd_ind = array(0, dim = c(0))
+  ar = array(0, dim = c(N, Laeta))
+  
+  dlindex = array(0, dim = c(0))
+  any_rand_ind_d = 0
+  Ldeta = 0
+  Ldeta_sd = 0
+  deta_sd_ind = array(0, dim = c(0))
+  dr = array(0, dim = c(N, Ldeta))
+
+  # uncorrelated random effects on alpha, delta parameters
+  if(!is.null(structural_design_ranef$a_predictors_ranef) | !is.null(structural_design_ranef$d_predictors_ranef)) {
+    
+    if(!is.null(structural_design_ranef$a_predictors_ranef)) {
+
+      any_rand_ind_a = 1
+      ar = structural_design_ranef$a_predictors_ranef
+      Laeta = ncol(ar)
+      a_ranef_id = structural_design_ranef$a_ranef_id
+      Laeta_sd = length(unique(a_ranef_id))
+      aeta_sd_ind = a_ranef_id
+      alindex = 1:Laeta
+
+    }
+
+    if(!is.null(structural_design_ranef$d_predictors_ranef)) {
+
+      any_rand_ind_d = 1
+      dr = structural_design_ranef$d_predictors_ranef
+      Ldeta = ncol(dr)
+      d_ranef_id = structural_design_ranef$d_ranef_id
+      Ldeta_sd = length(unique(d_ranef_id))
+      deta_sd_ind = d_ranef_id
+      dlindex = 1:Ldeta
+
+    }
+    
+  }
+
+  # alpha set-up
   any_rand_cor_a = 0
   a_c = array(0, dim = c(N, 0))
-  Laeta_sd = 0
-  alindex = array(0, dim = c(0))
-  aeta_sd_ind = array(0, dim = c(0))
   cor_a_item_ind = array(0, dim = c(0))
   cor_a_item_elem_ind = array(0, dim = c(0))
   Laeta_cor = 0
   u_Laeta_cor = 0
   l_Laeta_cor = 0
-  Laeta = 0
 
   # delta set-up
-  any_rand_ind_d = 0
   any_rand_cor_d = 0
   d_c = array(0, dim = c(N, 0))
-  Ldeta_sd = 0
-  dlindex = array(0, dim = c(0))
-  deta_sd_ind = array(0, dim = c(0))
   cor_d_item_ind = array(0, dim = c(0))
   cor_d_item_elem_ind = array(0, dim = c(0))
   Ldeta_cor = 0
   u_Ldeta_cor = 0
   l_Ldeta_cor = 0
-  Ldeta = 0
 
   if(!is.null(structural_design_ranef$a_predictors_ranef_corr) | !is.null(structural_design_ranef$d_predictors_ranef)) {
 
@@ -218,6 +255,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
     }
   }
 
+  # Independent random effects in the theta regression (theta ~ rand1 + rand2 + ....)
   if(!is.null(predictors_ranef)) {
     regress = 1
     start_index = 1
@@ -314,6 +352,8 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
         Laeta_cor = Laeta_cor, 
         Ldeta_cor = Ldeta_cor, 
         z = z, 
+        ar = ar,
+        dr = dr,
         Lzeta_sd = Lzeta_sd, zeta_sd_ind = zeta_sd_ind, cor_z_item_ind = cor_z_item_ind, cor_z_item_elem_ind = cor_z_item_elem_ind, 
         Laeta_sd = Laeta_sd, alindex = alindex, aeta_sd_ind = aeta_sd_ind, cor_a_item_ind = cor_a_item_ind, cor_a_item_elem_ind = cor_a_item_elem_ind,
         Ldeta_sd = Ldeta_sd, dlindex = dlindex, deta_sd_ind = deta_sd_ind, cor_d_item_ind = cor_d_item_ind, cor_d_item_elem_ind = cor_d_item_elem_ind,
@@ -343,7 +383,7 @@ inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_rane
 
   # Choose a model estimateion method: variational inference or HMC
   if(method[1] == "vb") {
-    out = rstan::vb(modl, data = standata, algorithm = vb_algorithm, ...)
+    out = rstan::vb(modl, data = standata, ...)
   } else if(method[1] == "hmc") {
     out = rstan::sampling(modl, data = standata, ...)
   } else {
