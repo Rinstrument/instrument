@@ -522,8 +522,8 @@ rstan::summary(fit, pars = "alpha_l")$summary
 rstan::summary(fit, pars = "beta")$summary
 rstan::summary(fit, pars = "beta_l")$summary
 
-rstan::summary(fit, pars = "aeta_l")$summary[,1]
-rstan::summary(fit, pars = "aeta_l_sd")$summary[,1]
+rstan::summary(fit, pars = "deta_l")$summary[,1]
+rstan::summary(fit, pars = "deta_l_sd")$summary[,1]
 
 
 
