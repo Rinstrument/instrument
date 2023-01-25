@@ -99,7 +99,7 @@ mod_theta = str_squish(str_split(mod_theta, c("\\+|\\,"))[[1]])
 mod_theta = str_squish(unlist(str_split(str_remove_all(mod_theta, "^c\\(|\\)"), ",")))
 mod_theta
 mod_theta[1]
-data[, eval(parse(text = mod_theta[1]))]
+data[, eval(parse(text = mod_theta[2]))]
 
 
 

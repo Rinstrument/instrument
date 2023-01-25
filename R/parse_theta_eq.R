@@ -1,8 +1,45 @@
+#' Parse Theta Equation for inirt Model
+#' 
+#' Parse an inirt model theta equation. For internal use only.
+#' This function is called by the inirt::inirt() function to parse
+#' a user specified theta equation. See examples on this page.
+#' 
+#' @param model string specifying regression formula
+#' @param data data frame 
+#' @param exploratory do exploratory multidimensional IRT? TRUE/FALSE
+#' 
+#' @return a list with the named elements:
+#' 
+#' @examples 
+#' 
+#' # data = as.data.frame(matrix(0, 10, 50))
+#' names(data) = paste0("x", 1:50)
+#' data$School = paste0("s", rep(1:5, each = 2))
+#' data$age = runif(10, 10, 20)
+#' mod_theta = "c(1:10, 20:35) + x12 + x13 + x14"
+#'   mod_theta = "x12 + x13 + x14"
+#'   mod_theta = "c(1:10, 20:35)"
+#' mod = "t1 = c(1:10, 20:35) + x12 + x13 + x14"
+#' mod = "t1 = c(1:10, 20:35)"
+#' mod = "t1 = c(1:10)"
+#' mod = "t1 = x12 + x13 + x14"
+#' mod = "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8"
+#' mod = "t1 = x1 + c(20:35)"
+#' mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8")
+#' mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", 
+#'   "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8", "t4 = t1 + t2 + t3")
+#' parse_regression_eq(mod, data = data)
+#' mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8")
+#' parse_regression_eq(mod, data = data)
+#' mod = c("t1 = c(1:50)", "t2 = c(1:50)", "t3 = c(1:50)", "t4 = c(1:50)")
+#' parse_regression_eq(mod, data = data, exploratory = TRUE)
+#' 
+#' 
+#'
+#'
+#'
+parse_regression_eq = function(model, data, exploratory = FALSE) {
 
-
-parse_regression_eq = function(model, data) {
-
-  model  = mod
   if(!all(str_detect(model, "="))) {
     stop("latent factor equations require a = between factor name and items. E.g. t1 = c(1:25).")
   }
@@ -17,12 +54,13 @@ parse_regression_eq = function(model, data) {
   item_id = NULL
   dims = length(first_order)
   second_order = NULL
+  h2_dims = NULL
   h2_dim_id = NULL
+  dim_id = NULL
   if(any(model_order)) {
     second_order = models[model_order]
     h2_dims = (!is.null(second_order)) * 1
     for(i in 1:length(first_order)) {
-      # model = str_squish(unlist(str_split(model, "="))[2])
       model = str_squish(str_split(first_order[i], c("\\+|\\,"))[[1]])
       model = str_squish(unlist(str_split(str_remove_all(model, "^c\\(|\\)"), ",")))
 
@@ -42,49 +80,72 @@ parse_regression_eq = function(model, data) {
     }
   } else {
 
-    model = str_squish(unlist(str_split(model, "="))[2])
-    model = str_squish(str_split(model, c("\\+|\\,"))[[1]])
-    model = str_squish(unlist(str_split(str_remove_all(model, "^c\\(|\\)"), ",")))
+    if(exploratory == TRUE) {
+      model = str_squish(str_split(first_order[1], c("\\+|\\,"))[[1]])
+      model = str_squish(unlist(str_split(str_remove_all(model, "^c\\(|\\)"), ",")))
 
-    presence = str_detect(model, ":")
+      presence = str_detect(model, ":")
 
-    for(i in 1:length(model)) {
-      if(presence[i]) {
-        item_id = c(item_id, eval(parse(text = model[i])))
-      } else {
-        name_id = which(names(data) %in% model[i])
-        item_id = c(item_id, name_id)
+      for(j in 1:length(model)) {
+        if(presence[j]) {
+          new_items = eval(parse(text = model[j]))
+          item_id = c(item_id, new_items)
+        } else {
+          name_id = which(names(data) %in% model[j])
+          item_id = c(item_id, name_id)
+        }
+      }
+    } else {
+      for(i in 1:length(first_order)) {
+        model = str_squish(str_split(first_order[i], c("\\+|\\,"))[[1]])
+        model = str_squish(unlist(str_split(str_remove_all(model, "^c\\(|\\)"), ",")))
+
+        presence = str_detect(model, ":")
+
+        for(j in 1:length(model)) {
+          if(presence[j]) {
+            new_items = eval(parse(text = model[j]))
+            item_id = c(item_id, new_items)
+            dim_id = c(dim_id, rep(i, length(new_items)))
+          } else {
+            name_id = which(names(data) %in% model[j])
+            item_id = c(item_id, name_id)
+            dim_id = c(dim_id, rep(i, 1))
+          }
+        }
       }
     }
-
   }
 
-  return(list(item_id = item_id, dims = dims, h2_dims = h2_dims, 
+  return(list(item_id = item_id, dims = dims, dim_id = dim_id, h2_dims = h2_dims, 
     h2_dim_id = h2_dim_id))
 
 }
 
 
-data = as.data.frame(matrix(0, 10, 50))
-names(data) = paste0("x", 1:50)
-data$School = paste0("s", rep(1:5, each = 2))
-data$age = runif(10, 10, 20)
+# data = as.data.frame(matrix(0, 10, 50))
+# names(data) = paste0("x", 1:50)
+# data$School = paste0("s", rep(1:5, each = 2))
+# data$age = runif(10, 10, 20)
 
-mod_theta = "c(1:10, 20:35) + x12 + x13 + x14"
-  mod_theta = "x12 + x13 + x14"
-  mod_theta = "c(1:10, 20:35)"
-mod = "t1 = c(1:10, 20:35) + x12 + x13 + x14"
-mod = "t1 = c(1:10, 20:35)"
-mod = "t1 = c(1:10)"
-mod = "t1 = x12 + x13 + x14"
-mod = "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8"
-mod = "t1 = x1 + c(20:35)"
+# mod_theta = "c(1:10, 20:35) + x12 + x13 + x14"
+#   mod_theta = "x12 + x13 + x14"
+#   mod_theta = "c(1:10, 20:35)"
+# mod = "t1 = c(1:10, 20:35) + x12 + x13 + x14"
+# mod = "t1 = c(1:10, 20:35)"
+# mod = "t1 = c(1:10)"
+# mod = "t1 = x12 + x13 + x14"
+# mod = "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8"
+# mod = "t1 = x1 + c(20:35)"
 
-mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8")
+# mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8")
 
-mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", 
-  "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8", "t4 = t1 + t2 + t3")
-parse_regression_eq(mod, data = data)
+# mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", 
+#   "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8", "t4 = t1 + t2 + t3")
+# parse_regression_eq(mod, data = data)
 
-mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8")
-parse_regression_eq(mod, data = data)
+# mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8")
+# parse_regression_eq(mod, data = data)
+
+# mod = c("t1 = c(1:50)", "t2 = c(1:50)", "t3 = c(1:50)", "t4 = c(1:50)")
+# parse_regression_eq(mod, data = data, exploratory = TRUE)
