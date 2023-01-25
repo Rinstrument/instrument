@@ -90,3 +90,31 @@ parse_regression_eq = function(model, data) {
     ranef_id = ranef_id, predictors_ranef_cor = predictors_ranef_cor, 
     n_pranef_cor = n_pranef_cor))
 }
+
+data = as.data.frame(matrix(0, 10, 20))
+names(data) = paste0("x", 1:20)
+data$School = paste0("s", rep(1:5, each = 2))
+data$age = runif(10, 10, 20)
+
+reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + x12 + x13 + x15", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School)", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ 0", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ x12 + x13 + x15", data = data)
+
+reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + c(12:20)", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + c(22, 24)", data = data)
+
+# Also, need to add multiline equation functionality
+reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + 
+                                            x12 + x13 + x15", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + 
+                                          c(22, 24)", data = data)
+
+model = "t1 ~ c(12:18) + 
+                                          c(22, 24)"
+model
+model = str_replace_all(model, pattern=" ", repl="") # smarter: remove all whitespace right away, then deal with other issues
+model
+model = str_replace_all(model, "[\r\n]" , "") # remove +\n combination
+model # left with correct model
