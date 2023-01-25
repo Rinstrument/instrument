@@ -25,6 +25,15 @@ library(stringr)
 mod = unlist(str_split(mod, "\\n"))
 mod
 
+for(i in 1:length(mod)) {
+  input_data = vector(mode = "list", length = length(mod))
+  if(str_detect("~", mod[i])) {
+    input_data[[i]] = parse_regression_eq(model = mod[i], data = data)
+  } else if(str_detect("=", mod[i])) {
+    input_data[[i]] = parse_theta_eq(model = mod[i], data = data)
+  }
+}
+
 mod_alpha_reg = str_detect(mod, "alpha")
 mod_alpha_reg = mod[mod_alpha_reg]
 mod_alpha_reg
@@ -108,37 +117,28 @@ model = "t1 ~ (1 + age|School) + (1| City) + x12 + x13 + x15"
 
 parse_regression_eq = function(model, data) {
 
+  predictors = NULL
+  predictors_ranef = NULL
+  ranef_id = NULL
+  predictors_ranef_cor = NULL
+  n_pranef_cor = NULL
+
   if(!str_detect(model, "~")) {
     stop("regression equations require a ~ between response and predictors. E.g. a ~ b.")
   }
 
   model = unlist(str_split(model, "~"))
-
   mod_lhs = str_squish(model[1])
-  mod_lhs
-
   mod_rhs = str_squish(model[2])
-  mod_rhs
-
-  # mod_ranef = str_extract_all(mod_rhs, "\\([^()]+\\)")[[1]]
-  # mod_ranef
-
   mod_fixed = str_replace_all(mod_rhs, "\\s*\\([^\\)]+\\)", "")
   mod_fixed = str_subset(str_squish(unlist(str_split(mod_fixed, "\\+"))), ".+")
-  mod_fixed
 
-  # mod_fixed = unlist(str_split(model, "~"))[2]
-  # mod_fixed = str_squish(unlist(str_split(mod_fixed, "\\+")))
-  # mod_fixed = str_remove_all(mod_fixed, "(?<=\\().*?(?=\\))")
-  # mod_fixed = mod_fixed[!str_detect(mod_fixed, "\\(")]
-  # mod_fixed
-
-  predictors = which(names(data) %in% mod_fixed)
-  predictors
+  if(length(mod_fixed[1]) > 0 & mod_fixed[1] != "0") {
+    predictors = which(names(data) %in% mod_fixed)
+  }
 
   mod_ranef = unlist(str_match_all(mod_rhs, "(?<=\\().*?(?=\\))"))
   mod_ranef = str_split(mod_ranef, "\\|")
-  mod_ranef
 
   if(length(mod_ranef) > 0) {
     ranef_id = c()
@@ -149,13 +149,15 @@ parse_regression_eq = function(model, data) {
       M = table(stack(setNames(strsplit(paste0(var, data[[var]]), "/"), 1:10))[2:1])
       M = matrix(M, ncol = ncol(M), dimnames = dimnames(M))
       lhs = str_squish(str_split(current[1], "\\+")[[1]])
-      if(length(lhs > 1)) {
+      if(length(lhs) > 1) {
         n_pranef_cor = length(lhs)
         for(j in 2:n_pranef_cor) {
           New_M = M
           New_M[M == 1] = data[[lhs[j]]]
-          M = cbind(M, )
+          M = cbind(M, New_M)
         }
+        predictors_ranef_cor = c(predictors_ranef_cor, (ncol(data) + 1):(ncol(data) + ncol(M)))
+        data = cbind(data, M)
       } else {
         ranef_id = c(ranef_id, rep(i, ncol(M)))
         predictors_ranef = c(predictors_ranef, (ncol(data) + 1):(ncol(data) + ncol(M)))
@@ -170,9 +172,9 @@ parse_regression_eq = function(model, data) {
     }
   }
 
-  return(list(data, predictors, predictors_ranef, ranef_id
-              # predictors_ranef_cor, n_pranef_cor
-              ))
+  return(list(data = data, predictors = predictors, predictors_ranef = predictors_ranef, 
+    ranef_id = ranef_id, predictors_ranef_cor = predictors_ranef_cor, 
+    n_pranef_cor = n_pranef_cor))
 }
 
 
@@ -181,8 +183,11 @@ names(data) = paste0("x", 1:20)
 data$School = paste0("s", rep(1:5, each = 2))
 data$age = runif(10, 10, 20)
 
-parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + x12 + x13 + x15", data = data)
-parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + x12 + x13 + x15", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School)", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ 0", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ x12 + x13 + x15", data = data)
 
 data, item_id, model = NULL, predictors = NULL, predictors_ranef = NULL, ranef_id = NULL, 
     predictors_ranef_corr = NULL, n_pranef_cor = NULL, dims = 1, h2_dims = 0, h2_dim_id = NULL, structural_design = NULL, 
