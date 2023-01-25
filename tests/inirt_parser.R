@@ -3,6 +3,13 @@ mod = "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
        t1 ~ (1 + age|School) + x12 + x13 + x15
        alpha ~ a1 + a2
        delta ~ d1 + d2 + d3 + d4"
+# how about definitions that carry to the next line??? - need to parse those differently
+mod = "t1 = c(1:50)
+       t1 ~ (1|School) + (age|School) + x12 + x13 + x15
+       alpha ~ a1 + a2
+       delta ~ d1 + d2 + d3 + d4"
+       #t1 = c(1:10, 20:35)
+       #t1 = c(1,2,5,6,10,12,14,20:30)
 
 mod = "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
        t1 ~ (1|School) + (age|School) + x12 + x13 + x15
@@ -45,6 +52,56 @@ mod_delta_reg
 mod_theta = str_detect(mod, " = ")
 mod_theta = mod[mod_theta]
 mod_theta
+
+mod = "t1 = c(1:10, 20:35) + x12 + x13 + x14
+       t1 ~ (1|School) + (age|School) + x12 + x13 + x15
+       alpha ~ a1 + a2
+       delta ~ d1 + d2 + d3 + d4"
+       #t1 = c(1:10, 20:35)
+       #t1 = c(1,2,5,6,10,12,14,20:30)
+
+mod = unlist(str_split(mod, "\\n"))
+mod
+
+mod_theta = str_detect(mod, " = ")
+mod_theta = mod[mod_theta]
+mod_theta
+
+mod_theta = str_squish(unlist(str_split(mod_theta, "="))[2])
+mod_theta
+
+# mod_theta_diff_range = str_remove_all(mod_theta, "(?<=c\\().*?(?=\\))")
+# mod_theta = paste(Reduce(setdiff, strsplit(c(mod_theta, mod_theta_diff_range), split = "")), collapse = "")
+# use str_remove instead of line above
+mod_theta
+str_replace_all("c(1,2,3)", mod_theta_diff_range, "")
+str_remove_all("c(1,2,3)", "^c\\(|\\)$")
+str_remove_all(mod_theta, "^c\\(|\\)$")
+
+
+# grab the [:] notation for specifying a model!
+mod_theta = "c(1:10, 20:35) + x12 + x13 + x14"
+str_remove_all(mod_theta, "^c\\(|\\)")
+
+
+
+item_id = str_squish(unlist(str_split(unlist(str_split(mod_theta, "="))[2], "\\+")))
+data = as.data.frame(matrix(0, 10, 20))
+names(data) = paste0("x", 1:20)
+data$School = paste0("s", rep(1:5, each = 2))
+data$age = runif(10, 10, 20)
+
+# new theta parser!
+mod_theta = "c(1:10, 20:35) + x12 + x13 + x14"
+mod_theta = "x12 + x13 + x14"
+mod_theta = "c(1:10, 20:35)"
+mod_theta = str_squish(str_split(mod_theta, c("\\+|\\,"))[[1]])
+mod_theta = str_squish(unlist(str_split(str_remove_all(mod_theta, "^c\\(|\\)"), ",")))
+mod_theta
+mod_theta[1]
+data[, eval(parse(text = mod_theta[1]))]
+
+
 
 mod_theta_reg = str_detect(mod, " ~ ") & (!str_detect(mod, "alpha")) & (!str_detect(mod, "delta"))
 mod_theta_reg = mod[mod_theta_reg]

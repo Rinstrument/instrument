@@ -11,3 +11,5 @@ https://stats.stackexchange.com/questions/228629/conversion-of-irt-logit-discrim
 chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.lesahoffman.com/PSYC948/948_Lecture6_Binary_Responses.pdf
 
 (a / sqrt(1 + a^2)) or replace 1 with 3.29 depending on the model
+
+Documentation with roxygen is broken again ugh!

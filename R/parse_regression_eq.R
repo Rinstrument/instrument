@@ -31,15 +31,15 @@
 #'
 parse_regression_eq = function(model, data) {
 
+  if(!str_detect(model, "~")) {
+    stop("regression equations require a ~ between response and predictors. E.g. a ~ b.")
+  }
+
   predictors = NULL
   predictors_ranef = NULL
   ranef_id = NULL
   predictors_ranef_cor = NULL
   n_pranef_cor = NULL
-
-  if(!str_detect(model, "~")) {
-    stop("regression equations require a ~ between response and predictors. E.g. a ~ b.")
-  }
 
   model = unlist(str_split(model, "~"))
   mod_lhs = str_squish(model[1])
