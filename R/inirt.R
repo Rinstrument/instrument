@@ -14,11 +14,15 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
 #'
-inirt = function(data, item_id, model = NULL, predictors = NULL, predictors_ranef = NULL, ranef_id = NULL, 
+inirt = function(data, model = NULL, exploratory = FALSE,
+    item_id = NULL, predictors = NULL, predictors_ranef = NULL, ranef_id = NULL, 
     predictors_ranef_corr = NULL, n_pranef_cor = NULL, dims = 1, h2_dims = 0, h2_dim_id = NULL, structural_design = NULL, 
     structural_design_ranef = list(a_predictors = NULL, a_predictors_ranef = NULL, a_ranef_id = NULL, a_predictors_ranef_corr = NULL, a_n_pranef_cor = NULL,
                                    d_predictors = NULL, d_predictors_ranef = NULL, d_ranef_id = NULL, d_predictors_ranef_corr = NULL, d_n_pranef_cor = NULL),
     method = c("vb", "hmc"), weights = NULL, ...) {
+  
+  # parse input model
+  model_data = parse_model(model = model, data = data, exploratory = exploratory)
   
   irt_data = data[, item_id, drop = FALSE]
   N = nrow(irt_data)

@@ -138,10 +138,3 @@ reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15"
 reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + 
                                           c(22, 24)", data = data)
 
-model = "t1 ~ c(12:18) + 
-            c(22, 24)"
-model
-model = str_replace_all(model, pattern=" ", repl="") # smarter: remove all whitespace right away, then deal with other issues
-model
-model = str_replace_all(model, "[\r\n]" , "") # remove +\n combination
-model # left with correct model

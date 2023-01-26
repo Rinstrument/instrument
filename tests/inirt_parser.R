@@ -32,6 +32,33 @@ library(stringr)
 mod = unlist(str_split(mod, "\\n"))
 mod
 
+model = "    
+
+t1 = x1 + x2 + x3 + x4 + x5 + 
+            x6 + x7 + x8
+
+            t2 = c(1:5, 2,4) + 
+            x6 + x7 + c(1:20)
+      
+       t1 ~ x12 + 
+           x13 + x15
+
+       alpha ~ x1 + 
+          x2
+
+       delta ~ x4 + 
+         x6
+         "
+model = str_replace_all(model, pattern=" ", repl="")
+model
+# model = str_remove(model, "^(+\n)$")
+model = str_replace_all(model, "\\+\n", "+")
+model
+cat(model)
+model = str_split(model, "\n")[[1]]
+model = model[model != ""]
+model
+
 for(i in 1:length(mod)) {
   input_data = vector(mode = "list", length = length(mod))
   if(str_detect("~", mod[i])) {

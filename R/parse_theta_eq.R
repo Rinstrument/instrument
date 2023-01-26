@@ -140,10 +140,10 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
 }
 
 
-data = as.data.frame(matrix(0, 10, 50))
-names(data) = paste0("x", 1:50)
-data$School = paste0("s", rep(1:5, each = 2))
-data$age = runif(10, 10, 20)
+# data = as.data.frame(matrix(0, 10, 50))
+# names(data) = paste0("x", 1:50)
+# data$School = paste0("s", rep(1:5, each = 2))
+# data$age = runif(10, 10, 20)
 
 # mod_theta = "c(1:10, 20:35) + x12 + x13 + x14"
 #   mod_theta = "x12 + x13 + x14"
@@ -156,10 +156,10 @@ data$age = runif(10, 10, 20)
 # mod = "t1 = x1 + c(20:35)"
 
 # mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8")
-mod = c("t1 = x1 + 
-             c(20:35)", "t2 = c(1:10, 20, 35)", "t3 = x1 + x2 + x3 + x4 + x5 + 
-                                                      x6 + x7 + x8")
-parse_theta_eq(mod, data = data)
+# mod = c("t1 = x1 + 
+#              c(20:35)", "t2 = c(1:10, 20, 35)", "t3 = x1 + x2 + x3 + x4 + x5 + 
+#                                                       x6 + x7 + x8")
+# parse_theta_eq(mod, data = data)
 
 # mod = c("t1 = x1 + c(20:35)", "t2 = c(1:10, 20:35)", 
 #   "t3 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8", "t4 = t1 + t2 + t3")
