@@ -31,29 +31,53 @@
 #'
 parse_regression_eq = function(model, data) {
 
+  # Check if user defined the regression equations using correct syntax
   if(!str_detect(model, "~")) {
     stop("regression equations require a ~ between response and predictors. E.g. a ~ b.")
   }
 
+  # remove all spaces from model definition right away
+  model = str_replace_all(model, pattern=" ", repl="")
+
+  # if equation breaks to a new line, e.g., t1 ~ x1 + 
+  #                                              x2 + x3
+  # remove the line break \n
+  model = str_replace_all(model, "[\r\n]" , "")
+
+  # instantiate return values. these values store the quantities which define
+  # the model for the inirt::inirt() internals
   predictors = NULL
   predictors_ranef = NULL
   ranef_id = NULL
   predictors_ranef_cor = NULL
   n_pranef_cor = NULL
 
+  # split left hand side and right had side of model
   model = unlist(str_split(model, "~"))
-  mod_lhs = str_squish(model[1])
-  mod_rhs = str_squish(model[2])
+  mod_lhs = model[1]
+  mod_rhs = model[2]
+  # fixed effect portion of model definition
   mod_fixed = str_replace_all(mod_rhs, "\\s*\\([^\\)]+\\)", "")
-  mod_fixed = str_subset(str_squish(unlist(str_split(mod_fixed, "\\+"))), ".+")
+  mod_fixed = str_subset(unlist(str_split(mod_fixed, "\\+")), ".+")
 
-  if(length(mod_fixed[1]) > 0 & mod_fixed[1] != "0") {
+  if(identical(mod_fixed, character(0)) || mod_fixed[1] == "0") {
+    mod_fixed = NULL
+  } else {
     predictors = which(names(data) %in% mod_fixed)
   }
 
+  # if(length(mod_fixed[1]) > 0 & mod_fixed[1] != "0") {
+    
+  # }
+
+  # parse and store the random effect portion of the regression equation
   mod_ranef = unlist(str_match_all(mod_rhs, "(?<=\\().*?(?=\\))"))
   mod_ranef = str_split(mod_ranef, "\\|")
 
+  # Random effects take some sorting out. They can be either uncorrelated or 
+  # correlated and there can be multiple separate definitions in one formula
+  # Therefore, a for loop is needed to work through something like
+  # t1 ~ (1|School) + (1 + age|Cohort), etc.
   if(length(mod_ranef) > 0) {
     ranef_id = c()
     predictors_ranef = c()
@@ -62,7 +86,7 @@ parse_regression_eq = function(model, data) {
       var = current[2]
       M = table(stack(setNames(strsplit(paste0(var, data[[var]]), "/"), 1:10))[2:1])
       M = matrix(M, ncol = ncol(M), dimnames = dimnames(M))
-      lhs = str_squish(str_split(current[1], "\\+")[[1]])
+      lhs = str_split(current[1], "\\+")[[1]]
       if(length(lhs) > 1) {
         n_pranef_cor = length(lhs)
         for(j in 2:n_pranef_cor) {
@@ -86,6 +110,8 @@ parse_regression_eq = function(model, data) {
     }
   }
 
+  # return quantities for inirt::inirt() to set up and fit model given the 
+  # parsed model definition
   return(list(data = data, predictors = predictors, predictors_ranef = predictors_ranef, 
     ranef_id = ranef_id, predictors_ranef_cor = predictors_ranef_cor, 
     n_pranef_cor = n_pranef_cor))
@@ -108,11 +134,12 @@ reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + c(22, 24)", data = data)
 # Also, need to add multiline equation functionality
 reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + 
                                             x12 + x13 + x15", data = data)
+reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
 reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + 
                                           c(22, 24)", data = data)
 
 model = "t1 ~ c(12:18) + 
-                                          c(22, 24)"
+            c(22, 24)"
 model
 model = str_replace_all(model, pattern=" ", repl="") # smarter: remove all whitespace right away, then deal with other issues
 model
