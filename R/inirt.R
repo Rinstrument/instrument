@@ -13,7 +13,7 @@
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
-#'
+#' @export 
 inirt = function(data, model, exploratory = FALSE, method = c("vb", "hmc"), 
   weights = NULL, ...) {
 

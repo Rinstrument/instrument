@@ -71,11 +71,16 @@ model = "theta = c(1:25)
          theta ~ 0
          alpha ~ 1
          delta ~ 1"
+# mod = parse_model(model ,data)
 method = "vb"
 iter = 5000
 tol_rel_obj = 2e-4
 exploratory = FALSE
 weights = NULL
+source("R/parse_model.R")
+source("R/parse_regression_eq.R")
+source("R/parse_theta_eq.R")
+library(stringr)
 fit = inirt::inirt(
   data = data,
   model = "theta = c(1:25)
@@ -83,6 +88,15 @@ fit = inirt::inirt(
            alpha ~ 1
            delta ~ 1",
   method = "vb", iter = 5000, tol_rel_obj = 2e-4
+  )
+fit = inirt::inirt(
+  data = data,
+  model = "theta = c(1:25)
+           theta ~ 0
+           alpha ~ 1
+           delta ~ 1",
+  method = "hmc", iter = 300, warmup = 150,
+  chains = 1
   )
 
 
