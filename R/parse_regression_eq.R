@@ -54,7 +54,7 @@ parse_regression_eq = function(model, data) {
 
   # split left hand side and right had side of model
   model = unlist(str_split(model, "~"))
-  mod_lhs = model[1]
+  type = model[1]
   mod_rhs = model[2]
   # fixed effect portion of model definition
   mod_fixed = str_replace_all(mod_rhs, "\\s*\\([^\\)]+\\)", "")
@@ -78,6 +78,7 @@ parse_regression_eq = function(model, data) {
   # correlated and there can be multiple separate definitions in one formula
   # Therefore, a for loop is needed to work through something like
   # t1 ~ (1|School) + (1 + age|Cohort), etc.
+  new_reg_data = matrix(0, nrow(data), 0)
   if(length(mod_ranef) > 0) {
     ranef_id = c()
     predictors_ranef = c()
@@ -94,17 +95,19 @@ parse_regression_eq = function(model, data) {
           New_M[M == 1] = data[[lhs[j]]]
           M = cbind(M, New_M)
         }
-        predictors_ranef_cor = c(predictors_ranef_cor, (ncol(data) + 1):(ncol(data) + ncol(M)))
-        data = cbind(data, M)
+        #predictors_ranef_cor = c(predictors_ranef_cor, (ncol(data) + 1):(ncol(data) + ncol(M)))
+        predictors_ranef_cor = c(predictors_ranef_cor, 1:ncol(M))
+        new_reg_data = cbind(new_reg_data, M)
       } else {
         ranef_id = c(ranef_id, rep(i, ncol(M)))
-        predictors_ranef = c(predictors_ranef, (ncol(data) + 1):(ncol(data) + ncol(M)))
+        #predictors_ranef = c(predictors_ranef, (ncol(data) + 1):(ncol(data) + ncol(M)))
+        predictors_ranef = c(predictors_ranef, 1:ncol(M))
         if(current[1] != "1") {
           var_val = data[[current[1]]]
           colnames(M) = paste0(colnames(M), "_", current[1])
-          data = cbind(data, M * var_val)
+          new_reg_data = cbind(new_reg_data, M * var_val)
         } else {
-          data = cbind(data, M)
+          new_reg_data = cbind(new_reg_data, M)
         }
       }
     }
@@ -112,9 +115,9 @@ parse_regression_eq = function(model, data) {
 
   # return quantities for inirt::inirt() to set up and fit model given the 
   # parsed model definition
-  return(list(data = data, predictors = predictors, predictors_ranef = predictors_ranef, 
-    ranef_id = ranef_id, predictors_ranef_cor = predictors_ranef_cor, 
-    n_pranef_cor = n_pranef_cor))
+  return(list(type = type, new_reg_data = new_reg_data, predictors = predictors, 
+    predictors_ranef = predictors_ranef, ranef_id = ranef_id, 
+    predictors_ranef_cor = predictors_ranef_cor, n_pranef_cor = n_pranef_cor))
 }
 
 data = as.data.frame(matrix(0, 10, 20))
@@ -122,19 +125,20 @@ names(data) = paste0("x", 1:20)
 data$School = paste0("s", rep(1:5, each = 2))
 data$age = runif(10, 10, 20)
 
-reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + x12 + x13 + x15", data = data)
-reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
-reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School)", data = data)
-reg_data = parse_regression_eq(model = "t1 ~ 0", data = data)
-reg_data = parse_regression_eq(model = "t1 ~ x12 + x13 + x15", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + x12 + x13 + x15", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School)", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ 0", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ x12 + x13 + x15", data = data)
 
-reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + c(12:20)", data = data)
-reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + c(22, 24)", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + c(12:20)", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + c(22, 24)", data = data)
 
-# Also, need to add multiline equation functionality
-reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + 
-                                            x12 + x13 + x15", data = data)
-reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
-reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + 
-                                          c(22, 24)", data = data)
+# # Also, need to add multiline equation functionality
+# reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + 
+#                                             x12 + x13 + x15", data = data)
+# reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)
+# reg_data
+# reg_data = parse_regression_eq(model = "t1 ~ c(12:18) + 
+#                                           c(22, 24)", data = data)
 

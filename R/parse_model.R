@@ -38,7 +38,7 @@ parse_model = function(model, data, exploratory = FALSE){
   model_regression = model[!latent_models]
 
   # How many sub-models were defined?
-  model_length = model_length - sum(latent_models) + 1
+  model_length = length(model_regression) + 1
 
   # list to store processed data for each sub-model
   input_data = vector(mode = "list", length = model_length)
@@ -47,10 +47,10 @@ parse_model = function(model, data, exploratory = FALSE){
   input_data[[1]] = parse_theta_eq(model_latent, data = data, exploratory = exploratory)
   
   # loop through the vector of models
-  for(i in 2:model_length) {
+  for(i in 1:(model_length - 1)) {
     # if detect a regression model, else detect & process a dimension definition
     # if(str_detect(model[i], "~")) {
-    input_data[[i]] = parse_regression_eq(model = model[i], data = data)
+    input_data[[i + 1]] = parse_regression_eq(model = model_regression[i], data = data)
     # } else if(str_detect(model[i], "=")) {
       # input_data[[i]] = parse_theta_eq(model = model[i], data = data, exploratory = exploratory)
     # }
@@ -69,11 +69,21 @@ data$age = runif(10, 10, 20)
 
 model_data = parse_model(
   "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
+   t2 = x11 + x12 + x13 + x14 + x15 + x16 + x17 + x18
    t1 ~ x12 + x13 + x15
+   t2 ~ 0
    alpha ~ x22 + x20 + x19
    delta ~ x40 + x41 + x42 + x50",
   data = data, 
   exploratory = FALSE)
 
+model_data = parse_model(
+  "theta = c(1:50)
+   theta ~ 0
+   alpha ~ 0
+   delta ~ 0",
+  data = data, 
+  exploratory = FALSE)
+
 str(model_data)
-model_data[[1]]
+model_data[[2]]
