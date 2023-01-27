@@ -120,10 +120,10 @@ parse_regression_eq = function(model, data) {
     predictors_ranef_cor = predictors_ranef_cor, n_pranef_cor = n_pranef_cor))
 }
 
-data = as.data.frame(matrix(0, 10, 20))
-names(data) = paste0("x", 1:20)
-data$School = paste0("s", rep(1:5, each = 2))
-data$age = runif(10, 10, 20)
+# data = as.data.frame(matrix(0, 10, 20))
+# names(data) = paste0("x", 1:20)
+# data$School = paste0("s", rep(1:5, each = 2))
+# data$age = runif(10, 10, 20)
 
 # reg_data = parse_regression_eq(model = "t1 ~ (1|School) + (age|School) + x12 + x13 + x15", data = data)
 # reg_data = parse_regression_eq(model = "t1 ~ (1 + age|School) + x12 + x13 + x15", data = data)

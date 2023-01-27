@@ -94,6 +94,7 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
       }
     }
   } else {  # first-order multidimensional model
+    h2_dims = 0
     # fit an exploratory muldimensional model?
     if(exploratory == TRUE) {
       model = str_split(first_order[1], c("\\+|\\,"))[[1]]

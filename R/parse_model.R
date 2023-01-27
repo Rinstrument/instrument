@@ -61,29 +61,29 @@ parse_model = function(model, data, exploratory = FALSE){
 
 }
 
-item_id = str_squish(unlist(str_split(unlist(str_split(mod_theta, "="))[2], "\\+")))
-data = as.data.frame(matrix(0, 10, 50))
-names(data) = paste0("x", 1:50)
-data$School = paste0("s", rep(1:5, each = 2))
-data$age = runif(10, 10, 20)
+# item_id = str_squish(unlist(str_split(unlist(str_split(mod_theta, "="))[2], "\\+")))
+# data = as.data.frame(matrix(0, 10, 50))
+# names(data) = paste0("x", 1:50)
+# data$School = paste0("s", rep(1:5, each = 2))
+# data$age = runif(10, 10, 20)
 
-model_data = parse_model(
-  "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
-   t2 = x11 + x12 + x13 + x14 + x15 + x16 + x17 + x18
-   t1 ~ x12 + x13 + x15
-   t2 ~ 0
-   alpha ~ x22 + x20 + x19
-   delta ~ x40 + x41 + x42 + x50",
-  data = data, 
-  exploratory = FALSE)
+# model_data = parse_model(
+#   "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
+#    t2 = x11 + x12 + x13 + x14 + x15 + x16 + x17 + x18
+#    t1 ~ x12 + x13 + x15
+#    t2 ~ 0
+#    alpha ~ x22 + x20 + x19
+#    delta ~ x40 + x41 + x42 + x50",
+#   data = data, 
+#   exploratory = FALSE)
 
-model_data = parse_model(
-  "theta = c(1:50)
-   theta ~ 0
-   alpha ~ 0
-   delta ~ 0",
-  data = data, 
-  exploratory = FALSE)
+# model_data = parse_model(
+#   "theta = c(1:50)
+#    theta ~ 0
+#    alpha ~ 0
+#    delta ~ 0",
+#   data = data, 
+#   exploratory = FALSE)
 
-str(model_data)
-model_data[[2]]
+# str(model_data)
+# model_data[[2]]

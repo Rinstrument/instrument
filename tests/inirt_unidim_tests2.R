@@ -47,7 +47,7 @@ dims = 1
 item_id = 1:j
 sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta)
 fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predictors,
-    n_pranef_cor = 2,
+    n_pranef_cor = 0,
     dims = dims, h2_dims = 0, h2_dim_id = NULL, structural_design = list(alpha = a_design, delta = d_design), 
     method = "vb", weights = NULL, tol_rel_obj = 0.0002, iter = 5e3, init = "random")
 # data = data; item_id = item_id; model = NULL; predictors = predictors; predictors_ranef = NULL; ranef_id = NULL; 
@@ -56,12 +56,35 @@ fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predi
 # method = "vb"; weights = NULL; tol_rel_obj = 0.0002; iter = 5e3; init = "random";
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
-fit = inirt::inirt(data = fit_data$data, item_id = fit_data$item_id, model = fit_data$model, predictors = fit_data$predictors, 
-    dims = fit_data$dims, h2_dims = fit_data$h2_dims, h2_dim_id = fit_data$h2_dim_id, structural_design = fit_data$structural_design, 
-    method = fit_data$method, weights = fit_data$weights, tol_rel_obj = fit_data$tol_rel_obj, iter = fit_data$iter, init = fit_data$init)
+# fit = inirt::inirt(data = fit_data$data, item_id = fit_data$item_id, model = fit_data$model, predictors = fit_data$predictors, 
+#     dims = fit_data$dims, h2_dims = fit_data$h2_dims, h2_dim_id = fit_data$h2_dim_id, structural_design = fit_data$structural_design, 
+#     method = fit_data$method, weights = fit_data$weights, tol_rel_obj = fit_data$tol_rel_obj, iter = fit_data$iter, init = fit_data$init)
 
+
+# data = fit_data$data
+# fit = inirt::inirt(data = data, item_id = 1:25, dims = 1, method = "vb", iter = 5000, tol_rel_obj = 2e-4)
+
+# new interface
+library(stringr)
 data = fit_data$data
-fit = inirt::inirt(data = data, item_id = 1:25, dims = 1, method = "vb", iter = 5000, tol_rel_obj = 2e-4)
+model = "theta = c(1:25)
+         theta ~ 0
+         alpha ~ 1
+         delta ~ 1"
+method = "vb"
+iter = 5000
+tol_rel_obj = 2e-4
+exploratory = FALSE
+weights = NULL
+fit = inirt::inirt(
+  data = data,
+  model = "theta = c(1:25)
+           theta ~ 0
+           alpha ~ 1
+           delta ~ 1",
+  method = "vb", iter = 5000, tol_rel_obj = 2e-4
+  )
+
 
 fit@model_pars
 rstan::summary(fit, pars = "delta_r_l")$summary

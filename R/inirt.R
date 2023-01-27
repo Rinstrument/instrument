@@ -17,16 +17,63 @@
 inirt = function(data, model, exploratory = FALSE, method = c("vb", "hmc"), 
   weights = NULL, ...) {
 
-  item_id = NULL, predictors = NULL, predictors_ranef = NULL, ranef_id = NULL
-  predictors_ranef_corr = NULL, n_pranef_cor = NULL, dims = 1, h2_dims = 0, h2_dim_id = NULL, structural_design = NULL
-  structural_design_ranef = list(a_predictors = NULL, a_predictors_ranef = NULL, a_ranef_id = NULL, a_predictors_ranef_corr = NULL, a_n_pranef_cor = NULL,
-                                 d_predictors = NULL, d_predictors_ranef = NULL, d_ranef_id = NULL, d_predictors_ranef_corr = NULL, d_n_pranef_cor = NULL)
+  # item_id = NULL
+  # predictors = NULL
+  # predictors_ranef = NULL
+  # ranef_id = NULL
+  # predictors_ranef_corr = NULL
+  # n_pranef_cor = NULL
+  # dims = 1
+  # h2_dims = 0
+  # h2_dim_id = NULL
   
   # parse input model
   model_data = parse_model(model = model, data = data, exploratory = exploratory)
+  dim_model_data = length(model_data)
+  names_model_data = unlist(purrr::map(1:dim_model_data, \(x) {model_data[[x]]$type}))
 
   # next, translate input into each of the stan input variables
-  
+
+  # What type of IRT model are we fitting? - parsed, translated to input parameters
+  irt_model = model_data[[1]]
+  item_id = irt_model$item_id
+  dims = irt_model$dims
+  dim_id = irt_model$dim_id
+  h2_dims = irt_model$h2_dims
+  h2_dim_id = irt_model$h2_dim_id
+
+  model_data = model_data[-1]
+
+  # What type of IRT regression are we fitting? - parsed, translated to input parameters
+  regr_alpha_delta = str_detect(names_model_data, "alpha|delta")
+  regr_theta = model_data[!regr_alpha_delta]
+  regr_alpha_delta = model_data[regr_alpha_delta]
+
+  # For a single theta
+  predictors = regr_theta$predictors
+  predictors_ranef = regr_theta$predictors_ranef
+  ranef_id = regr_theta$ranef_id
+  predictors_ranef_corr = regr_theta$predictors_ranef_cor
+  n_pranef_cor = regr_theta$n_pranef_cor
+
+  # alpha and delta
+  structural_design = NULL
+  structural_design_ranef = 
+    list(a_predictors = NULL, 
+         a_predictors_ranef = NULL, 
+         a_ranef_id = NULL, 
+         a_predictors_ranef_corr = NULL, 
+         a_n_pranef_cor = NULL,
+         d_predictors = NULL, 
+         d_predictors_ranef = NULL, 
+         d_ranef_id = NULL, 
+         d_predictors_ranef_corr = NULL, 
+         d_n_pranef_cor = NULL)
+
+  # Model input is parsed and converted into numeric variables. The rest
+  # if inirt::inirt sets up the model for stan and then calls the pre-compiled
+  # stan programs
+
   irt_data = data[, item_id, drop = FALSE]
   N = nrow(irt_data)
   J = ncol(irt_data)
