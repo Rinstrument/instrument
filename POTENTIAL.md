@@ -13,3 +13,8 @@ chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.lesahoffman.com/
 (a / sqrt(1 + a^2)) or replace 1 with 3.29 depending on the model
 
 Documentation with roxygen is broken again ugh!
+
+On keeping parameters positive: 
+https://groups.google.com/g/stan-users/c/JI6yrSZz_Xg
+Relevant to the alpha regression portion since
+there is that constraint

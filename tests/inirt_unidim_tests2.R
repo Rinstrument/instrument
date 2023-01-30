@@ -106,6 +106,8 @@ rstan::summary(fit, pars = "delta_l")$summary
 rstan::summary(fit, pars = "alpha_r_l")$summary
 rstan::summary(fit, pars = "alpha_l")$summary
 
+rstan::summary(fit, pars = "beta_l")$summary
+
 # --------------------------
 devtools::install(dependencies = FALSE)
 
@@ -177,6 +179,33 @@ ls()
 data = fit_data$data
 fit = inirt::inirt(data = data, item_id = 1:25, dims = 1, predictors = list(c(26, 27)), 
   method = "vb", iter = 5000, tol_rel_obj = 2e-4)
+  method = "vb"
+data = fit_data$data
+iter = 5000
+tol_rel_obj = 2e-4
+exploratory = FALSE
+weights = NULL
+source("R/parse_model.R")
+source("R/parse_regression_eq.R")
+source("R/parse_theta_eq.R")
+library(stringr)
+fit = inirt::inirt(
+  data = data,
+  model = "theta = c(1:25)
+           theta ~ pred1 + pred2
+           alpha ~ 1
+           delta ~ 1",
+  method = "vb", iter = 5000, tol_rel_obj = 2e-4
+  )
+fit = inirt::inirt(
+  data = data,
+  model = "theta = c(1:25)
+           theta ~ pred1 + pred2
+           alpha ~ 1
+           delta ~ 1",
+  method = "hmc", iter = 300, chains = 1
+  )
+
 
 fit@model_pars
 rstan::summary(fit, pars = "delta_r_l")$summary
@@ -186,7 +215,8 @@ rstan::summary(fit, pars = "alpha_l")$summary
 
 rstan::summary(fit, pars = "beta")$summary
 rstan::summary(fit, pars = "beta_l")$summary
-
+# this one worked but fit the wrong model! - it should have two predictors
+# but does not
 
 
 

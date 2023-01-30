@@ -87,7 +87,7 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
           item_id = c(item_id, new_items)
           h2_dim_id = c(h2_dim_id, rep(i, length(new_items)))
         } else {
-          name_id = which(names(data) %in% model[j])
+          name_id = which(colnames(data) %in% model[j])
           item_id = c(item_id, name_id)
           h2_dim_id = c(h2_dim_id, rep(i, 1))
         }
@@ -107,7 +107,7 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
           new_items = eval(parse(text = model[j]))
           item_id = c(item_id, new_items)
         } else {
-          name_id = which(names(data) %in% model[j])
+          name_id = which(colnames(data) %in% model[j])
           item_id = c(item_id, name_id)
         }
       }
@@ -124,7 +124,7 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
             item_id = c(item_id, new_items)
             dim_id = c(dim_id, rep(i, length(new_items)))
           } else {
-            name_id = which(names(data) %in% model[j])
+            name_id = which(colnames(data) %in% model[j])
             item_id = c(item_id, name_id)
             dim_id = c(dim_id, rep(i, 1))
           }

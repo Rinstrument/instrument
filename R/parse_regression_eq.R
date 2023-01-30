@@ -63,7 +63,7 @@ parse_regression_eq = function(model, data) {
   if(identical(mod_fixed, character(0)) || mod_fixed[1] == "0") {
     mod_fixed = NULL
   } else {
-    predictors = which(names(data) %in% mod_fixed)
+    predictors = which(colnames(data) %in% mod_fixed)
   }
 
   # if(length(mod_fixed[1]) > 0 & mod_fixed[1] != "0") {
