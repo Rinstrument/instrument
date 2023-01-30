@@ -4,20 +4,33 @@
 \alias{inirt}
 \title{Explanatory Item Response Theory}
 \usage{
-inirt(data, model, predictors = NULL, dims, method = c("vb", "hmc"), ...)
+inirt(
+  data,
+  model,
+  exploratory = FALSE,
+  method = c("vb", "hmc"),
+  weights = NULL,
+  ...
+)
 }
 \arguments{
 \item{data}{data frame}
 
 \item{model}{text specification of the model. Not yet implemented. Instead use the other arguments}
 
-\item{predictors}{list of predictors}
-
-\item{dims}{dimensions}
-
 \item{method}{Choose estimation method. Choices are method = 'vb' (default) for variational Bayes, or method = 'hmc' for Hamiltonian Monte Carlo.}
 
 \item{...}{Arguments passed to \code{rstan::sampling} (e.g. iter, chains).}
+
+\item{predictors}{list of predictors for each dimension. Each element of the list gives the predictors for the given dimension.}
+
+\item{predictors_ranef}{list of random effect parameters for each dimension.}
+
+\item{ranef_id}{id for which items belong to the current random effect.}
+
+\item{predictors_ranef_corr}{list of correlated random effect parameters for each dimension.}
+
+\item{dims}{dimensions}
 }
 \value{
 An object of class \code{stanfit} returned by \code{rstan::sampling}

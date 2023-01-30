@@ -197,13 +197,15 @@ fit = inirt::inirt(
            delta ~ 1",
   method = "vb", iter = 5000, tol_rel_obj = 2e-4
   )
+
+# run
 fit = inirt::inirt(
   data = data,
   model = "theta = c(1:25)
            theta ~ pred1 + pred2
            alpha ~ 1
            delta ~ 1",
-  method = "hmc", iter = 300, chains = 1
+  method = "hmc", iter = 10, chains = 1
   )
 
 

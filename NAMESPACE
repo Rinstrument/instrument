@@ -3,5 +3,6 @@
 export(inirt)
 import(Rcpp)
 import(methods)
+import(stringr)
 importFrom(rstan,sampling)
 useDynLib(inirt, .registration = TRUE)
