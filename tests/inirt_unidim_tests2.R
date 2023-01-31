@@ -199,13 +199,14 @@ fit = inirt::inirt(
   )
 
 # run
+data = fit_data$data
 fit = inirt::inirt(
   data = data,
   model = "theta = c(1:25)
            theta ~ pred1 + pred2
            alpha ~ 1
            delta ~ 1",
-  method = "hmc", iter = 10, chains = 1
+  method = "hmc", iter = 20, chains = 1
   )
 
 

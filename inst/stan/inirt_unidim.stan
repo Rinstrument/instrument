@@ -94,6 +94,7 @@ parameters {
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
   vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
+  real<lower=0> sigma_alpha;
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
   vector[K] beta_l;            // regression parameters for each dimension
 
@@ -182,7 +183,8 @@ transformed parameters {
 model {
   to_vector(theta) ~ normal(0, 1);
   // alpha_l ~ lognormal(0, 0.3);
-  alpha_l ~ cauchy(0, 5);
+  alpha_l ~ lognormal(0, sigma_alpha); //cauchy(0, 5);
+  sigma_alpha ~ cauchy(0, 5);
   alpha_r_l ~ cauchy(0, 5);
   delta_l ~ normal(0, 1);
   delta_r_l ~ normal(0, 1);
@@ -274,7 +276,13 @@ model {
           db += d_c[nn[i], k] * deta_c[cor_d_item_ind[k]][cor_d_item_elem_ind[k]];
         }
       }
-      nu[i] = (theta[nn[i], ] + xb)*(col(alpha, jj[i]) + ab);
+
+      real g_mu = exp(ab); //using the log link 
+      alpha_l ~ gamma(g_mu .* g_mu / g_phi, g_mu / g_phi); // stopped here
+      // how to include a gamma GLM on the alpha parameters?
+      // especially given that the alpha pars are organized into a matrix
+      // likelihood for complete model
+      nu[i] = (theta[nn[i], ] + xb)*(col(alpha, jj[i])); // + ab
       target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + db) * weights[i];
     }
   }

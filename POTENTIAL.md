@@ -18,3 +18,6 @@ On keeping parameters positive:
 https://groups.google.com/g/stan-users/c/JI6yrSZz_Xg
 Relevant to the alpha regression portion since
 there is that constraint
+
+Tutorial of IRT in stan:
+https://agabrioblog.onrender.com/tutorial/irt-stan/irt-stan/
