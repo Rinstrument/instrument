@@ -14,7 +14,7 @@
 
 ## Overview
 
-The R package `inirt` is an item response theory modeling software whose purpose is: 
+The R package `theta2` is an item response theory modeling software whose purpose is: 
 
  - Fit a variety of IRT models including the univariate, multivariate exploratory and confirmatory, and higher-order confirmatory models
  - Specify regression models in the context of IRT with both fixed and random effects (i.e., mixed modeling)
@@ -22,7 +22,7 @@ The R package `inirt` is an item response theory modeling software whose purpose
 
 ## Documentation & Source
 
- - The `inirt` R package source code can be found at [github.com/inirt/theta2](https://github.com/inirt/theta2)
+ - The `theta2` R package source code can be found at [github.com/inirt/theta2](https://github.com/inirt/theta2)
 
  - Full documentation and tutorials can be found at [inirt.github.io/doc/](https://inirt.github.io/doc/)
 
