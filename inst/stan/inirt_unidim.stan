@@ -115,12 +115,20 @@ parameters {
   vector[l_Lzeta_cor] zeta_c[u_Lzeta_cor];          // random regression pars
   vector[l_Laeta_cor] aeta_c[u_Laeta_cor];
   vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
+
+  real g_phi; // gamma parameter for the alpha ~ item parameter regression model
 }
 transformed parameters {
   matrix[D, J] alpha;                  // connstrain the upper traingular elements to zero 
   matrix[K, D] beta;               // organize regression parameters into a matrix
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
   vector[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
+  vector[N_long] db;
+  vector[N_long] ab;
+  vector[N_long] xb;
+  vector[L] g_mu;
+  vector[L] g_alpha;
+  vector[L] g_beta;
 
   {
     int index = 0;
@@ -179,11 +187,74 @@ transformed parameters {
       }
     }
   }
+
+  {
+    for(i in 1:N_long) {
+      db[i] = d_design[nn[i], ]*delta_r_l;
+      if(any_rand_ind_d) {
+        for(k in 1:Ldeta) {
+          db[i] += dr[nn[i], k] * deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
+        }
+      }
+      if(any_rand_cor_d) {
+        for(k in 1:Ldeta_cor) {
+          db[i] += d_c[nn[i], k] * deta_c[cor_d_item_ind[k]][cor_d_item_elem_ind[k]];
+        }
+      }
+    }
+  }
+
+  {
+    for(i in 1:N_long) {
+      ab[i] = a_design[nn[i], ]*alpha_r_l;
+      if(any_rand_ind_a) {
+        for(k in 1:Laeta) {
+          ab[i] += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
+        }
+      }
+      if(any_rand_cor_a) {
+        for(k in 1:Laeta_cor) {
+          ab[i] += a_c[nn[i], k] * aeta_c[cor_a_item_ind[k]][cor_a_item_elem_ind[k]];
+        }
+      }
+    }
+  }
+
+  {
+    for(i in 1:N_long) {
+      for(k in 1:K) {
+        if(x_miss[i, k] == 0) {
+          xb[i] += x[nn[i], k] * beta[k,1];
+        }
+      }
+      if(any_rand_cor) {
+        for(k in 1:Lzeta_cor) {
+          xb[i] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+        }
+      }
+      if(any_rand_ind) {
+        for(k in 1:Lzeta) {
+          xb[i] += z[nn[i], k] * zeta[k,1];
+        }
+      }
+    }
+  }
+
+  // Transformed parameters for the regression on alpha parameters
+  // alpha ~ x1 + x2 + ... Part of the item covariate portion
+  {
+    g_mu = exp(ab);
+    g_alpha = g_mu .* g_mu / g_phi;
+    g_beta = g_mu / g_phi;
+  }
+  
 }
 model {
   to_vector(theta) ~ normal(0, 1);
   // alpha_l ~ lognormal(0, 0.3);
-  alpha_l ~ lognormal(0, sigma_alpha); //cauchy(0, 5);
+  // alpha_l ~ lognormal(0, sigma_alpha); //cauchy(0, 5);
+  alpha_l ~ gamma(g_alpha, g_beta);
+
   sigma_alpha ~ cauchy(0, 5);
   alpha_r_l ~ cauchy(0, 5);
   delta_l ~ normal(0, 1);
@@ -235,55 +306,62 @@ model {
   {
     vector[N_long] nu;
     for (i in 1:N_long) {
-      real xb = 0.0;
-      real ab = a_design[nn[i], ]*alpha_r_l;
-      real db = d_design[nn[i], ]*delta_r_l;
-
-      for(k in 1:K) {
-        if(x_miss[i, k] == 0) {
-          xb += x[nn[i], k] * beta[k,1];
-        }
-      }
-      // // if(any_rand) { // handle random effects
-      if(any_rand_cor) {
-        for(k in 1:Lzeta_cor) {
-          xb += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
-        }
-      }
-      if(any_rand_ind) {
-        for(k in 1:Lzeta) {
-          xb += z[nn[i], k] * zeta[k,1];
-        }
-      }
-      // // }
-      if(any_rand_ind_a) {
-        for(k in 1:Laeta) {
-          ab += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
-        }
-      }
-      if(any_rand_cor_a) {
-        for(k in 1:Laeta_cor) {
-          ab += a_c[nn[i], k] * aeta_c[cor_a_item_ind[k]][cor_a_item_elem_ind[k]];
-        }
-      }
-      if(any_rand_ind_d) {
-        for(k in 1:Ldeta) {
-          db += dr[nn[i], k] * deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
-        }
-      }
-      if(any_rand_cor_d) {
-        for(k in 1:Ldeta_cor) {
-          db += d_c[nn[i], k] * deta_c[cor_d_item_ind[k]][cor_d_item_elem_ind[k]];
-        }
-      }
-
-      real g_mu = exp(ab); //using the log link 
-      alpha_l ~ gamma(g_mu .* g_mu / g_phi, g_mu / g_phi); // stopped here
-      // how to include a gamma GLM on the alpha parameters?
-      // especially given that the alpha pars are organized into a matrix
       // likelihood for complete model
-      nu[i] = (theta[nn[i], ] + xb)*(col(alpha, jj[i])); // + ab
-      target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + db) * weights[i];
+      nu[i] = (theta[nn[i], ] + xb[i])*(col(alpha, jj[i]));
+      target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + db[i]) * weights[i];
     }
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+// real xb = 0.0;
+      // real ab = a_design[nn[i], ]*alpha_r_l;
+      // real db = d_design[nn[i], ]*delta_r_l;
+
+      // for(k in 1:K) {
+      //   if(x_miss[i, k] == 0) {
+      //     xb += x[nn[i], k] * beta[k,1];
+      //   }
+      // }
+      // // if(any_rand) { // handle random effects
+      // if(any_rand_cor) {
+      //   for(k in 1:Lzeta_cor) {
+      //     xb += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+      //   }
+      // }
+      // if(any_rand_ind) {
+      //   for(k in 1:Lzeta) {
+      //     xb += z[nn[i], k] * zeta[k,1];
+      //   }
+      // }
+      // // }
+      // if(any_rand_ind_a) {
+      //   for(k in 1:Laeta) {
+      //     ab += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
+      //   }
+      // }
+      // if(any_rand_cor_a) {
+      //   for(k in 1:Laeta_cor) {
+      //     ab += a_c[nn[i], k] * aeta_c[cor_a_item_ind[k]][cor_a_item_elem_ind[k]];
+      //   }
+      // }
+      // if(any_rand_ind_d) {
+      //   for(k in 1:Ldeta) {
+      //     db += dr[nn[i], k] * deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
+      //   }
+      // }
+      // if(any_rand_cor_d) {
+      //   for(k in 1:Ldeta_cor) {
+      //     db += d_c[nn[i], k] * deta_c[cor_d_item_ind[k]][cor_d_item_elem_ind[k]];
+      //   }
+      // }
