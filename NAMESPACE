@@ -1,8 +1,8 @@
 # Edit by hand (not managed by Roxygen)
 
-export(inirt)
+export(theta2)
 import(Rcpp)
 import(methods)
 import(stringr)
 importFrom(rstan,sampling)
-useDynLib(inirt, .registration = TRUE)
+useDynLib(theta2, .registration = TRUE)

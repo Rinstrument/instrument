@@ -4,14 +4,13 @@
 
 ---
 
-<br />
-<div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+<!-- <p align="right">
+  <a href="https://github.com/inirt/theta2">
     <img src="https://github.com/inirt/.github/blob/master/images/hex-inirt.png" alt="Logo" width="80" height="80">
   </a>
-</div>
+</p> -->
 
----
+<img align="right" src="https://github.com/inirt/.github/blob/master/images/hex-inirt.png">
 
 ## Overview
 
@@ -21,11 +20,11 @@ The R package `inirt` is an item response theory modeling software whose purpose
  - Specify regression models in the context of IRT with both fixed and random effects (i.e., mixed modeling)
  - Simple model syntax to describe IRT models with and without regression
 
-The `inirt` R package source code can be found at [github.com/inirt/inirt](https://github.com/inirt/inirt)
- --
+## Documentation & Source
 
-Full documentation and tutorials can be found at [inirt.github.io/doc/](https://inirt.github.io/doc/)
- --
+ - The `inirt` R package source code can be found at [github.com/inirt/theta2](https://github.com/inirt/theta2)
+
+ - Full documentation and tutorials can be found at [inirt.github.io/doc/](https://inirt.github.io/doc/)
 
 ---
 
@@ -39,7 +38,13 @@ Full documentation and tutorials can be found at [inirt.github.io/doc/](https://
 # remotes
 install.packages("remotes")
 # install from Github
-remotes::install_github("inirt/inirt")
+remotes::install_github("inirt/theta2")
+```
+
+Alternatively, install from CRAN with:
+
+``` r
+install.packages("theta2")
 ```
 
 ---

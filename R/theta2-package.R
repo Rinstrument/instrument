@@ -1,11 +1,11 @@
-#' The 'inirt' package.
+#' The 'theta2' package.
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
 #' @docType package
-#' @name inirt-package
-#' @aliases inirt
-#' @useDynLib inirt, .registration = TRUE
+#' @name theta2-package
+#' @aliases theta2
+#' @useDynLib theta2, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling

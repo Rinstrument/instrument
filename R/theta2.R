@@ -1,4 +1,4 @@
-#' Explanatory Item Response Theory
+#' Item Response Theory
 #'
 #' @export
 #' @param data data frame
@@ -14,7 +14,7 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
 #' @export 
-inirt = function(data, model, exploratory = FALSE, method = c("vb", "hmc"), 
+theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"), 
   weights = NULL, ...) {
 
   # item_id = NULL
