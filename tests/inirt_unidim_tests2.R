@@ -1,6 +1,8 @@
 # INIRT with univariate theta dimension
 devtools::install(dependencies = FALSE)
-
+# library(devtools)
+# Rcpp::compileAttributes()
+# load_all()
 # Test 1: simplest possible settings
 n = 800
 ncat = 4
@@ -65,23 +67,51 @@ ls()
 # fit = inirt::inirt(data = data, item_id = 1:25, dims = 1, method = "vb", iter = 5000, tol_rel_obj = 2e-4)
 
 # new interface
-library(stringr)
+# library(stringr)
+# data = fit_data$data
+# model = "theta = c(1:25)
+#          theta ~ 0
+#          alpha ~ 1
+#          delta ~ 1"
+# # mod = parse_model(model ,data)
+# method = "vb"
+# iter = 5000
+# tol_rel_obj = 2e-4
+# exploratory = FALSE
+# weights = NULL
+# source("R/parse_model.R")
+# source("R/parse_regression_eq.R")
+# source("R/parse_theta_eq.R")
+# library(stringr)
+# fit = inirt::inirt(
+#   data = data,
+#   model = "theta = c(1:25)
+#            theta ~ 0
+#            alpha ~ 1
+#            delta ~ 1",
+#   method = "vb", iter = 5000, tol_rel_obj = 2e-4
+#   )
+# method = "hmc"; iter = 300; warmup = 150; chains = 1
+# exploratory = FALSE
+# weights = NULL
+# source("R/parse_model.R")
+# source("R/parse_regression_eq.R")
+# source("R/parse_theta_eq.R")
+# library(stringr)
+
+# data = fit_data$data
+# fit = theta2::theta2(
+#   data = data,
+#   model = "theta = c(1:25)
+#            theta ~ 0
+#            alpha ~ 1
+#            delta ~ 1",
+#   method = "hmc", iter = 300, warmup = 150,
+#   chains = 1
+#   )
+
 data = fit_data$data
-model = "theta = c(1:25)
-         theta ~ 0
-         alpha ~ 1
-         delta ~ 1"
-# mod = parse_model(model ,data)
-method = "vb"
-iter = 5000
-tol_rel_obj = 2e-4
-exploratory = FALSE
-weights = NULL
-source("R/parse_model.R")
-source("R/parse_regression_eq.R")
-source("R/parse_theta_eq.R")
-library(stringr)
-fit = inirt::inirt(
+fit = theta2::theta2(
   data = data,
   model = "theta = c(1:25)
            theta ~ 0
@@ -89,15 +119,7 @@ fit = inirt::inirt(
            delta ~ 1",
   method = "vb", iter = 5000, tol_rel_obj = 2e-4
   )
-fit = inirt::inirt(
-  data = data,
-  model = "theta = c(1:25)
-           theta ~ 0
-           alpha ~ 1
-           delta ~ 1",
-  method = "hmc", iter = 300, warmup = 150,
-  chains = 1
-  )
+
 
 
 fit@model_pars
@@ -107,6 +129,55 @@ rstan::summary(fit, pars = "alpha_r_l")$summary
 rstan::summary(fit, pars = "alpha_l")$summary
 
 rstan::summary(fit, pars = "beta_l")$summary
+
+fit@model_pars
+cor(sim_data$alpha[1,], rstan::summary(fit, pars = "alpha")$summary[,1])
+plot(sim_data$alpha[1,], (rstan::summary(fit, pars = "alpha")$summary[,1]))
+
+exp(rstan::summary(fit, pars = "alpha_r_l")$summary[,1])
+
+# looked correct on this run
+cor(
+cbind(
+  as.vector(sim_data$b_alpha + sim_data$alpha),
+  as.vector(exp(rstan::summary(fit, pars = "alpha_r_l")$summary[,1] + rstan::summary(fit, pars = "alpha")$summary[,1]))
+)
+)
+
+plot(sim_data$alpha[1,], exp(rstan::summary(fit, pars = "alpha")$summary[,1] + 
+  rstan::summary(fit, pars = "alpha_r_l")$summary[,1]))
+
+exp(rstan::summary(fit, pars = "alpha_r_l")$summary[,1])
+
+cbind(
+  sim_data$alpha[1,],
+  rstan::summary(fit, pars = "alpha")$summary[,1] + rstan::summary(fit, pars = "alpha_r_l")$summary[,1]
+)
+
+rstan::summary(fit, pars = "alpha_r_l")$summary[,1]
+mean(sim_data$b_alpha)
+mean(rstan::summary(fit, pars = "alpha_r_l")$summary[,1] + rstan::summary(fit, pars = "alpha")$summary[,1])
+
+
+plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
+cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
+
+
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 25, byrow = TRUE)
+cor(dest[,1], sim_data$delta[,2])
+plot(dest[,1], sim_data$delta[,2])
+
+mean(dest)
+mean(sim_data$delta[,-1])
+rstan::summary(fit, pars = c("delta_r_l"))$summary[,1]
+dest[,1] + sim_data$b_delta
+sim_data$delta[,2]
+
+library(bayesplot)
+color_scheme_set("blue")
+mcmc_trace(fit, pars = c("alpha_l[2]"))
+
+
 
 # --------------------------
 devtools::install(dependencies = FALSE)
@@ -363,7 +434,7 @@ sim_data$delta[,2]
 devtools::install(dependencies = FALSE)
 
 # Test 4: beta regression, fixed effects + two random effects (each with 20 dummies), alpha fixed effects, delta fixed effects
-n = 800
+n = 200
 ncat = 4
 j = 25
 d = 1
@@ -407,8 +478,8 @@ for(dd in 1:d) {
   }
 }
 x = matrix(data = runif(uk*n,-1,1), nrow = n, ncol = uk)
-Lz = 40
-z = matrix(rep(diag(40), each = 20), nrow = Lz*20) # for n = 800
+Lz = 10
+z = matrix(rep(diag(10), each = 20), nrow = Lz*20) # for n = 800
 z = cbind(z, z[gtools::permute(1:nrow(z)), ])
 zeta_sd = 2
 zeta = rnorm(Lz*2, 0, sd = zeta_sd)

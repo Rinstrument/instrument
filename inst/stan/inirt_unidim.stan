@@ -93,8 +93,8 @@ parameters {
 
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
-  vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
-  real<lower=0> sigma_alpha;
+  vector[L] alpha_l;      // distrimination over multiple dimensions
+  // real<lower=0> sigma_alpha;
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
   vector[K] beta_l;            // regression parameters for each dimension
 
@@ -116,19 +116,19 @@ parameters {
   vector[l_Laeta_cor] aeta_c[u_Laeta_cor];
   vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
 
-  real g_phi; // gamma parameter for the alpha ~ item parameter regression model
+  // real g_phi; // gamma parameter for the alpha ~ item parameter regression model
 }
 transformed parameters {
   matrix[D, J] alpha;                  // connstrain the upper traingular elements to zero 
-  matrix[K, D] beta;               // organize regression parameters into a matrix
+  matrix[K, D] beta;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
   vector[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
   vector[N_long] db;
   vector[N_long] ab;
   vector[N_long] xb;
-  vector[L] g_mu;
-  vector[L] g_alpha;
-  vector[L] g_beta;
+  // vector[L] g_mu;
+  // vector[L] g_alpha;
+  // vector[L] g_beta;
 
   {
     int index = 0;
@@ -172,6 +172,9 @@ transformed parameters {
     }
   }
 
+  // ensures delta parameters satisfy requirements of the ordered logistic 
+  // distribution according to STAN's definition
+  // Basically, sort and make NA values inf
   {
     int idx = 0;
     int d_index = 0;
@@ -222,10 +225,14 @@ transformed parameters {
 
   {
     for(i in 1:N_long) {
-      for(k in 1:K) {
-        if(x_miss[i, k] == 0) {
-          xb[i] += x[nn[i], k] * beta[k,1];
+      if(has_treg) {
+        for(k in 1:K) {
+          if(x_miss[i, k] == 0) {
+            xb[i] += x[nn[i], k] * beta[k,1];
+          }
         }
+      } else {
+        xb[i] = 0.0;
       }
       if(any_rand_cor) {
         for(k in 1:Lzeta_cor) {
@@ -242,21 +249,23 @@ transformed parameters {
 
   // Transformed parameters for the regression on alpha parameters
   // alpha ~ x1 + x2 + ... Part of the item covariate portion
-  {
-    g_mu = exp(ab);
-    g_alpha = g_mu .* g_mu / g_phi;
-    g_beta = g_mu / g_phi;
-  }
+  // {
+  //   g_mu = exp(ab);
+  //   g_alpha = g_mu .* g_mu / g_phi;
+  //   g_beta = g_mu / g_phi;
+  // }
   
 }
 model {
   to_vector(theta) ~ normal(0, 1);
   // alpha_l ~ lognormal(0, 0.3);
   // alpha_l ~ lognormal(0, sigma_alpha); //cauchy(0, 5);
-  alpha_l ~ gamma(g_alpha, g_beta);
-
-  sigma_alpha ~ cauchy(0, 5);
-  alpha_r_l ~ cauchy(0, 5);
+  // sigma_alpha ~ cauchy(0, 5);
+  // alpha_l ~ gamma(g_alpha, g_beta);
+  alpha_l ~ normal(0, 0.5);
+  alpha_r_l ~ normal(0, 0.5); //cauchy(0, 5);
+  // sigma_alpha ~ cauchy(0, 5);
+  
   delta_l ~ normal(0, 1);
   delta_r_l ~ normal(0, 1);
 
@@ -279,11 +288,11 @@ model {
 
   if(any_rand_ind_a) {
     aeta_l  ~ normal(0, 1);
-    aeta_l_sd ~ cauchy(0, 5);
+    aeta_l_sd ~ cauchy(0, 5); // may need to hammer down on this?
   }
 
   if(any_rand_cor_a) {
-    tau_a ~ cauchy(0, 2.5);
+    tau_a ~ cauchy(0, 2.5); // may need to hammer down on this?
     Omega_a ~ lkj_corr(1);
     for(i in 1:u_Laeta_cor) {
       aeta_c[i] ~ multi_normal(zeros_Laeta_cor, quad_form_diag(Omega_a, tau_a));
@@ -306,8 +315,8 @@ model {
   {
     vector[N_long] nu;
     for (i in 1:N_long) {
-      // likelihood for complete model
-      nu[i] = (theta[nn[i], ] + xb[i])*(col(alpha, jj[i]));
+      // likelihood for the model
+      nu[i] = (theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
       target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + db[i]) * weights[i];
     }
   }

@@ -50,7 +50,10 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   regr_alpha_delta = model_data[-which(!regr_alpha_delta)]
 
   # For a single theta
-  predictors = list(regr_theta$predictors)
+  predictors = regr_theta$predictors
+  if(!is.null(predictors)) {
+    predictors = list(regr_theta$predictors)
+  }
   predictors_ranef = regr_theta$predictors_ranef
   ranef_id = regr_theta$ranef_id
   predictors_ranef_corr = regr_theta$predictors_ranef_cor
