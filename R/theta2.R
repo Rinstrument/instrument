@@ -48,6 +48,8 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   regr_alpha_delta = str_detect(names_model_data, "alpha|delta")
   regr_theta = model_data[[which(!regr_alpha_delta)]]
   regr_alpha_delta = model_data[-which(!regr_alpha_delta)]
+  regr_alpha_data = regr_alpha_delta[str_detect(names_model_data[-1], "alpha")][[1]]
+  regr_delta_data = regr_alpha_delta[str_detect(names_model_data[-1], "delta")][[1]]
 
   # For a single theta
   predictors = regr_theta$predictors
@@ -59,8 +61,44 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   predictors_ranef_corr = regr_theta$predictors_ranef_cor
   n_pranef_cor = regr_theta$n_pranef_cor
 
+  irt_data = data[, item_id, drop = FALSE]
+  N = nrow(irt_data)
+  J = ncol(irt_data)
+  N_long = N*J
+
   # alpha and delta
-  structural_design = NULL
+  a_design = matrix(1, nrow = N, ncol = 1)
+  nAlpha_r = 1
+  d_design = matrix(1, nrow = N, ncol = 1)
+  nDelta_r = 1
+
+  if(length(regr_alpha_data$predictors)) {
+    a_design = cbind(a_design, data[, regr_alpha_data$predictors])
+    nAlpha_r = ncol(nAlpha_r)
+  }
+
+  if(length(regr_delta_data$predictors)) {
+    d_design = cbind(d_design, data[, regr_delta_data$predictors])
+    nDelta_r = ncol(nDelta_r)
+  }
+
+  # # Set up the structural regressions (item regression)
+  # if(!is.null(structural_design)) {
+  #   if(any(c("alpha") %in% names(structural_design))) {
+  #     a_design = as.matrix(structural_design[["alpha"]])
+  #     nAlpha_r = ncol(a_design)
+  #   }
+  #   if(any(c("delta") %in% names(structural_design))) {
+  #     d_design = as.matrix(structural_design[["delta"]])
+  #     nDelta_r = ncol(d_design)
+  #   }
+  # } else {
+  #   a_design = matrix(1, nrow = N, ncol = 1)
+  #   nAlpha_r = 1
+  #   d_design = matrix(1, nrow = N, ncol = 1)
+  #   nDelta_r = 1
+  # }
+
   structural_design_ranef = 
     list(a_predictors = NULL, 
          a_predictors_ranef = NULL, 
@@ -76,11 +114,6 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   # Model input is parsed and converted into numeric variables. The rest
   # if inirt::inirt sets up the model for stan and then calls the pre-compiled
   # stan programs
-
-  irt_data = data[, item_id, drop = FALSE]
-  N = nrow(irt_data)
-  J = ncol(irt_data)
-  N_long = N*J
 
   if(any(is.na(irt_data))) {
     model_missing_y = 1
@@ -335,6 +368,7 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
     zeta_dstart = array(0, dim = c(0))
     zeta_dend = array(0, dim = c(0))
   }
+  
   if(!is.null(predictors_ranef_corr)) {
     regress = 1
   }
@@ -376,23 +410,6 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
       lambda_ind = c(lambda_ind, rep(i, d_lengths[i]))
     }
     lambda_ind = as.vector(t(replicate(N, lambda_ind)))
-  }
-
-  # Set up the structural regressions (item regression)
-  if(!is.null(structural_design)) {
-    if(any(c("alpha") %in% names(structural_design))) {
-      a_design = as.matrix(structural_design[["alpha"]])
-      nAlpha_r = ncol(a_design)
-    }
-    if(any(c("delta") %in% names(structural_design))) {
-      d_design = as.matrix(structural_design[["delta"]])
-      nDelta_r = ncol(d_design)
-    }
-  } else {
-    a_design = matrix(1, nrow = N, ncol = 1)
-    nAlpha_r = 1
-    d_design = matrix(1, nrow = N, ncol = 1)
-    nDelta_r = 1
   }
 
   if(D == 1) {

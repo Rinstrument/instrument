@@ -4,8 +4,8 @@ devtools::install(dependencies = FALSE)
 # Rcpp::compileAttributes()
 # load_all()
 # Test 1: simplest possible settings
-n = 800
-ncat = 4
+n = 100
+ncat = 3
 j = 25
 d = 1
 k = 0
@@ -13,8 +13,8 @@ uk = 0
 ncategi = c(rep(ncat, j))
 ncateg_max = max(ncategi)
 alpha = matrix(0, d, j)
-a_design = as.matrix(data.frame(x1 = rep(1, n)))
-b_alpha = 0.8
+a_design = as.matrix(data.frame(x1 = rep(1, n), x2 = rnorm(n)))
+b_alpha = c(0.8, 1.2)
 for(dd in 1:d) {
   alpha[dd, ] = sort(runif(j, 0.2, 1.5))
 }
@@ -37,14 +37,15 @@ beta_dend = NULL
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
   for(jj in 1:j) {#                                                                                  z[i, ] %*% zeta
-    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha*a_design[i,])*(theta[i, ])) - (delta[jj, ] + b_delta*d_design[i,])))))
+    prb = (1 / (1 + exp(-(sum((alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
     data[i, jj] = sample(1:ncategi[[jj]], 1, prob = prb)
   }
 }
-colnames(data) = c(paste0("x", 1:j))
+data = cbind(data, a_design)
+colnames(data) = c(paste0("x", 1:j), paste0("ap", 1:2))
 dims = 1
 item_id = 1:j
 sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta)
@@ -115,7 +116,7 @@ fit = theta2::theta2(
   data = data,
   model = "theta = c(1:25)
            theta ~ 0
-           alpha ~ 1
+           alpha ~ 1 + ap2
            delta ~ 1",
   method = "vb", iter = 5000, tol_rel_obj = 2e-4
   )
@@ -137,6 +138,11 @@ plot(sim_data$alpha[1,], (rstan::summary(fit, pars = "alpha")$summary[,1]))
 exp(rstan::summary(fit, pars = "alpha_r_l")$summary[,1])
 
 # looked correct on this run
+
+
+rstan::summary(fit, pars = "alpha_r_l")$summary[,1]
+rstan::summary(fit, pars = "alpha_l")$summary[,1]
+
 cor(
 cbind(
   as.vector(sim_data$b_alpha + sim_data$alpha),
