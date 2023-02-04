@@ -14,7 +14,7 @@ ncategi = c(rep(ncat, j))
 ncateg_max = max(ncategi)
 alpha = matrix(0, d, j)
 a_design = as.matrix(data.frame(x1 = rep(1, n), x2 = rnorm(n)))
-b_alpha = c(0.8, 1.2)
+b_alpha = c(0.8, 0)
 for(dd in 1:d) {
   alpha[dd, ] = sort(runif(j, 0.2, 1.5))
 }
@@ -116,7 +116,7 @@ fit = theta2::theta2(
   data = data,
   model = "theta = c(1:25)
            theta ~ 0
-           alpha ~ 1 + ap2
+           alpha ~ 1 + ap2 + (1 + ap3)
            delta ~ 1",
   method = "vb", iter = 5000, tol_rel_obj = 2e-4
   )
@@ -140,7 +140,7 @@ exp(rstan::summary(fit, pars = "alpha_r_l")$summary[,1])
 # looked correct on this run
 
 
-rstan::summary(fit, pars = "alpha_r_l")$summary[,1]
+exp(rstan::summary(fit, pars = "alpha_r_l")$summary[,1])
 rstan::summary(fit, pars = "alpha_l")$summary[,1]
 
 cor(
@@ -159,6 +159,8 @@ cbind(
   sim_data$alpha[1,],
   rstan::summary(fit, pars = "alpha")$summary[,1] + rstan::summary(fit, pars = "alpha_r_l")$summary[,1]
 )
+
+cor(sim_data$alpha[1,], rstan::summary(fit, pars = "alpha")$summary[,1])
 
 rstan::summary(fit, pars = "alpha_r_l")$summary[,1]
 mean(sim_data$b_alpha)
@@ -213,7 +215,7 @@ delta = cbind(0, delta)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
   theta[, dd] = rnorm(n, 0, 1)
-}
+} 
 beta = c(1.0, 0.4)
 predictors = list(c(1, 2))
 start_index = 1

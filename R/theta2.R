@@ -61,7 +61,7 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   predictors_ranef_corr = regr_theta$predictors_ranef_cor
   n_pranef_cor = regr_theta$n_pranef_cor
 
-  irt_data = data[, item_id, drop = FALSE]
+  irt_data = as.matrix(data[, item_id, drop = FALSE])
   N = nrow(irt_data)
   J = ncol(irt_data)
   N_long = N*J
@@ -74,12 +74,12 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
 
   if(length(regr_alpha_data$predictors)) {
     a_design = cbind(a_design, data[, regr_alpha_data$predictors])
-    nAlpha_r = ncol(nAlpha_r)
+    nAlpha_r = ncol(a_design)
   }
 
   if(length(regr_delta_data$predictors)) {
     d_design = cbind(d_design, data[, regr_delta_data$predictors])
-    nDelta_r = ncol(nDelta_r)
+    nDelta_r = ncol(d_design)
   }
 
   # # Set up the structural regressions (item regression)
@@ -110,6 +110,20 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
          d_ranef_id = NULL, 
          d_predictors_ranef_corr = NULL, 
          d_n_pranef_cor = NULL)
+
+  # if(!is.null(regr_alpha_data$predictors_ranef)) {
+  structural_design_ranef$a_predictors_ranef = regr_alpha_data$new_reg_data[, regr_alpha_data$predictors_ranef]
+  structural_design_ranef$a_ranef_id = regr_alpha_data$ranef_id
+
+  structural_design_ranef$d_predictors_ranef = regr_delta_data$new_reg_data[, regr_alpha_data$predictors_ranef]
+  structural_design_ranef$d_ranef_id = regr_delta_data$ranef_id
+  # }
+
+  structural_design_ranef$a_predictors_ranef_corr = regr_alpha_data$new_reg_data[, regr_alpha_data$predictors_ranef_corr]
+  structural_design_ranef$a_n_pranef_cor = regr_alpha_data$n_pranef_cor
+
+  structural_design_ranef$d_predictors_ranef_corr = regr_delta_data$new_reg_data[, regr_delta_data$predictors_ranef_corr]
+  structural_design_ranef$d_n_pranef_cor = regr_delta_data$n_pranef_cor
 
   # Model input is parsed and converted into numeric variables. The rest
   # if inirt::inirt sets up the model for stan and then calls the pre-compiled

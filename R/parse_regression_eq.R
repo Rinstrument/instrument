@@ -31,6 +31,9 @@
 #'
 parse_regression_eq = function(model, data) {
 
+  # dimensions of data
+  d_dims = dim(data)
+
   # Check if user defined the regression equations using correct syntax
   if(!str_detect(model, "~")) {
     stop("regression equations require a ~ between response and predictors. E.g. a ~ b.")
@@ -85,7 +88,10 @@ parse_regression_eq = function(model, data) {
     for(i in 1:length(mod_ranef)) {
       current = mod_ranef[[i]]
       var = current[2]
-      M = table(stack(setNames(strsplit(paste0(var, data[[var]]), "/"), 1:10))[2:1])
+      M = stack(setNames(strsplit(paste0(var, data[[var]]), "/"), 1:d_dims[1]))[2:1]
+      M[["values"]] = factor(M[["values"]], levels = unique(M[["values"]]))
+      M = table(M)
+      # M = table(stack(setNames(strsplit(paste0(var, data[[var]]), "/"), 1:400))[2:1])
       M = matrix(M, ncol = ncol(M), dimnames = dimnames(M))
       lhs = str_split(current[1], "\\+")[[1]]
       if(length(lhs) > 1) {

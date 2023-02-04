@@ -288,7 +288,7 @@ model {
 
   if(any_rand_ind_a) {
     aeta_l  ~ normal(0, 1);
-    aeta_l_sd ~ cauchy(0, 5); // may need to hammer down on this?
+    aeta_l_sd ~ cauchy(0, 2); // may need to hammer down on this?
   }
 
   if(any_rand_cor_a) {
