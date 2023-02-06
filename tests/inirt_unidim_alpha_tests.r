@@ -229,6 +229,8 @@ ls()
 
 data = fit_data$data
 colnames(data)
+
+
 fit = theta2::theta2(
   data = data,
   model = "theta = c(1:25)
@@ -237,6 +239,18 @@ fit = theta2::theta2(
            delta ~ 1",
   method = "vb", iter = 10000, tol_rel_obj = 2e-4
   )
+
+
+model = "theta = c(1:25)
+        theta ~ 0
+        alpha ~ 1 + ap2 + (1 + ap2|z_fac)
+        delta ~ 1"
+method = "vb"; iter = 10000; tol_rel_obj = 2e-4
+exploratory = FALSE
+weights = NULL
+library(devtools)
+load_all()
+
 model = "theta = c(1:25)
          theta ~ 0
          alpha ~ 1 + ap2 + (1|z_fac)
@@ -262,3 +276,24 @@ cor(sim_data$zeta, (rstan::summary(fit, pars = "aeta_l")$summary[,1]))
 plot(sim_data$zeta, (rstan::summary(fit, pars = "aeta_l")$summary[,1]))
 
 rstan::summary(fit, pars = "aeta_l_sd")$summary
+
+fit@model_pars
+
+omega = matrix(rstan::summary(fit, pars = "Omega_a")$summary[,1], nrow = 2)
+tau = diag(rstan::summary(fit, pars = "tau_a")$summary[,1])
+vcov = tau %*% omega %*% tau
+vcov
+
+
+aeta_c = matrix(rstan::summary(fit, pars = "aeta_c")$summary[,1], byrow = TRUE, ncol = 2)
+
+cor((aeta_c[,1]), sim_data$int_slope[,1])
+cor((aeta_c[,2]), sim_data$int_slope[,2])
+
+plot((aeta_c[,1]), sim_data$int_slope[,1])
+plot((aeta_c[,2]), sim_data$int_slope[,2])
+
+
+# What does a simple single fixed effect give with this
+# new alpha parameterization?
+# two groups + mean alpha

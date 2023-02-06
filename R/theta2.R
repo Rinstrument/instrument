@@ -119,10 +119,10 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   structural_design_ranef$d_ranef_id = regr_delta_data$ranef_id
   # }
 
-  structural_design_ranef$a_predictors_ranef_corr = regr_alpha_data$new_reg_data[, regr_alpha_data$predictors_ranef_corr]
+  structural_design_ranef$a_predictors_ranef_corr = regr_alpha_data$new_reg_data[, regr_alpha_data$predictors_ranef_cor]
   structural_design_ranef$a_n_pranef_cor = regr_alpha_data$n_pranef_cor
 
-  structural_design_ranef$d_predictors_ranef_corr = regr_delta_data$new_reg_data[, regr_delta_data$predictors_ranef_corr]
+  structural_design_ranef$d_predictors_ranef_corr = regr_delta_data$new_reg_data[, regr_delta_data$predictors_ranef_cor]
   structural_design_ranef$d_n_pranef_cor = regr_delta_data$n_pranef_cor
 
   # Model input is parsed and converted into numeric variables. The rest
@@ -209,9 +209,9 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   dr = array(0, dim = c(N, Ldeta))
 
   # uncorrelated random effects on alpha, delta parameters
-  if(!is.null(structural_design_ranef$a_predictors_ranef) | !is.null(structural_design_ranef$d_predictors_ranef)) {
+  if(dim(structural_design_ranef$a_predictors_ranef)[2] | dim(structural_design_ranef$d_predictors_ranef)[2]) {
     
-    if(!is.null(structural_design_ranef$a_predictors_ranef)) {
+    if(dim(structural_design_ranef$a_predictors_ranef)[2]) {
 
       any_rand_ind_a = 1
       ar = structural_design_ranef$a_predictors_ranef
@@ -223,8 +223,8 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
 
     }
 
-    if(!is.null(structural_design_ranef$d_predictors_ranef)) {
-
+    if(dim(structural_design_ranef$d_predictors_ranef)[2]) {
+      
       any_rand_ind_d = 1
       dr = structural_design_ranef$d_predictors_ranef
       Ldeta = ncol(dr)
@@ -255,9 +255,9 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   u_Ldeta_cor = 0
   l_Ldeta_cor = 0
 
-  if(!is.null(structural_design_ranef$a_predictors_ranef_corr) | !is.null(structural_design_ranef$d_predictors_ranef)) {
+  if(dim(structural_design_ranef$a_predictors_ranef_corr)[2] | dim(structural_design_ranef$d_predictors_ranef)[2]) {
 
-    if(!is.null(structural_design_ranef$a_predictors_ranef_corr)) {
+    if(dim(structural_design_ranef$a_predictors_ranef_corr)[2]) {
       any_rand = 1
       any_rand_cor_a = 1
       a_c = structural_design_ranef$a_predictors_ranef_corr
@@ -268,7 +268,7 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
       cor_a_item_elem_ind = rep(1:l_Laeta_cor, each = u_Laeta_cor)
     }
 
-    if(!is.null(structural_design_ranef$d_predictors_ranef_corr)) {
+    if(dim(structural_design_ranef$d_predictors_ranef)[2]) {
       any_rand = 1
       any_rand_cor_d = 1
       d_c = structural_design_ranef$d_predictors_ranef_corr

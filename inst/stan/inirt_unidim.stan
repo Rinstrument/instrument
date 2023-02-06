@@ -292,8 +292,8 @@ model {
   }
 
   if(any_rand_cor_a) {
-    tau_a ~ cauchy(0, 2.5); // may need to hammer down on this?
-    Omega_a ~ lkj_corr(1);
+    tau_a ~ normal(0, 2);
+    Omega_a ~ lkj_corr(2);
     for(i in 1:u_Laeta_cor) {
       aeta_c[i] ~ multi_normal(zeros_Laeta_cor, quad_form_diag(Omega_a, tau_a));
     }
