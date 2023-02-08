@@ -48,8 +48,8 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   regr_alpha_delta = str_detect(names_model_data, "alpha|delta")
   regr_theta = model_data[[which(!regr_alpha_delta)]]
   regr_alpha_delta = model_data[-which(!regr_alpha_delta)]
-  regr_alpha_data = regr_alpha_delta[str_detect(names_model_data[-1], "alpha")][[1]]
-  regr_delta_data = regr_alpha_delta[str_detect(names_model_data[-1], "delta")][[1]]
+  regr_alpha_data = regr_alpha_delta[str_detect(names_model_data, "alpha")][[1]] # [-1] ???
+  regr_delta_data = regr_alpha_delta[str_detect(names_model_data, "delta")][[1]]
 
   # For a single theta
   predictors = regr_theta$predictors
