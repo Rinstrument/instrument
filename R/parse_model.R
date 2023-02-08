@@ -37,6 +37,9 @@ parse_model = function(model, data, exploratory = FALSE){
   model_latent = model[latent_models]
   model_regression = model[!latent_models]
 
+  # If some regression models were not specified, insert defaults
+  model_regression = insert_default_regression(model_regression)
+
   # How many sub-models were defined?
   model_length = length(model_regression) + 1
 

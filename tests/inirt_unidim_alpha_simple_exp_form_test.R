@@ -177,7 +177,7 @@ beta_dstart = NULL
 beta_dend = NULL
 Lz = 20
 sigma = matrix(c(4, 3, 3, 3.5), nrow = 2)
-int_slope = mvtnorm::rmvnorm(Lz, mean = c(0, 0), sigma = sigma) / 5
+int_slope = mvtnorm::rmvnorm(Lz, mean = c(0, 0), sigma = sigma) / 7
 cov(int_slope)
 z_c_int = matrix(rep(diag(20), each = 20), nrow = Lz*20)
 zc_is = z_c_int %*% int_slope[,1]
@@ -237,21 +237,9 @@ fit = theta2::theta2(
            theta ~ 0
            alpha ~ 1 + ap2 + (1 + ap2|z_fac)
            delta ~ 1",
-#   pre_start = FALSE,
-  method = "vb", iter = 15000, tol_rel_obj = 5e-4
+  method = "vb", iter = 15000, tol_rel_obj = 2e-4
   )
 
-fit = theta2::theta2(
-  data = data,
-  model = "theta = c(1:25)
-           alpha ~ 1 + ap2 + (1 + ap2|z_fac)",
-#   pre_start = FALSE,
-  method = "vb", iter = 15000, tol_rel_obj = 5e-4
-  )
-
-
-model = "theta = c(1:25)
-        alpha ~ 1 + ap2 + (1 + ap2|z_fac)"
 
 model = "theta = c(1:25)
         theta ~ 0
