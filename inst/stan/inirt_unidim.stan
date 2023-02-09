@@ -24,7 +24,7 @@ data {
   matrix[N, K] x;   // fixed effect design matrix for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=1> nDelta;        // total number of delta parameters
-  int<lower=1> L;        // number of non-zero loadings
+  int<lower=0> L;        // number of non-zero loadings
   int<lower=0,upper=1> has_treg;  // do theta regression?
   int<lower=1> beta_dstart[has_treg ? D : 0]; // beta start index for each dimension
   int<lower=1> beta_dend[has_treg ? D : 0];   // beta end index for each dimension
@@ -35,7 +35,7 @@ data {
   // int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
   // int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
   int<lower=1> nDelta_r;            // number of delta structural regression parameters
-  int<lower=1> nAlpha_r;            // number of alpha structural regression parameters
+  int<lower=0> nAlpha_r;            // number of alpha structural regression parameters
   matrix[N, nDelta_r] d_design;     // delta structural design matrix
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
   
@@ -131,11 +131,13 @@ transformed parameters {
   // vector[L] g_beta;
 
   {
-    int index = 0;
-    for(d in 1:D) {
-      for(j in d:J) {
-        index = index + 1;
-        alpha[d, j] = alpha_l[index];
+    if(L) {
+      int index = 0;
+      for(d in 1:D) {
+        for(j in d:J) {
+          index = index + 1;
+          alpha[d, j] = alpha_l[index];
+        }
       }
     }
   }

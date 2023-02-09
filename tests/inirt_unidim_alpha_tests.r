@@ -156,9 +156,11 @@ ncateg_max = max(ncategi)
 alpha = matrix(0, d, j)
 a_design = as.matrix(data.frame(x1 = rep(1, n), x2 = rnorm(n, 0.1), x3 = rnorm(n, 0.1), 
                                 x4 = rnorm(n, 0.1), x5 = sample(c(1,0), n, replace = TRUE), x6 = sample(c(1,0), n, replace = TRUE)))
-b_alpha = c(0.8, 1.7, 0.7, 0.2, 0.4, -0.8)
+b_alpha = c(0.8, 1.4, 0.7, 0.2, 0.4, -0.8)
+exp(c(0.2, -1.4, 0.7, 0.2, 0.4, -0.8))
 for(dd in 1:d) {
   alpha[dd, ] = sort(runif(j, -1, 1.5))
+  alpha[dd, ] = alpha[dd, ] - mean(alpha[dd, ])
 }
 delta = matrix(nrow = j, ncol = ncateg_max - 1)
 d_design = as.matrix(data.frame(x1 = rep(1, n)))
@@ -231,11 +233,32 @@ ls()
 data = fit_data$data
 colnames(data)
 
+library(devtools)
+load_all()
+weights = NULL
+exploratory = FALSE
+data = data
+model = "theta = c(1:35)"
+#   pre_start = FALSE,
+itype = "1pl"
+method = "vb"; iter = 15000; tol_rel_obj = 5e-4
+
+
+
+fit = theta2::theta2(
+  data = data,
+  model = "theta = c(1:35)",
+#   pre_start = FALSE,
+  itype = "1pl",
+  method = "vb", iter = 150, tol_rel_obj = 5e-4
+  )
+
 fit = theta2::theta2(
   data = data,
   model = "theta = c(1:35)
            alpha ~ 1 + ap2 + ap3 + ap4 + ap5 + ap6",
 #   pre_start = FALSE,
+  itype = "2pl",
   method = "vb", iter = 15000, tol_rel_obj = 5e-4
   )
 
@@ -273,6 +296,7 @@ cor(dest[,1], sim_data$delta[,2])
 
 rstan::summary(fit, pars = "alpha_r_l")$summary
 exp(rstan::summary(fit, pars = "alpha_r_l")$summary)
+exp(c(0.8, 1.4, 0.7, 0.2, 0.4, -0.8))
 
 fit@model_pars
 

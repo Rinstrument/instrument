@@ -14,7 +14,7 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
 #' @export 
-theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"), 
+theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc"), 
   weights = NULL, ...) {
 
   # item_id = NULL
@@ -69,12 +69,24 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   N_long = N*J
 
   # alpha and delta
-  a_design = matrix(1, nrow = N, ncol = 1)
-  nAlpha_r = 1
+  if(itype == "2pl") {
+    a_design = matrix(1, nrow = N, ncol = 1)
+    nAlpha_r = 1
+  } else if(itype == "1pl") {
+    a_design = matrix(1, nrow = N, ncol = 0)
+    nAlpha_r = 0
+  } else {
+    stop(paste0("itype = ", itype, " not valid."))
+  }
+  
   d_design = matrix(1, nrow = N, ncol = 1)
   nDelta_r = 1
 
   if(length(regr_alpha_data$predictors)) {
+    if(itype == "1pl") {
+      stop("Invalid model. Cannot specify an alpha ~ regression when itype == 1pl.
+            Alpha is a parameter in the 2pl model.")
+    }
     a_design = cbind(a_design, data[, regr_alpha_data$predictors])
     nAlpha_r = ncol(a_design)
   }
@@ -215,6 +227,11 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
     
     if(dim(structural_design_ranef$a_predictors_ranef)[2]) {
 
+      if(itype == "1pl") {
+      stop("Invalid model. Cannot specify an alpha ~ regression when itype == 1pl.
+            Alpha is a parameter in the 2pl model.")
+      }
+
       any_rand_ind_a = 1
       ar = structural_design_ranef$a_predictors_ranef
       Laeta = ncol(ar)
@@ -260,6 +277,12 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   if(dim(structural_design_ranef$a_predictors_ranef_corr)[2] | dim(structural_design_ranef$d_predictors_ranef)[2]) {
 
     if(dim(structural_design_ranef$a_predictors_ranef_corr)[2]) {
+
+      if(itype == "1pl") {
+      stop("Invalid model. Cannot specify an alpha ~ regression when itype == 1pl.
+            Alpha is a parameter in the 2pl model.")
+      }
+
       any_rand = 1
       any_rand_cor_a = 1
       a_c = structural_design_ranef$a_predictors_ranef_corr
@@ -299,9 +322,17 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   D = dims
 
   if(h2_dims == 0) {
-    L = D*(J-D) + D*(D+1)/2
+    if(itype == "2pl") {
+      L = D*(J-D) + D*(D+1)/2
+    } else if(itype == "1pl") {
+      L = 0
+    }
   } else if(h2_dims == 1){
-    L = J
+    if(itype == "2pl") {
+      L = J
+    } else if(itype == "1pl") {
+      L = 0
+    }
   } else {
     stop("h2_dims > 1 not yet implemented. Choose 0 or 1.")
   }
