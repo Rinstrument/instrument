@@ -63,6 +63,7 @@ theta2 = function(data, model, exploratory = FALSE, method = c("vb", "hmc"),
   n_pranef_cor = regr_theta$n_pranef_cor
 
   irt_data = as.matrix(data[, item_id, drop = FALSE])
+  irt_data = collapse_categories(irt_data)  # collapse missing categories in IRT data set
   N = nrow(irt_data)
   J = ncol(irt_data)
   N_long = N*J

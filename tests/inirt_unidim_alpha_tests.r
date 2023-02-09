@@ -145,17 +145,18 @@ devtools::install(dependencies = FALSE)
 # Rcpp::compileAttributes()
 # load_all()
 # Test 1: simplest possible settings
-n = 400
+n = 800
 ncat = 3
-j = 25
+j = 35
 d = 1
 k = 0
 uk = 0
 ncategi = c(rep(ncat, j))
 ncateg_max = max(ncategi)
 alpha = matrix(0, d, j)
-a_design = as.matrix(data.frame(x1 = rep(1, n), x2 = rnorm(n, 0.1)))
-b_alpha = c(0.8, -0.6)
+a_design = as.matrix(data.frame(x1 = rep(1, n), x2 = rnorm(n, 0.1), x3 = rnorm(n, 0.1), 
+                                x4 = rnorm(n, 0.1), x5 = sample(c(1,0), n, replace = TRUE), x6 = sample(c(1,0), n, replace = TRUE)))
+b_alpha = c(0.8, 1.7, 0.7, 0.2, 0.4, -0.8)
 for(dd in 1:d) {
   alpha[dd, ] = sort(runif(j, -1, 1.5))
 }
@@ -175,20 +176,20 @@ predictors = NULL
 start_index = 1
 beta_dstart = NULL
 beta_dend = NULL
-Lz = 20
+Lz = 40
 sigma = matrix(c(4, 3, 3, 3.5), nrow = 2)
 int_slope = mvtnorm::rmvnorm(Lz, mean = c(0, 0), sigma = sigma) / 5
 cov(int_slope)
-z_c_int = matrix(rep(diag(20), each = 20), nrow = Lz*20)
+z_c_int = matrix(rep(diag(40), each = 20), nrow = Lz*20)
 zc_is = z_c_int %*% int_slope[,1]
-z_c_slope = matrix(rep(diag(20), each = 20), nrow = Lz*20)
+z_c_slope = matrix(rep(diag(40), each = 20), nrow = Lz*20)
 z_c_slope[z_c_slope == 1] = a_design[,2] #runif(20*20)
 zc_is = zc_is + z_c_slope %*% int_slope[,2]
 z_c = cbind(z_c_int, z_c_slope)
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
-  for(jj in 1:j) {#                                                                                   z[i, ] %*% zeta
-    prb = (1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,] + zc_is[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))
+  for(jj in 1:j) {#                                                               + zc_is[i,]                     z[i, ] %*% zeta
+    prb = (1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -198,11 +199,11 @@ for(i in 1:n) {
 apply(data, 2, table)
 data = cbind(data, a_design)
 data = as.data.frame(data)
-colnames(data) = c(paste0("x", 1:j), paste0("ap", 1:2)) #, paste0("z", 1:(2*Lz))
+colnames(data) = c(paste0("x", 1:j), paste0("ap", 1:6)) #, paste0("z", 1:(2*Lz))
 data = cbind(data, z_fac = rep(paste0("z", 1:(Lz)), each = 20))
 # ranef_id = c(rep(1, ncol(z)/2)) #, rep(2, ncol(z)/2)
 dims = 1
-# item_id = 1:j
+# item_id = 1:j           
 sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta, int_slope = int_slope)
 fit_data = list(data = data, model = NULL, predictors = predictors,
     n_pranef_cor = 0,
@@ -230,33 +231,24 @@ ls()
 data = fit_data$data
 colnames(data)
 
-
 fit = theta2::theta2(
   data = data,
-  model = "theta = c(1:25)
-           theta ~ 0
-           alpha ~ 1 + ap2 + (1 + ap2|z_fac)
-           delta ~ 1",
+  model = "theta = c(1:35)
+           alpha ~ 1 + ap2 + ap3 + ap4 + ap5 + ap6",
 #   pre_start = FALSE,
   method = "vb", iter = 15000, tol_rel_obj = 5e-4
   )
 
 fit = theta2::theta2(
   data = data,
-  model = "theta = c(1:25)
+  model = "theta = c(1:35)
            alpha ~ 1 + ap2 + (1 + ap2|z_fac)",
 #   pre_start = FALSE,
   method = "vb", iter = 15000, tol_rel_obj = 5e-4
   )
 
-
-model = "theta = c(1:25)
+model = "theta = c(1:35)
         alpha ~ 1 + ap2 + (1 + ap2|z_fac)"
-
-model = "theta = c(1:25)
-        theta ~ 0
-        alpha ~ 1 + ap2 + (1 + ap2|z_fac)
-        delta ~ 1"
 method = "vb"; iter = 10000; tol_rel_obj = 2e-4
 exploratory = FALSE
 weights = NULL
@@ -276,7 +268,7 @@ exploratory = FALSE
 
 cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
 plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
-dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 25, byrow = TRUE)
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 35, byrow = TRUE)
 cor(dest[,1], sim_data$delta[,2])
 
 rstan::summary(fit, pars = "alpha_r_l")$summary
@@ -306,6 +298,15 @@ plot((aeta_c[,1]), sim_data$int_slope[,1])
 plot((aeta_c[,2]), sim_data$int_slope[,2])
 
 
+fit@model_pars
+
+rstan::summary(fit, pars = "alpha")$summary
+exp(rstan::summary(fit, pars = "alpha")$summary[,1])
+
+cor(sim_data$alpha[1,], exp(rstan::summary(fit, pars = "alpha")$summary[,1]))
+plot(sim_data$alpha[1,], exp(rstan::summary(fit, pars = "alpha")$summary[,1]))
+
 # What does a simple single fixed effect give with this
 # new alpha parameterization?
 # two groups + mean alpha
+
