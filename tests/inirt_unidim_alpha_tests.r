@@ -141,8 +141,8 @@ rstan::summary(fit, pars = "aeta_l_sd")$summary
 # INIRT with univariate theta dimension
 # test of the new alpha regression setup (correlated random effect)
 devtools::install(dependencies = FALSE)
-# library(rstan)
-# stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
+library(rstan)
+stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 # ?stanc
 # library(devtools)
 # Rcpp::compileAttributes()
@@ -252,7 +252,7 @@ fit = theta2::theta2(
   data = data,
   model = "theta = c(1:35)",
 #   pre_start = FALSE,
-  itype = "1pl",
+  itype = "2pl",
   method = "vb", iter = 1500, tol_rel_obj = 5e-4
   )
 

@@ -4,6 +4,40 @@
 // Stan program meant to be used by the inirt::inirt() R function
 // Example (test if it compiles to c++):
 // mod = rstan::stan_model(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
+
+// https://github.com/henrixapp/muq2/blob/35d366b07cf1929c03e1ac8b5e6f1f355e12a760/external/include/stan/prob/distributions/univariate/discrete/ordered_logistic.hpp
+functions {
+  real ordered_logistic_log_irt(int y, real nu, vector cut, int K) {
+    print("y = ", y);
+    print("nu = ", nu);
+    print("cut = ", cut);
+    print("K = ", K);
+    // log(1 - inv_logit(lambda))
+    // if(is_inf(nu)) {
+    //   print("infinite nu ");
+    //   return 0.0;
+    // }
+    // if(cut[0] > 1e6) {
+    //   print("infinite cut[0] ");
+    //   return 0.0;
+    // }
+    // if(cut[K-2] > 1e6) {
+    //   print("infinite cut[K-1] ");
+    //   return 0.0;
+    // }
+    if (y == 1) {
+      return 0.0; //-log1p_exp(nu - cut[0]); 
+    }
+    // log(inv_logit(lambda - c(K-3)));
+    if (y == K) {
+      return 0.0; //-log1p_exp(cut[K-2] - nu);
+    }
+    // if (2 < y < K) { ... }
+    // log(inv_logit(lambda - c(y-2)) - inv_logit(lambda - c(y-1)))
+    return log_inv_logit_diff(cut[y-2] - nu, cut[y-1] - nu);
+  }
+}
+
 data {
   int<lower=1> N;              // number of participants
   int<lower=1> J;              // number of questions
@@ -79,6 +113,7 @@ data {
   matrix[N, Laeta_cor] a_c;
   matrix[N, Ldeta_cor] d_c;
 }
+
 transformed data {
   vector[l_Lzeta_cor] zeros_Lzeta_cor;
   zeros_Lzeta_cor = rep_vector(0, l_Lzeta_cor);
@@ -89,6 +124,7 @@ transformed data {
   vector[l_Ldeta_cor] zeros_Ldeta_cor;
   zeros_Ldeta_cor = rep_vector(0, l_Ldeta_cor);
 }
+
 parameters {
   matrix[N, D] theta;              // ability
 
@@ -128,14 +164,14 @@ transformed parameters {
   vector[N_long*(DAlpha ? 1 : 0)] ab;
   vector[N_long] xb;
   vector[N_long] nu;
-  vector[N_long] c;
+  vector[Ncateg_max-1] c[N_long];
+  // vector[N_long] c;
   // vector[L] g_mu;
   // vector[L] g_alpha;
   // vector[L] g_beta;
 
   {
     if(L) {
-      print(L);
       int index = 0;
       for(d in 1:D) {
         for(j in d:J) {
@@ -197,14 +233,8 @@ transformed parameters {
     }
   }
 
-
-
-
   {
     for(i in 1:N_long) {
-
-
-      
       db[i] = d_design[nn[i], ]*delta_r_l;
       if(any_rand_ind_d) {
         for(k in 1:Ldeta) {
@@ -217,19 +247,7 @@ transformed parameters {
         }
       }
 
-
-
-
-    }
-  }
-
-
-
-
-
-  {
-    if(L) {
-      for(i in 1:N_long) {
+      if(L) {
         ab[i] = a_design[nn[i], ]*alpha_r_l;
         if(any_rand_ind_a) {
           for(k in 1:Laeta) {
@@ -242,11 +260,7 @@ transformed parameters {
           }
         }
       }
-    }
-  }
 
-  {
-    for(i in 1:N_long) {
       if(has_treg) {
         for(k in 1:K) {
           if(x_miss[i, k] == 0) {
@@ -266,11 +280,7 @@ transformed parameters {
           xb[i] += z[nn[i], k] * zeta[k,1];
         }
       }
-    }
-  }
 
-  {
-    for (i in 1:N_long) {
       c[i] = delta_trans[jj[i]] + db[i];
       if(L) {
         nu[i] = (theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
@@ -279,6 +289,28 @@ transformed parameters {
       }
     }
   }
+  
+  // {
+  //   if(L) {
+  //     for(i in 1:N_long) {
+        
+  //     }
+  //   }
+  // }
+
+
+
+  // {
+  //   for(i in 1:N_long) {
+      
+  //   }
+  // }
+
+  // {
+  //   for (i in 1:N_long) {
+      
+  //   }
+  // }
 
   // Transformed parameters for the regression on alpha parameters
   // alpha ~ x1 + x2 + ... Part of the item covariate portion
@@ -350,7 +382,8 @@ model {
   {
     for (i in 1:N_long) {
       // likelihood for the model
-      target += ordered_logistic_lpmf(y[i] | nu[i], c[i]) * weights[i];
+      target += ordered_logistic_log_irt(y[i], nu[i], c[i], Ncategi[jj[i]]);
+      // target += ordered_logistic_lpmf(y[i] | nu[i], c[i]) * weights[i];
     }
   }
 }
