@@ -23,6 +23,7 @@ data {
   int<lower=0,upper=Ncateg_max> y[N_long];   // correctness for observation n
   matrix[N, K] x;   // fixed effect design matrix for observation n
   int<lower=1> D;        // number of first-order dimensions
+  int<lower=0> DAlpha;  // Copy of D except that it is zero if itype == "1pl" - no alpha parameters estimated in this case
   int<lower=1> nDelta;        // total number of delta parameters
   int<lower=0> L;        // number of non-zero loadings
   int<lower=0,upper=1> has_treg;  // do theta regression?
@@ -119,19 +120,22 @@ parameters {
   // real g_phi; // gamma parameter for the alpha ~ item parameter regression model
 }
 transformed parameters {
-  matrix[D, J] alpha;                  // connstrain the upper traingular elements to zero 
+  matrix[DAlpha, J] alpha;                  // connstrain the upper traingular elements to zero 
   matrix[K, D] beta;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
   vector[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
   vector[N_long] db;
-  vector[N_long] ab;
+  vector[N_long*(DAlpha ? 1 : 0)] ab;
   vector[N_long] xb;
+  vector[N_long] nu;
+  vector[N_long] c;
   // vector[L] g_mu;
   // vector[L] g_alpha;
   // vector[L] g_beta;
 
   {
     if(L) {
+      print(L);
       int index = 0;
       for(d in 1:D) {
         for(j in d:J) {
@@ -193,8 +197,14 @@ transformed parameters {
     }
   }
 
+
+
+
   {
     for(i in 1:N_long) {
+
+
+      
       db[i] = d_design[nn[i], ]*delta_r_l;
       if(any_rand_ind_d) {
         for(k in 1:Ldeta) {
@@ -206,20 +216,30 @@ transformed parameters {
           db[i] += d_c[nn[i], k] * deta_c[cor_d_item_ind[k]][cor_d_item_elem_ind[k]];
         }
       }
+
+
+
+
     }
   }
 
+
+
+
+
   {
-    for(i in 1:N_long) {
-      ab[i] = a_design[nn[i], ]*alpha_r_l;
-      if(any_rand_ind_a) {
-        for(k in 1:Laeta) {
-          ab[i] += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
+    if(L) {
+      for(i in 1:N_long) {
+        ab[i] = a_design[nn[i], ]*alpha_r_l;
+        if(any_rand_ind_a) {
+          for(k in 1:Laeta) {
+            ab[i] += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
+          }
         }
-      }
-      if(any_rand_cor_a) {
-        for(k in 1:Laeta_cor) {
-          ab[i] += a_c[nn[i], k] * aeta_c[cor_a_item_ind[k]][cor_a_item_elem_ind[k]];
+        if(any_rand_cor_a) {
+          for(k in 1:Laeta_cor) {
+            ab[i] += a_c[nn[i], k] * aeta_c[cor_a_item_ind[k]][cor_a_item_elem_ind[k]];
+          }
         }
       }
     }
@@ -249,6 +269,17 @@ transformed parameters {
     }
   }
 
+  {
+    for (i in 1:N_long) {
+      c[i] = delta_trans[jj[i]] + db[i];
+      if(L) {
+        nu[i] = (theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
+      } else {
+        nu[i] = sum(theta[nn[i], ] + xb[i]);
+      }
+    }
+  }
+
   // Transformed parameters for the regression on alpha parameters
   // alpha ~ x1 + x2 + ... Part of the item covariate portion
   // {
@@ -264,8 +295,10 @@ model {
   // alpha_l ~ lognormal(0, sigma_alpha); //cauchy(0, 5);
   // sigma_alpha ~ cauchy(0, 5);
   // alpha_l ~ gamma(g_alpha, g_beta);
-  alpha_l ~ normal(0, 0.5);
-  alpha_r_l ~ normal(0, 0.5); //cauchy(0, 5);
+  if(L) {
+    alpha_l ~ normal(0, 0.5);      // try a uniform prior on a reasonable interval
+    alpha_r_l ~ normal(0, 0.5); //cauchy(0, 5);
+  }
   // sigma_alpha ~ cauchy(0, 5);
   
   delta_l ~ normal(0, 1);
@@ -315,11 +348,9 @@ model {
   }
   
   {
-    vector[N_long] nu;
     for (i in 1:N_long) {
       // likelihood for the model
-      nu[i] = (theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
-      target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + db[i]) * weights[i];
+      target += ordered_logistic_lpmf(y[i] | nu[i], c[i]) * weights[i];
     }
   }
 }

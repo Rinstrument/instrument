@@ -72,9 +72,11 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   if(itype == "2pl") {
     a_design = matrix(1, nrow = N, ncol = 1)
     nAlpha_r = 1
+    DAlpha = 1
   } else if(itype == "1pl") {
     a_design = matrix(1, nrow = N, ncol = 0)
     nAlpha_r = 0
+    DAlpha = 0
   } else {
     stop(paste0("itype = ", itype, " not valid."))
   }
@@ -463,7 +465,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     standata = list(N = N, J = J, K = K, any_rand = any_rand, any_rand_ind = any_rand_ind, any_rand_cor = any_rand_cor, 
         any_rand_ind_a = any_rand_ind_a, any_rand_cor_a = any_rand_cor_a, any_rand_ind_d = any_rand_ind_d, any_rand_cor_d = any_rand_cor_d,
         Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
-        D = D, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, zeta_dstart = zeta_dstart, zeta_dend = zeta_dend, 
+        D = D, DAlpha = DAlpha, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, zeta_dstart = zeta_dstart, zeta_dend = zeta_dend, 
         weights = weights, x_miss = x_miss, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r,
         d_design = d_design, a_design = a_design, Lzeta = Lzeta, Laeta = Laeta, Ldeta = Ldeta, 
         u_Lzeta_cor = u_Lzeta_cor, l_Lzeta_cor = l_Lzeta_cor, 
