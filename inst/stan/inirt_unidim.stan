@@ -1,40 +1,39 @@
-// Unidimensional IRT with latent regression (inirt package)
+// Unidimensional IRT with latent regression (theta2 package)
 // Author: Michael Kleinsasser
 // Description:
-// Stan program meant to be used by the inirt::inirt() R function
+// Stan program meant to be used by the theta2::theta2() R function
 // Example (test if it compiles to c++):
 // mod = rstan::stan_model(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
-
+// stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 // https://github.com/henrixapp/muq2/blob/35d366b07cf1929c03e1ac8b5e6f1f355e12a760/external/include/stan/prob/distributions/univariate/discrete/ordered_logistic.hpp
 functions {
-  real ordered_logistic_log_irt(int y, real nu, vector cut, int K) {
-    print("y = ", y);
-    print("nu = ", nu);
-    print("cut = ", cut);
-    print("K = ", K);
-    // log(1 - inv_logit(lambda))
-    // if(is_inf(nu)) {
-    //   print("infinite nu ");
-    //   return 0.0;
-    // }
-    // if(cut[0] > 1e6) {
-    //   print("infinite cut[0] ");
-    //   return 0.0;
-    // }
-    // if(cut[K-2] > 1e6) {
-    //   print("infinite cut[K-1] ");
-    //   return 0.0;
-    // }
-    if (y == 1) {
-      return 0.0; //-log1p_exp(nu - cut[0]); 
+  real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut, vector eta, array[] int K, int nlong, array[] int itype) {
+    real val = 0.0;
+    for(i in 1:nlong) {
+      int K_i = K[i];
+      int y_i = y[i];
+      real nu_i = nu[i];
+      if(itype[i] < 3) {
+        if (y_i == 1) {
+          val += -log1p_exp(nu_i - cut[i, 1]);
+        } else if(y_i == K_i) {
+          val += -log1p_exp(cut[i, K_i-1] - nu_i);
+        } else {
+          val += log_inv_logit_diff(cut[i, y_i] - nu_i, cut[i, y_i-1] - nu_i);
+        }
+      } else {
+        real eta_i = eta[i];
+        if (y_i == 1) {
+          val += log(eta_i + (1-eta_i)*(inv_logit(nu_i - cut[i, 1])));
+        } else if(y_i == K_i) {
+          val += log(eta_i + (1-eta_i)*(inv_logit(cut[i, K_i-1] - nu_i)));
+        } else {
+          val += log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));
+          // val += log_inv_logit_diff(cut[i, y_i] - nu_i, cut[i, y_i-1] - nu_i);
+        }
+      }
     }
-    // log(inv_logit(lambda - c(K-3)));
-    if (y == K) {
-      return 0.0; //-log1p_exp(cut[K-2] - nu);
-    }
-    // if (2 < y < K) { ... }
-    // log(inv_logit(lambda - c(y-2)) - inv_logit(lambda - c(y-1)))
-    return log_inv_logit_diff(cut[y-2] - nu, cut[y-1] - nu);
+    return val;
   }
 }
 
@@ -55,6 +54,10 @@ data {
   int<lower=1,upper=N> nn[N_long];  // participant for observation n
   int<lower=1,upper=J> jj[N_long];  // question for observation n
   int<lower=0,upper=Ncateg_max> y[N_long];   // correctness for observation n
+  int<lower=1,upper=3> itype[N_long];      // item type for each item (1pl=1, 2pl=2, 3pl=3)
+  int<lower=0,upper=1> any_eta3pl;       // any eta parameters?
+  int<lower=0> nEta3pl; // number of eta parameters
+  int<lower=1> find_eta3pl[N_long];      // find the correct eta parameter for long format of data
   matrix[N, K] x;   // fixed effect design matrix for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=0> DAlpha;  // Copy of D except that it is zero if itype == "1pl" - no alpha parameters estimated in this case
@@ -123,6 +126,11 @@ transformed data {
 
   vector[l_Ldeta_cor] zeros_Ldeta_cor;
   zeros_Ldeta_cor = rep_vector(0, l_Ldeta_cor);
+
+  int Ncategi_jj[N_long];
+  for(i in 1:N_long) {
+    Ncategi_jj[i] = Ncategi[jj[i]];
+  }
 }
 
 parameters {
@@ -131,8 +139,9 @@ parameters {
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
   vector[L] alpha_l;      // distrimination over multiple dimensions
-  // real<lower=0> sigma_alpha;
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
+  vector[nEta3pl] eta3pl_l;
+
   vector[K] beta_l;            // regression parameters for each dimension
 
   vector[Lzeta] zeta_l;          // random regression pars
@@ -152,23 +161,18 @@ parameters {
   vector[l_Lzeta_cor] zeta_c[u_Lzeta_cor];          // random regression pars
   vector[l_Laeta_cor] aeta_c[u_Laeta_cor];
   vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
-
-  // real g_phi; // gamma parameter for the alpha ~ item parameter regression model
 }
 transformed parameters {
   matrix[DAlpha, J] alpha;                  // connstrain the upper traingular elements to zero 
   matrix[K, D] beta;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
-  vector[Ncateg_max-1] delta_trans[J]; // Make excess categories infinite
+  matrix[J, Ncateg_max-1] delta_trans; // Make excess categories infinite
   vector[N_long] db;
   vector[N_long*(DAlpha ? 1 : 0)] ab;
   vector[N_long] xb;
   vector[N_long] nu;
-  vector[Ncateg_max-1] c[N_long];
-  // vector[N_long] c;
-  // vector[L] g_mu;
-  // vector[L] g_alpha;
-  // vector[L] g_beta;
+  matrix[N_long, Ncateg_max-1] c; // Make excess categories infinite
+  vector[N_long] eta3pl;
 
   {
     if(L) {
@@ -224,10 +228,10 @@ transformed parameters {
       vector[Ncategi[j]-1] ds_ind = sort_asc(delta_l[(d_index+1):(d_index+Ncategi[j]-1)]);
       for(i in 1:(Ncategi[j]-1)) {
         d_index = d_index + 1;
-        delta_trans[j][i] = ds_ind[i];
+        delta_trans[j, i] = ds_ind[i];
       }
       for(i in (Ncategi[j]):(Ncateg_max-1)) {
-        delta_trans[j][i] = 1e7 + idx;
+        delta_trans[j, i] = 1e7 + idx;
         idx = idx + 1;
       }
     }
@@ -281,52 +285,27 @@ transformed parameters {
         }
       }
 
-      c[i] = delta_trans[jj[i]] + db[i];
+      c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
         nu[i] = (theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
       } else {
         nu[i] = sum(theta[nn[i], ] + xb[i]);
       }
+
+      if(any_eta3pl) {
+        eta3pl[i] = (itype[i] == 3) ? eta3pl_l[find_eta3pl[i]] : 0.0;
+        // if(eta3pl[i] == 3) {
+        //   eta3pl[i] = eta3pl_l[find_eta3pl[i]];
+        // } else {
+        //   eta3pl[i] = 0.0;
+        // }
+      }
     }
   }
-  
-  // {
-  //   if(L) {
-  //     for(i in 1:N_long) {
-        
-  //     }
-  //   }
-  // }
-
-
-
-  // {
-  //   for(i in 1:N_long) {
-      
-  //   }
-  // }
-
-  // {
-  //   for (i in 1:N_long) {
-      
-  //   }
-  // }
-
-  // Transformed parameters for the regression on alpha parameters
-  // alpha ~ x1 + x2 + ... Part of the item covariate portion
-  // {
-  //   g_mu = exp(ab);
-  //   g_alpha = g_mu .* g_mu / g_phi;
-  //   g_beta = g_mu / g_phi;
-  // }
-  
 }
 model {
   to_vector(theta) ~ normal(0, 1);
-  // alpha_l ~ lognormal(0, 0.3);
-  // alpha_l ~ lognormal(0, sigma_alpha); //cauchy(0, 5);
-  // sigma_alpha ~ cauchy(0, 5);
-  // alpha_l ~ gamma(g_alpha, g_beta);
+  
   if(L) {
     alpha_l ~ normal(0, 0.5);      // try a uniform prior on a reasonable interval
     alpha_r_l ~ normal(0, 0.5); //cauchy(0, 5);
@@ -335,6 +314,10 @@ model {
   
   delta_l ~ normal(0, 1);
   delta_r_l ~ normal(0, 1);
+
+  if(any_eta3pl) {
+    eta3pl_l ~ beta(2, 3); // 5, 23
+  }
 
   if(has_treg) {
     beta_l ~ normal(0, 5);
@@ -347,7 +330,7 @@ model {
 
   if(any_rand_cor) {
     tau ~ cauchy(0, 2.5);
-    Omega ~ lkj_corr(1); //l_Lzeta_cor
+    Omega ~ lkj_corr(1);
     for(i in 1:u_Lzeta_cor) {
       zeta_c[i] ~ multi_normal(zeros_Lzeta_cor, quad_form_diag(Omega, tau));
     }
@@ -379,13 +362,8 @@ model {
     }
   }
   
-  {
-    for (i in 1:N_long) {
-      // likelihood for the model
-      target += ordered_logistic_log_irt(y[i], nu[i], c[i], Ncategi[jj[i]]);
-      // target += ordered_logistic_lpmf(y[i] | nu[i], c[i]) * weights[i];
-    }
-  }
+  // array[] int y, vector nu, matrix cut, vector eta, array[] int K, int nlong, int itype
+  target += ordered_logistic_log_irt_vec(y, nu, c, eta3pl, Ncategi_jj, N_long, itype);
 }
 
 

@@ -1,13 +1,15 @@
 # INIRT with univariate theta dimension
 # test of the new alpha regression setup
 devtools::install(dependencies = FALSE)
+library(rstan)
+stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 # library(devtools)
 # Rcpp::compileAttributes()
 # load_all()
 # Test 1: simplest possible settings
 n = 400
 ncat = 3
-j = 25
+j = 15
 d = 1
 k = 0
 uk = 0
@@ -70,43 +72,40 @@ fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predi
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
 
-# data = fit_data$data
-# fit = theta2::theta2(
-#   data = data,
-#   model = "theta = c(1:25)
-#            theta ~ 0
-#            alpha ~ 1
-#            delta ~ 1",
-#   method = "hmc", iter = 300, warmup = 150,
-#   chains = 1
-#   )
-
+library(devtools)
+load_all()
+data = fit_data$data
+model = "theta = c(1:5)"
+itype = "2pl"
+method = "vb"
+iter = 15000
+tol_rel_obj = 1e-4
+exploratory = FALSE
+method = "vb"
+weights = NULL
 
 data = fit_data$data
 colnames(data)
 fit = theta2::theta2(
   data = data,
-  model = "theta = c(1:25)
-           theta ~ 0
-           alpha ~ 1 + ap2 + (1|z_fac)
-           delta ~ 1",
-  method = "vb", iter = 10000, tol_rel_obj = 2e-4
+  model = "theta = c(1:15)",
+  itype = "2pl",
+  method = "vb", iter = 30000, tol_rel_obj = 1e-4
   )
-model = "theta = c(1:25)
-         theta ~ 0
-         alpha ~ 1 + ap2 + (1|z_fac)
-         delta ~ 1"
-method = "vb"; iter = 5000; tol_rel_obj = 2e-4
-library(devtools)
-load_all()
-weights = NULL
-exploratory = FALSE
+
+fit = theta2::theta2(
+  data = data,
+  model = "theta = c(1:15)",
+  itype = "2pl",
+  method = "hmc", iter = 300, warmup = 150,
+  chains = 1
+  )
 
 
 cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
 plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
-dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 25, byrow = TRUE)
-cor(dest[,1], sim_data$delta[,2])
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 10, byrow = TRUE)
+cor(dest[,2], sim_data$delta[,3])
 
 rstan::summary(fit, pars = "alpha_r_l")$summary
 exp(rstan::summary(fit, pars = "alpha_r_l")$summary)
@@ -248,13 +247,13 @@ method = "vb"; iter = 15000; tol_rel_obj = 5e-4
 
 
 
-fit = theta2::theta2(
-  data = data,
-  model = "theta = c(1:35)",
-#   pre_start = FALSE,
-  itype = "2pl",
-  method = "vb", iter = 1500, tol_rel_obj = 5e-4
-  )
+# fit = theta2::theta2(
+#   data = data,
+#   model = "theta = c(1:35)",
+# #   pre_start = FALSE,
+#   itype = "2pl",
+#   method = "vb", iter = 1500, tol_rel_obj = 5e-4
+#   )
 
 fit = theta2::theta2(
   data = data,
@@ -264,7 +263,7 @@ fit = theta2::theta2(
   itype = "2pl",
   method = "vb", iter = 15000, tol_rel_obj = 5e-4
   )
-
+ 
 fit = theta2::theta2(
   data = data,
   model = "theta = c(1:35)

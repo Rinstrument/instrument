@@ -44,6 +44,13 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
   model_data = model_data[-1]
 
+  # Given IRT model, what item types are being fitted?
+  if(length(itype) == 1) {
+    itype = rep(which(itype == c("1pl", "2pl", "3pl")), length(item_id))
+  } else {
+    which(c("1pl", "3pl", "3pl", "2pl", "1pl", "3pl") == c("1pl", "2pl", "3pl"))
+  }
+
   # What type of IRT regression are we fitting? - parsed, translated to input parameters
   regr_alpha_delta = str_detect(names_model_data, "alpha|delta")
   regr_theta = model_data[[which(!regr_alpha_delta)]]
