@@ -7,12 +7,17 @@
 // stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 // https://github.com/henrixapp/muq2/blob/35d366b07cf1929c03e1ac8b5e6f1f355e12a760/external/include/stan/prob/distributions/univariate/discrete/ordered_logistic.hpp
 functions {
-  real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut, vector eta, array[] int K, int nlong, array[] int itype) {
+  real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut, vector eta, 
+    array[] int K, int nlong, array[] int itype) {
     real val = 0.0;
+    int K_i = 0;
+    int y_i = 0;
+    real nu_i = 0.0;
+    real eta_i = 0.0;
     for(i in 1:nlong) {
-      int K_i = K[i];
-      int y_i = y[i];
-      real nu_i = nu[i];
+      K_i = K[i];
+      y_i = y[i];
+      nu_i = nu[i];
       if(itype[i] < 3) {
         if (y_i == 1) {
           val += -log1p_exp(nu_i - cut[i, 1]);
@@ -22,7 +27,7 @@ functions {
           val += log_inv_logit_diff(cut[i, y_i] - nu_i, cut[i, y_i-1] - nu_i);
         }
       } else {
-        real eta_i = eta[i];
+        eta_i = eta[i];
         if (y_i == 1) {
           val += log(eta_i + (1-eta_i)*(inv_logit(nu_i - cut[i, 1])));
         } else if(y_i == K_i) {
@@ -51,13 +56,14 @@ data {
   int<lower=2> Ncateg_max;         // Max Number of categories in ordered logistic responses
   int<lower=2,upper=Ncateg_max> Ncategi[J]; // Number of categories for each item
   int<lower=1> N_long;              // number of long observations
+  int<lower=1> Ncategi_jj[N_long];
   int<lower=1,upper=N> nn[N_long];  // participant for observation n
   int<lower=1,upper=J> jj[N_long];  // question for observation n
   int<lower=0,upper=Ncateg_max> y[N_long];   // correctness for observation n
   int<lower=1,upper=3> itype[N_long];      // item type for each item (1pl=1, 2pl=2, 3pl=3)
   int<lower=0,upper=1> any_eta3pl;       // any eta parameters?
   int<lower=0> nEta3pl; // number of eta parameters
-  int<lower=1> find_eta3pl[N_long];      // find the correct eta parameter for long format of data
+  int<lower=0> find_eta3pl[N_long];      // find the correct eta parameter for long format of data
   matrix[N, K] x;   // fixed effect design matrix for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=0> DAlpha;  // Copy of D except that it is zero if itype == "1pl" - no alpha parameters estimated in this case
@@ -127,10 +133,10 @@ transformed data {
   vector[l_Ldeta_cor] zeros_Ldeta_cor;
   zeros_Ldeta_cor = rep_vector(0, l_Ldeta_cor);
 
-  int Ncategi_jj[N_long];
-  for(i in 1:N_long) {
-    Ncategi_jj[i] = Ncategi[jj[i]];
-  }
+  // int Ncategi_jj[N_long];
+  // for(i in 1:N_long) {
+  //   Ncategi_jj[i] = Ncategi[jj[i]];
+  // }
 }
 
 parameters {
@@ -138,7 +144,7 @@ parameters {
 
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
-  vector[L] alpha_l;      // distrimination over multiple dimensions
+  vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
   vector[nEta3pl] eta3pl_l;
 
@@ -287,7 +293,7 @@ transformed parameters {
 
       c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
-        nu[i] = (theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
+        nu[i] = dot_product(theta[nn[i], ] + xb[i], col(alpha, jj[i]) + exp(ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
       } else {
         nu[i] = sum(theta[nn[i], ] + xb[i]);
       }
@@ -299,6 +305,8 @@ transformed parameters {
         // } else {
         //   eta3pl[i] = 0.0;
         // }
+      } else {
+        eta3pl[i] = 0.0;
       }
     }
   }
@@ -307,8 +315,10 @@ model {
   to_vector(theta) ~ normal(0, 1);
   
   if(L) {
-    alpha_l ~ normal(0, 0.5);      // try a uniform prior on a reasonable interval
+    alpha_l ~ lognormal(0, 2); // normal(0, 1);      // try a uniform prior on a reasonable interval
     alpha_r_l ~ normal(0, 0.5); //cauchy(0, 5);
+    // alpha_l ~ uniform(-2.0, 1.0);
+    // alpha_r_l ~ uniform(-2.0, 1.0);
   }
   // sigma_alpha ~ cauchy(0, 5);
   

@@ -7,7 +7,7 @@
 #' @param predictors_ranef list of random effect parameters for each dimension.
 #' @param ranef_id id for which items belong to the current random effect.
 #' @param predictors_ranef_corr list of correlated random effect parameters for each dimension.
-#' @param 
+#' @param stuff stuff
 #' @param dims dimensions
 #' @param method Choose estimation method. Choices are method = 'vb' (default) for variational Bayes, or method = 'hmc' for Hamiltonian Monte Carlo.
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
@@ -48,8 +48,13 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   if(length(itype) == 1) {
     itype = rep(which(itype == c("1pl", "2pl", "3pl")), length(item_id))
   } else {
-    which(c("1pl", "3pl", "3pl", "2pl", "1pl", "3pl") == c("1pl", "2pl", "3pl"))
+    itype = match(itype, c("1pl", "2pl", "3pl"))
   }
+
+  # Check for 3parameter item types
+  all_3pl = itype == 3
+  any_eta3pl = any(all_3pl) * 1
+  nEta3pl = sum(all_3pl)
 
   # What type of IRT regression are we fitting? - parsed, translated to input parameters
   regr_alpha_delta = str_detect(names_model_data, "alpha|delta")
@@ -74,25 +79,23 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   N = nrow(irt_data)
   J = ncol(irt_data)
   N_long = N*J
-
+  
   # alpha and delta
-  if(itype == "2pl") {
+  if(any(itype == 2)) {
     a_design = matrix(1, nrow = N, ncol = 1)
     nAlpha_r = 1
     DAlpha = 1
-  } else if(itype == "1pl") {
+  } else {
     a_design = matrix(1, nrow = N, ncol = 0)
     nAlpha_r = 0
     DAlpha = 0
-  } else {
-    stop(paste0("itype = ", itype, " not valid."))
   }
   
   d_design = matrix(1, nrow = N, ncol = 1)
   nDelta_r = 1
 
   if(length(regr_alpha_data$predictors)) {
-    if(itype == "1pl") {
+    if(all(itype == 1)) {
       stop("Invalid model. Cannot specify an alpha ~ regression when itype == 1pl.
             Alpha is a parameter in the 2pl model.")
     }
@@ -236,7 +239,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     
     if(dim(structural_design_ranef$a_predictors_ranef)[2]) {
 
-      if(itype == "1pl") {
+      if(all(itype == 1)) {
       stop("Invalid model. Cannot specify an alpha ~ regression when itype == 1pl.
             Alpha is a parameter in the 2pl model.")
       }
@@ -287,7 +290,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
     if(dim(structural_design_ranef$a_predictors_ranef_corr)[2]) {
 
-      if(itype == "1pl") {
+      if(all(itype == 1)) {
       stop("Invalid model. Cannot specify an alpha ~ regression when itype == 1pl.
             Alpha is a parameter in the 2pl model.")
       }
@@ -325,21 +328,24 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     names(Ncategi) = NULL
   }
   
+  Ncategi_jj = rep(Ncategi, each = N)
   y = as.vector(irt_data)
   nn = rep(1:N, J)
   jj = rep(1:J, each = N)
   D = dims
+  itype = rep(itype, each = N)
+  find_eta3pl = (itype == 3) * 1
 
   if(h2_dims == 0) {
-    if(itype == "2pl") {
+    if(all(itype == 2)) {
       L = D*(J-D) + D*(D+1)/2
-    } else if(itype == "1pl") {
+    } else if(all(itype == 1)) {
       L = 0
     }
   } else if(h2_dims == 1){
-    if(itype == "2pl") {
+    if(all(itype == 2)) {
       L = J
-    } else if(itype == "1pl") {
+    } else if(all(itype == 1)) {
       L = 0
     }
   } else {
@@ -471,7 +477,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   if(D == 1) {
     standata = list(N = N, J = J, K = K, any_rand = any_rand, any_rand_ind = any_rand_ind, any_rand_cor = any_rand_cor, 
         any_rand_ind_a = any_rand_ind_a, any_rand_cor_a = any_rand_cor_a, any_rand_ind_d = any_rand_ind_d, any_rand_cor_d = any_rand_cor_d,
-        Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
+        Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, itype = itype, any_eta3pl = any_eta3pl, nEta3pl = nEta3pl, x = x, 
         D = D, DAlpha = DAlpha, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, zeta_dstart = zeta_dstart, zeta_dend = zeta_dend, 
         weights = weights, x_miss = x_miss, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r,
         d_design = d_design, a_design = a_design, Lzeta = Lzeta, Laeta = Laeta, Ldeta = Ldeta, 

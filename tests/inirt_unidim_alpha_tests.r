@@ -7,9 +7,9 @@ stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 # Rcpp::compileAttributes()
 # load_all()
 # Test 1: simplest possible settings
-n = 400
-ncat = 3
-j = 15
+n = 1000
+ncat = 2
+j = 35
 d = 1
 k = 0
 uk = 0
@@ -37,15 +37,15 @@ predictors = NULL
 start_index = 1
 beta_dstart = NULL
 beta_dend = NULL
-Lz = 20
-z = matrix(rep(diag(20), each = 20), nrow = Lz*20) # for n = 800
+# Lz = 20
+# z = matrix(rep(diag(20), each = 20), nrow = Lz*20) # for n = 800
 # z = cbind(z, z[gtools::permute(1:nrow(z)), ])
-zeta_sd = 0.5
-zeta = rnorm(Lz, 0, sd = zeta_sd)
+# zeta_sd = 0.5
+# zeta = rnorm(Lz, 0, sd = zeta_sd)
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
   for(jj in 1:j) {#                                                                                   z[i, ] %*% zeta
-    prb = (1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,] + z[i, ]%*%zeta))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))
+    prb = (1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -53,14 +53,14 @@ for(i in 1:n) {
   }
 }
 apply(data, 2, table)
-data = cbind(data, a_design, z)
+data = cbind(data, a_design)
 data = as.data.frame(data)
-colnames(data) = c(paste0("x", 1:j), paste0("ap", 1:2), paste0("z", 1:(Lz)))
-data = cbind(data, z_fac = rep(paste0("z", 1:(Lz)), each = 20))
-ranef_id = c(rep(1, ncol(z)/2)) #, rep(2, ncol(z)/2)
+colnames(data) = c(paste0("x", 1:j), paste0("ap", 1:2))
+# data = cbind(data, z_fac = rep(paste0("z", 1:(Lz)), each = 20))
+# ranef_id = c(rep(1, ncol(z)/2)) #, rep(2, ncol(z)/2)
 dims = 1
 item_id = 1:j
-sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta, zeta = zeta)
+sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta)
 fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predictors,
     n_pranef_cor = 0,
     dims = dims, h2_dims = 0, h2_dim_id = NULL, structural_design = list(alpha = a_design, delta = d_design), 
@@ -72,40 +72,41 @@ fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predi
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
 
-library(devtools)
-load_all()
-data = fit_data$data
-model = "theta = c(1:5)"
-itype = "2pl"
-method = "vb"
-iter = 15000
-tol_rel_obj = 1e-4
-exploratory = FALSE
-method = "vb"
-weights = NULL
+# library(devtools)
+# load_all()
+# data = fit_data$data
+# model = "theta = c(1:10)"
+# itype = "2pl"
+# method = "vb"
+# iter = 15000
+# tol_rel_obj = 1e-4
+# exploratory = FALSE
+# method = "vb"
+# weights = NULL
 
 data = fit_data$data
 colnames(data)
 fit = theta2::theta2(
   data = data,
-  model = "theta = c(1:15)",
+  model = "theta = c(1:35)",
   itype = "2pl",
-  method = "vb", iter = 30000, tol_rel_obj = 1e-4
-  )
+  method = "vb", 
+  iter = 10000, 
+  tol_rel_obj = 1e-4)
 
 fit = theta2::theta2(
   data = data,
-  model = "theta = c(1:15)",
+  model = "theta = c(1:35)",
   itype = "2pl",
-  method = "hmc", iter = 300, warmup = 150,
+  method = "hmc", iter = 30, warmup = 15,
   chains = 1
   )
 
 
 cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
 plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
-dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 10, byrow = TRUE)
-cor(dest[,2], sim_data$delta[,3])
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 35, byrow = TRUE)
+cor(dest[,1], sim_data$delta[,2])
 
 rstan::summary(fit, pars = "alpha_r_l")$summary
 exp(rstan::summary(fit, pars = "alpha_r_l")$summary)
