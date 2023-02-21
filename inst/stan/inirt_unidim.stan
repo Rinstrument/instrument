@@ -78,8 +78,10 @@ data {
   matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
   // int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
   // int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
-  int<lower=1> nDelta_r;            // number of delta structural regression parameters
+  int<lower=0> nDelta_r;            // number of delta structural regression parameters
   int<lower=0> nAlpha_r;            // number of alpha structural regression parameters
+  int<lower=0> LMean;        // want at least intercept for alpha pars?
+  int<lower=0> deltaMean;    // want at least intercept for delta pars?
   matrix[N, nDelta_r] d_design;     // delta structural design matrix
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
   
@@ -245,7 +247,11 @@ transformed parameters {
 
   {
     for(i in 1:N_long) {
-      db[i] = d_design[nn[i], ]*delta_r_l;
+      if(deltaMean) {
+        db[i] = d_design[nn[i], ]*delta_r_l;
+      } else {
+        db[i] = 0.0;
+      }
       if(any_rand_ind_d) {
         for(k in 1:Ldeta) {
           db[i] += dr[nn[i], k] * deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
@@ -258,7 +264,11 @@ transformed parameters {
       }
 
       if(L) {
-        ab[i] = a_design[nn[i], ]*alpha_r_l;
+        if(LMean) {
+          ab[i] = a_design[nn[i], ]*alpha_r_l;
+        } else {
+          ab[i] = 0.0;
+        }
         if(any_rand_ind_a) {
           for(k in 1:Laeta) {
             ab[i] += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
@@ -315,15 +325,16 @@ model {
   to_vector(theta) ~ normal(0, 1);
   
   if(L) {
-    alpha_l ~ normal(-0.5, 1.0); //-0.72, 1.2 normal(0, 1);      // try a uniform prior on a reasonable interval
-    alpha_r_l ~ normal(-0.5, 1.0); //cauchy(0, 5);
-    // alpha_l ~ uniform(-2.0, 1.0);
-    // alpha_r_l ~ uniform(-2.0, 1.0);
+    alpha_l ~ normal(-0.5, 1.0);
+    if(LMean) {
+      alpha_r_l ~ normal(-0.5, 1.0);
+    }
   }
-  // sigma_alpha ~ cauchy(0, 5);
   
-  delta_l ~ normal(0, 2);
-  delta_r_l ~ normal(0, 2);
+  delta_l ~ normal(0, 5);
+  if(deltaMean) {
+    delta_r_l ~ normal(0, 5);
+  }
 
   if(any_eta3pl) {
     eta3pl_l ~ beta(2, 3); // 5, 23

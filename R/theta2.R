@@ -82,18 +82,34 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   
   # alpha and delta
   if(any(itype == 2)) {
-    a_design = matrix(1, nrow = N, ncol = 1)
-    nAlpha_r = 1
-    DAlpha = 1
+    if(is.null(regr_alpha_data$predictors)) {
+      a_design = matrix(1, nrow = N, ncol = 0)
+      nAlpha_r = 0
+      LMean = 0
+      DAlpha = 1
+    } else {
+      a_design = matrix(1, nrow = N, ncol = 1)
+      nAlpha_r = 1
+      LMean = 1
+      DAlpha = 1
+    }
   } else {
     a_design = matrix(1, nrow = N, ncol = 0)
     nAlpha_r = 0
+    LMean = 0
     DAlpha = 0
   }
   
-  d_design = matrix(1, nrow = N, ncol = 1)
-  nDelta_r = 1
-
+  if(is.null(regr_delta_data$predictors)) {
+    d_design = matrix(1, nrow = N, ncol = 0)
+    deltaMean = 0
+    nDelta_r = 0
+  } else {
+    d_design = matrix(1, nrow = N, ncol = 1)
+    deltaMean = 1
+    nDelta_r = 1
+  }
+  
   if(length(regr_alpha_data$predictors)) {
     if(all(itype == 1)) {
       stop("Invalid model. Cannot specify an alpha ~ regression when itype == 1pl.
@@ -479,7 +495,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         any_rand_ind_a = any_rand_ind_a, any_rand_cor_a = any_rand_cor_a, any_rand_ind_d = any_rand_ind_d, any_rand_cor_d = any_rand_cor_d,
         Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, itype = itype, any_eta3pl = any_eta3pl, nEta3pl = nEta3pl, x = x, 
         D = D, DAlpha = DAlpha, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, zeta_dstart = zeta_dstart, zeta_dend = zeta_dend, 
-        weights = weights, x_miss = x_miss, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r,
+        weights = weights, x_miss = x_miss, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r, LMean = LMean, deltaMean = deltaMean, 
         d_design = d_design, a_design = a_design, Lzeta = Lzeta, Laeta = Laeta, Ldeta = Ldeta, 
         u_Lzeta_cor = u_Lzeta_cor, l_Lzeta_cor = l_Lzeta_cor, 
         u_Laeta_cor = u_Laeta_cor, l_Laeta_cor = l_Laeta_cor, 

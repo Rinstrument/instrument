@@ -21,10 +21,10 @@ insert_default_regression = function(model_regression) {
       model_regression = c(model_regression, "theta~0")
     }
     if(!("alpha" %in% spec_type)) {
-      model_regression = c(model_regression, "alpha~1")
+      model_regression = c(model_regression, "alpha~0")
     }
     if(!("delta" %in% spec_type)) {
-      model_regression = c(model_regression, "delta~1")
+      model_regression = c(model_regression, "delta~0")
     }
   }
 

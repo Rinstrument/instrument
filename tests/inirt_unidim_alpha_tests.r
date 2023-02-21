@@ -24,7 +24,7 @@ for(dd in 1:d) {
 alpha[1, ] = alpha[1, ] - mean(alpha[1, ])
 delta = matrix(nrow = j, ncol = ncateg_max - 1)
 d_design = as.matrix(data.frame(x1 = rep(1, n)))
-b_delta = 1.3
+b_delta = 0.7
 for(jj in 1:j) {
   delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
 }
@@ -73,17 +73,17 @@ fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predi
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
 
-# library(devtools)
-# load_all()
-# data = fit_data$data
-# model = "theta = c(1:10)"
-# itype = "2pl"
-# method = "vb"
-# iter = 15000
-# tol_rel_obj = 1e-4
-# exploratory = FALSE
-# method = "vb"
-# weights = NULL
+library(devtools)
+load_all()
+data = fit_data$data
+model = "theta = c(1:35)"
+itype = "2pl"
+method = "vb"
+iter = 15000
+tol_rel_obj = 1e-4
+exploratory = FALSE
+method = "vb"
+weights = NULL
 
 data = fit_data$data
 colnames(data)
