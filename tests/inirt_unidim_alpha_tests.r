@@ -17,10 +17,11 @@ ncategi = c(rep(ncat, j))
 ncateg_max = max(ncategi)
 alpha = matrix(0, d, j)
 a_design = as.matrix(data.frame(x1 = rep(1, n), x2 = rnorm(n, 0.1)))
-b_alpha = c(0.8, 0)
+b_alpha = c(0.4, 0)
 for(dd in 1:d) {
-  alpha[dd, ] = sort(runif(j, -1, 1.5))
+  alpha[dd, ] = (sort(runif(j, -1.5, 1.5)))
 }
+alpha[1, ] = alpha[1, ] - mean(alpha[1, ])
 delta = matrix(nrow = j, ncol = ncateg_max - 1)
 d_design = as.matrix(data.frame(x1 = rep(1, n)))
 b_delta = 1.3
@@ -30,7 +31,7 @@ for(jj in 1:j) {
 delta = cbind(0, delta)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
-  theta[, dd] = rnorm(n, 0, 1)
+  theta[, dd] = rnorm(n, 0, sqrt(1.5))
 }
 beta = NULL
 predictors = NULL
@@ -93,7 +94,7 @@ fit = theta2::theta2(
   method = "vb", 
   iter = 10000, 
   tol_rel_obj = 1e-4)
-
+ 
 fit = theta2::theta2(
   data = data,
   model = "theta = c(1:35)",
@@ -107,6 +108,12 @@ cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
 plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
 dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 35, byrow = TRUE)
 cor(dest[,1], sim_data$delta[,2])
+plot(dest[,1], sim_data$delta[,2])
+
+
+rstan::summary(fit, pars = "alpha_l")$summary
+cor(sim_data$alpha[1,], rstan::summary(fit, pars = "alpha_l")$summary[,1])
+plot(sim_data$alpha[1,], rstan::summary(fit, pars = "alpha_l")$summary[,1])
 
 rstan::summary(fit, pars = "alpha_r_l")$summary
 exp(rstan::summary(fit, pars = "alpha_r_l")$summary)

@@ -144,7 +144,7 @@ parameters {
 
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
-  vector<lower=0>[L] alpha_l;      // distrimination over multiple dimensions
+  vector[L] alpha_l;      // distrimination over multiple dimensions
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
   vector[nEta3pl] eta3pl_l;
 
@@ -293,7 +293,7 @@ transformed parameters {
 
       c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
-        nu[i] = dot_product(theta[nn[i], ] + xb[i], col(alpha, jj[i]) + exp(ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
+        nu[i] = dot_product(theta[nn[i], ] + xb[i], exp(col(alpha, jj[i]) + ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
       } else {
         nu[i] = sum(theta[nn[i], ] + xb[i]);
       }
@@ -315,15 +315,15 @@ model {
   to_vector(theta) ~ normal(0, 1);
   
   if(L) {
-    alpha_l ~ lognormal(0, 2); // normal(0, 1);      // try a uniform prior on a reasonable interval
-    alpha_r_l ~ normal(0, 0.5); //cauchy(0, 5);
+    alpha_l ~ normal(-0.5, 1.0); //-0.72, 1.2 normal(0, 1);      // try a uniform prior on a reasonable interval
+    alpha_r_l ~ normal(-0.5, 1.0); //cauchy(0, 5);
     // alpha_l ~ uniform(-2.0, 1.0);
     // alpha_r_l ~ uniform(-2.0, 1.0);
   }
   // sigma_alpha ~ cauchy(0, 5);
   
-  delta_l ~ normal(0, 1);
-  delta_r_l ~ normal(0, 1);
+  delta_l ~ normal(0, 2);
+  delta_r_l ~ normal(0, 2);
 
   if(any_eta3pl) {
     eta3pl_l ~ beta(2, 3); // 5, 23
@@ -375,56 +375,3 @@ model {
   // array[] int y, vector nu, matrix cut, vector eta, array[] int K, int nlong, int itype
   target += ordered_logistic_log_irt_vec(y, nu, c, eta3pl, Ncategi_jj, N_long, itype);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-// real xb = 0.0;
-      // real ab = a_design[nn[i], ]*alpha_r_l;
-      // real db = d_design[nn[i], ]*delta_r_l;
-
-      // for(k in 1:K) {
-      //   if(x_miss[i, k] == 0) {
-      //     xb += x[nn[i], k] * beta[k,1];
-      //   }
-      // }
-      // // if(any_rand) { // handle random effects
-      // if(any_rand_cor) {
-      //   for(k in 1:Lzeta_cor) {
-      //     xb += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
-      //   }
-      // }
-      // if(any_rand_ind) {
-      //   for(k in 1:Lzeta) {
-      //     xb += z[nn[i], k] * zeta[k,1];
-      //   }
-      // }
-      // // }
-      // if(any_rand_ind_a) {
-      //   for(k in 1:Laeta) {
-      //     ab += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
-      //   }
-      // }
-      // if(any_rand_cor_a) {
-      //   for(k in 1:Laeta_cor) {
-      //     ab += a_c[nn[i], k] * aeta_c[cor_a_item_ind[k]][cor_a_item_elem_ind[k]];
-      //   }
-      // }
-      // if(any_rand_ind_d) {
-      //   for(k in 1:Ldeta) {
-      //     db += dr[nn[i], k] * deta_l[dlindex[k]]*deta_l_sd[deta_sd_ind[k]];
-      //   }
-      // }
-      // if(any_rand_cor_d) {
-      //   for(k in 1:Ldeta_cor) {
-      //     db += d_c[nn[i], k] * deta_c[cor_d_item_ind[k]][cor_d_item_elem_ind[k]];
-      //   }
-      // }
