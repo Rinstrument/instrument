@@ -34,7 +34,8 @@ functions {
           val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, K_i-1] - nu_i)));
         } else {
           //val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));
-          val += log(    (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i)) -   (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i))       );
+          //val += log(    (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i)) -   (1.0-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i))       );
+          val += log(  (1.0-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i))    -    (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i))     );
         }
       }
     }
