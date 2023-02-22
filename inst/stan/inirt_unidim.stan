@@ -34,7 +34,6 @@ functions {
           val += log(eta_i + (1-eta_i)*(inv_logit(cut[i, K_i-1] - nu_i)));
         } else {
           val += log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));
-          // val += log_inv_logit_diff(cut[i, y_i] - nu_i, cut[i, y_i-1] - nu_i);
         }
       }
     }
@@ -134,11 +133,6 @@ transformed data {
 
   vector[l_Ldeta_cor] zeros_Ldeta_cor;
   zeros_Ldeta_cor = rep_vector(0, l_Ldeta_cor);
-
-  // int Ncategi_jj[N_long];
-  // for(i in 1:N_long) {
-  //   Ncategi_jj[i] = Ncategi[jj[i]];
-  // }
 }
 
 parameters {
@@ -179,7 +173,7 @@ transformed parameters {
   vector[N_long*(DAlpha ? 1 : 0)] ab;
   vector[N_long] xb;
   vector[N_long] nu;
-  matrix[N_long, Ncateg_max-1] c; // Make excess categories infinite
+  matrix[N_long, Ncateg_max-1] c;
   vector[N_long] eta3pl;
 
   {
@@ -310,11 +304,6 @@ transformed parameters {
 
       if(any_eta3pl) {
         eta3pl[i] = (itype[i] == 3) ? eta3pl_l[find_eta3pl[i]] : 0.0;
-        // if(eta3pl[i] == 3) {
-        //   eta3pl[i] = eta3pl_l[find_eta3pl[i]];
-        // } else {
-        //   eta3pl[i] = 0.0;
-        // }
       } else {
         eta3pl[i] = 0.0;
       }
@@ -337,7 +326,7 @@ model {
   }
 
   if(any_eta3pl) {
-    eta3pl_l ~ beta(2, 3); // 5, 23
+    eta3pl_l ~ beta(5, 23); // 5, 23  2, 3
   }
 
   if(has_treg) {
@@ -383,6 +372,5 @@ model {
     }
   }
   
-  // array[] int y, vector nu, matrix cut, vector eta, array[] int K, int nlong, int itype
   target += ordered_logistic_log_irt_vec(y, nu, c, eta3pl, Ncategi_jj, N_long, itype);
 }
