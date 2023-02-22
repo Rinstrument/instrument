@@ -81,7 +81,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   N_long = N*J
   
   # alpha and delta
-  if(any(itype == 2)) {
+  if(any(itype >= 2)) {
     if(is.null(regr_alpha_data$predictors)) {
       a_design = matrix(1, nrow = N, ncol = 0)
       nAlpha_r = 0
@@ -353,7 +353,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   find_eta3pl = (itype == 3) * 1
 
   if(h2_dims == 0) {
-    if(all(itype == 2)) {
+    if(all(itype >= 2)) {
       L = D*(J-D) + D*(D+1)/2
     } else if(all(itype == 1)) {
       L = 0

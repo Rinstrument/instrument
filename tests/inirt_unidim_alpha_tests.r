@@ -75,6 +75,8 @@ rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
 
 library(devtools)
+library(Rcpp)
+compileAttributes()
 load_all()
 data = fit_data$data
 model = "theta = c(1:35)"
