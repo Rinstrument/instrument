@@ -45,9 +45,10 @@ beta_dend = NULL
 # zeta_sd = 0.5
 # zeta = rnorm(Lz, 0, sd = zeta_sd)
 data = matrix(0, nrow = n, ncol = j)
+#                eta[jj] + ((1 - eta[jj]) *
 for(i in 1:n) {
-  for(jj in 1:j) {#                                                                                   z[i, ] %*% zeta
-    prb = eta[jj] + ((1 - eta[jj]) * (1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,])))))))
+  for(jj in 1:j) {                                                          
+    prb = eta[jj] + ((1 - eta[jj]) *(1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))  )
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -90,6 +91,13 @@ weights = NULL
 
 data = fit_data$data
 colnames(data)
+fit = theta2::theta2(
+  data = data,
+  model = "theta = c(1:35)",
+  itype = "2pl",
+  method = "mle", 
+  tol_rel_obj = 1e-4)
+
 fit = theta2::theta2(
   data = data,
   model = "theta = c(1:35)",

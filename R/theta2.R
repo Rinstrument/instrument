@@ -349,10 +349,10 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   nn = rep(1:N, J)
   jj = rep(1:J, each = N)
   D = dims
-  itype = rep(itype, each = N)
   match_eta3pl = match(itype, 3, nomatch = 0)
   find_eta3pl = rep(cumsum(match_eta3pl) * match_eta3pl, each = N)
-
+  itype = rep(itype, each = N)
+  
   if(h2_dims == 0) {
     if(all(itype >= 2)) {
       L = D*(J-D) + D*(D+1)/2
@@ -494,7 +494,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   if(D == 1) {
     standata = list(N = N, J = J, K = K, any_rand = any_rand, any_rand_ind = any_rand_ind, any_rand_cor = any_rand_cor, 
         any_rand_ind_a = any_rand_ind_a, any_rand_cor_a = any_rand_cor_a, any_rand_ind_d = any_rand_ind_d, any_rand_cor_d = any_rand_cor_d,
-        Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, itype = itype, any_eta3pl = any_eta3pl, nEta3pl = nEta3pl, x = x, 
+        Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, itype = itype, any_eta3pl = any_eta3pl, nEta3pl = nEta3pl, find_eta3pl = find_eta3pl, x = x, 
         D = D, DAlpha = DAlpha, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, zeta_dstart = zeta_dstart, zeta_dend = zeta_dend, 
         weights = weights, x_miss = x_miss, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r, LMean = LMean, deltaMean = deltaMean, 
         d_design = d_design, a_design = a_design, Lzeta = Lzeta, Laeta = Laeta, Ldeta = Ldeta, 
