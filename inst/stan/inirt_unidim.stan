@@ -29,9 +29,11 @@ functions {
       } else {
         eta_i = eta[i];
         if (y_i == 1) {
-          val += log(eta_i + (1.0 - eta_i)*(inv_logit(nu_i - cut[i, 1])));
+         // val += log(eta_i + (1.0 - eta_i)*(inv_logit(nu_i - cut[i, 1])));
+         val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, 1] - nu_i)));
         } else if(y_i == K_i) {
-          val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, K_i-1] - nu_i)));
+         // val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, K_i-1] - nu_i)));
+         val += log(eta_i + (1.0 - eta_i)*(inv_logit(nu_i - cut[i, K_i-1])));
         } else {
           //val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));
           //val += log(    (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i)) -   (1.0-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i))       );
