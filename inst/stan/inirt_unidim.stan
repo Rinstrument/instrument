@@ -29,11 +29,12 @@ functions {
       } else {
         eta_i = eta[i];
         if (y_i == 1) {
-          val += log(eta_i + (1-eta_i)*(inv_logit(nu_i - cut[i, 1])));
+          val += log(eta_i + (1.0 - eta_i)*(inv_logit(nu_i - cut[i, 1])));
         } else if(y_i == K_i) {
-          val += log(eta_i + (1-eta_i)*(inv_logit(cut[i, K_i-1] - nu_i)));
+          val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, K_i-1] - nu_i)));
         } else {
-          val += log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));
+          //val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));
+          val += log(    (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i)) -   (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i))       );
         }
       }
     }
@@ -142,7 +143,7 @@ parameters {
   vector[nDelta_r] delta_r_l;      // structural regression, delta
   vector[L] alpha_l;      // distrimination over multiple dimensions
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
-  vector[nEta3pl] eta3pl_l;
+  vector<lower=0,upper=1>[nEta3pl] eta3pl_l;
 
   vector[K] beta_l;            // regression parameters for each dimension
 
@@ -174,7 +175,7 @@ transformed parameters {
   vector[N_long] xb;
   vector[N_long] nu;
   matrix[N_long, Ncateg_max-1] c;
-  vector[N_long] eta3pl;
+  vector<lower=0,upper=1>[N_long] eta3pl;
 
   {
     if(L) {
