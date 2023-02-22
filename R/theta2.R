@@ -350,7 +350,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   jj = rep(1:J, each = N)
   D = dims
   itype = rep(itype, each = N)
-  find_eta3pl = (itype == 3) * 1
+  match_eta3pl = match(itype, 3, nomatch = 0)
+  find_eta3pl = rep(cumsum(match_eta3pl) * match_eta3pl, each = N)
 
   if(h2_dims == 0) {
     if(all(itype >= 2)) {
