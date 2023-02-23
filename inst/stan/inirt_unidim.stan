@@ -21,18 +21,20 @@ functions {
       if(itype[i] < 3) {
         if (y_i == 1) {
           val += -log1p_exp(nu_i - cut[i, 1]);
+          //val += log(inv_logit(cut[i, 1] - nu_i));
         } else if(y_i == K_i) {
           val += -log1p_exp(cut[i, K_i-1] - nu_i);
+          //val += log(inv_logit(nu_i - cut[i, K_i-1]));
         } else {
           val += log_inv_logit_diff(cut[i, y_i] - nu_i, cut[i, y_i-1] - nu_i);
         }
       } else {
         eta_i = eta[i];
         if (y_i == 1) {
-         val += log(eta_i + (1.0 - eta_i)*(inv_logit(-1*(nu_i - cut[i, 1]))));
+         val += log(eta_i + (1.0 - eta_i)*inv_logit(cut[i, 1] - nu_i));
          //val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, 1] - nu_i)));
         } else if(y_i == K_i) {
-         val += log(eta_i + (1.0 - eta_i)*(inv_logit(-1*(cut[i, K_i-1] - nu_i))));
+         val += log(eta_i + (1.0 - eta_i)*inv_logit(nu_i - cut[i, K_i-1]));
          //val += log(eta_i + (1.0 - eta_i)*(inv_logit(nu_i - cut[i, K_i-1])));
         } else {
           //val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));

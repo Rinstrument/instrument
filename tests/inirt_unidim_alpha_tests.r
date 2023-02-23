@@ -47,8 +47,8 @@ beta_dend = NULL
 data = matrix(0, nrow = n, ncol = j)
 #                eta[jj] + ((1 - eta[jj]) *
 for(i in 1:n) {
-  for(jj in 1:j) {                                                          
-    prb = eta[jj] + ((1 - eta[jj]) *(1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))  )
+  for(jj in 1:j) {         #  eta[jj] +           (1 - eta[jj])                                                  
+    prb = eta[jj] + ((1 - eta[jj]) * ((1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))  ))
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -63,7 +63,8 @@ colnames(data) = c(paste0("x", 1:j), paste0("ap", 1:2))
 # ranef_id = c(rep(1, ncol(z)/2)) #, rep(2, ncol(z)/2)
 dims = 1
 item_id = 1:j
-sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta)
+sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, 
+    beta = beta, theta = theta, eta = eta)
 fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predictors,
     n_pranef_cor = 0,
     dims = dims, h2_dims = 0, h2_dim_id = NULL, structural_design = list(alpha = a_design, delta = d_design), 
@@ -75,29 +76,22 @@ fit_data = list(data = data, item_id = item_id, model = NULL, predictors = predi
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
 
-library(devtools)
-library(Rcpp)
-compileAttributes()
-load_all()
-data = fit_data$data
-model = "theta = c(1:35)"
-itype = "3pl"
-method = "vb"
-iter = 15000
-tol_rel_obj = 1e-4
-exploratory = FALSE
-method = "vb"
-weights = NULL
+# library(devtools)
+# library(Rcpp)
+# compileAttributes()
+# load_all()
+# data = fit_data$data
+# model = "theta = c(1:35)"
+# itype = "3pl"
+# method = "vb"
+# iter = 15000
+# tol_rel_obj = 1e-4
+# exploratory = FALSE
+# method = "vb"
+# weights = NULL
 
 data = fit_data$data
 colnames(data)
-fit = theta2::theta2(
-  data = data,
-  model = "theta = c(1:35)",
-  itype = "2pl",
-  method = "mle", 
-  tol_rel_obj = 1e-4)
-
 fit = theta2::theta2(
   data = data,
   model = "theta = c(1:35)",
@@ -106,13 +100,13 @@ fit = theta2::theta2(
   iter = 10000, 
   tol_rel_obj = 1e-4)
 
-fit = theta2::theta2(
-  data = data,
-  model = "theta = c(1:35)",
-  itype = "3pl",
-  method = "hmc", iter = 30, warmup = 15,
-  chains = 1
-  )
+# fit = theta2::theta2(
+#   data = data,
+#   model = "theta = c(1:35)",
+#   itype = "3pl",
+#   method = "hmc", iter = 30, warmup = 15,
+#   chains = 1
+#   )
 
 
 cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
@@ -131,7 +125,14 @@ exp(rstan::summary(fit, pars = "alpha_r_l")$summary)
 
 
 rstan::summary(fit, pars = "delta_r_l")$summary
+
 fit@model_pars
+
+rstan::summary(fit, pars = "eta3pl_l")$summary
+cor(rstan::summary(fit, pars = "eta3pl_l")$summary[,1], sim_data$eta)
+plot(rstan::summary(fit, pars = "eta3pl_l")$summary[,1], sim_data$eta)
+
+
 
 cor(sim_data$zeta, (rstan::summary(fit, pars = "aeta_l")$summary[,1]))
 plot(sim_data$zeta, (rstan::summary(fit, pars = "aeta_l")$summary[,1]))
