@@ -110,7 +110,7 @@ data = fit_data$data
 colnames(data)
 fit = theta2::theta2(
   data = data,
-  model = "thetag ~ theta1 + theta2 + theta3 + theta4
+  model = "thetag = theta1 + theta2 + theta3 + theta4
            theta1 = c(1:10)
            theta2 = c(11:20)
            theta3 = c(21:30)
