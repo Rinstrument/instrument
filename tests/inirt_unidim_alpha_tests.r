@@ -2,7 +2,7 @@
 # test of the new alpha regression setup
 devtools::install(dependencies = FALSE)
 library(rstan)
-stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
+stanc(file = "./inst/stan/inirt_hoirt2.stan", verbose = TRUE)
 # library(devtools)
 # Rcpp::compileAttributes()
 # load_all()
