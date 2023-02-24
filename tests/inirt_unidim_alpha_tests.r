@@ -29,7 +29,7 @@ for(jj in 1:j) {
   delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
 }
 delta = cbind(0, delta)
-eta = runif(j, 0.02, 0.4)
+# eta = runif(j, 0.1, 0.7)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
   theta[, dd] = rnorm(n, 0, sqrt(1.5))
@@ -48,7 +48,7 @@ data = matrix(0, nrow = n, ncol = j)
 #                eta[jj] + ((1 - eta[jj]) *
 for(i in 1:n) {
   for(jj in 1:j) {         #  eta[jj] +           (1 - eta[jj])                                                  
-    prb = eta[jj] + ((1 - eta[jj]) * ((1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))  ))
+    prb = ((1 / (1 + exp(-(sum(exp(alpha[, jj] + as.vector(b_alpha%*%a_design[i,]))*(theta[i, ])) - (delta[jj, ] + as.vector(b_delta%*%d_design[i,]))))))  )
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -95,18 +95,18 @@ colnames(data)
 fit = theta2::theta2(
   data = data,
   model = "theta = c(1:35)",
-  itype = "3pl",
-  method = "vb", 
-  iter = 10000, 
+  itype = "2pl",
+  method = "vb",
+  iter = 10000,
   tol_rel_obj = 1e-4)
 
-# fit = theta2::theta2(
-#   data = data,
-#   model = "theta = c(1:35)",
-#   itype = "3pl",
-#   method = "hmc", iter = 30, warmup = 15,
-#   chains = 1
-#   )
+fit = theta2::theta2(
+  data = data,
+  model = "theta = c(1:35)",
+  itype = "2pl",
+  method = "hmc", iter = 300, warmup = 150,
+  chains = 1
+  )
 
 
 cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta)
@@ -131,7 +131,8 @@ fit@model_pars
 rstan::summary(fit, pars = "eta3pl_l")$summary
 cor(rstan::summary(fit, pars = "eta3pl_l")$summary[,1], sim_data$eta)
 plot(rstan::summary(fit, pars = "eta3pl_l")$summary[,1], sim_data$eta)
-
+library(rstan)
+traceplot(fit, "eta3pl_l")
 
 
 cor(sim_data$zeta, (rstan::summary(fit, pars = "aeta_l")$summary[,1]))

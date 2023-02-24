@@ -31,10 +31,11 @@ functions {
       } else {
         eta_i = eta[i];
         if (y_i == 1) {
-         val += log(eta_i + (1.0 - eta_i)*inv_logit(cut[i, 1] - nu_i));
+        //  val += log(eta_i + (1.0 - eta_i)*inv_logit(cut[i, 1] - nu_i));
+         val += log(eta_i + (1.0 - eta_i)*(1.0 - inv_logit(nu_i - cut[i, 1]))); //nu_i - cut[i, 1]
          //val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, 1] - nu_i)));
         } else if(y_i == K_i) {
-         val += log(eta_i + (1.0 - eta_i)*inv_logit(nu_i - cut[i, K_i-1]));
+         val += log(eta_i + (1.0 - eta_i)*inv_logit(nu_i - cut[i, K_i-1])); //nu_i - cut[i, K_i-1]
          //val += log(eta_i + (1.0 - eta_i)*(inv_logit(nu_i - cut[i, K_i-1])));
         } else {
           //val += log(eta_i + (1.0 - eta_i)*(inv_logit(cut[i, y_i] - nu_i))) - log(eta_i + (1-eta_i)*(inv_logit(cut[i, y_i-1] - nu_i)));
@@ -148,7 +149,7 @@ parameters {
   vector[nDelta_r] delta_r_l;      // structural regression, delta
   vector[L] alpha_l;      // distrimination over multiple dimensions
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
-  vector<lower=0,upper=1>[nEta3pl] eta3pl_l;
+  vector<lower=0,upper=1>[nEta3pl] eta3pl_l; //
 
   vector[K] beta_l;            // regression parameters for each dimension
 
@@ -172,7 +173,7 @@ parameters {
 }
 transformed parameters {
   matrix[DAlpha, J] alpha;                  // connstrain the upper traingular elements to zero 
-  matrix[K, D] beta;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
+  matrix[K, D] betat;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
   matrix[J, Ncateg_max-1] delta_trans; // Make excess categories infinite
   vector[N_long] db;
@@ -204,7 +205,7 @@ transformed parameters {
         b_upper = beta_dend[d];
         for(i in b_lower:b_upper) {
           bindex = bindex + 1;
-          beta[i, d] = beta_l[bindex];
+          betat[i, d] = beta_l[bindex];
         }
       }
     }
@@ -284,7 +285,7 @@ transformed parameters {
       if(has_treg) {
         for(k in 1:K) {
           if(x_miss[i, k] == 0) {
-            xb[i] += x[nn[i], k] * beta[k,1];
+            xb[i] += x[nn[i], k] * betat[k,1];
           }
         }
       } else {
@@ -332,7 +333,7 @@ model {
   }
 
   if(any_eta3pl) {
-    eta3pl_l ~ beta(5, 23); // 5, 23  2, 3
+    eta3pl_l ~ beta(2, 2); // 5, 23  2, 3
   }
 
   if(has_treg) {
