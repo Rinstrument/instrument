@@ -94,7 +94,7 @@ library(Rcpp)
 compileAttributes()
 load_all()
 data = fit_data$data
-model = "thetag ~ theta1 + theta2 + theta3 + theta4
+model = "thetag = theta1 + theta2 + theta3 + theta4
          theta1 = c(1:10)
          theta2 = c(11:20)
          theta3 = c(21:30)
