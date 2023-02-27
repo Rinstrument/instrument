@@ -144,7 +144,7 @@ transformed data {
 }
 
 parameters {
-  matrix[N, D] theta;              // general ability
+  matrix[N, 1] theta;              // general ability
   matrix[N, D] theta_resid;        // residual 1st order ability
 
   vector[D] lambda; // loadings for second order on first, e.g., theta1 = lambda * theta + error
@@ -176,7 +176,7 @@ parameters {
   vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
 }
 transformed parameters {
-  matrix[DAlpha, J] alpha;                  // connstrain the upper traingular elements to zero 
+  matrix[D*(DAlpha ? 1 : 0), J] alpha;                  // connstrain the upper traingular elements to zero 
   matrix[K, D] betat;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
   matrix[J, Ncateg_max-1] delta_trans; // Make excess categories infinite
@@ -189,11 +189,20 @@ transformed parameters {
 
   {
     if(L) {
-      int index = 0;
       for(d in 1:D) {
-        for(j in d:J) {
-          index = index + 1;
-          alpha[d, j] = alpha_l[index];
+        for(j in 1:J) {
+          alpha[d, j] = 0;
+        }
+      }
+      int aindex = 0;
+      int a_lower = 0;
+      int a_upper = 0;
+      for(d in 1:D) {
+        a_lower = alpha_dstart[d];
+        a_upper = alpha_dend[d];
+        for(i in a_lower:a_upper) {
+          aindex += 1;
+          alpha[d, i] = alpha_l[aindex];
         }
       }
     }
@@ -308,9 +317,12 @@ transformed parameters {
 
       c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
-        nu[i] = dot_product(lambda[lambda_ind[i]]*theta[nn[i], ] + xb[i] + theta_resid[nn[i], lambda_ind[i]], exp(col(alpha, jj[i]) + ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
+        //nu[i] = dot_product(rep_vector(lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]], D), exp(col(alpha, jj[i]) + ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
+        nu[i] = dot_product(rep_vector( (lambda[lambda_ind[i]]*theta[nn[i], 1]) + theta_resid[nn[i], lambda_ind[i]], D), exp(col(alpha, jj[i]))); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
+
       } else {
-        nu[i] = sum(lambda[lambda_ind[i]]*theta[nn[i], ] + xb[i] + theta_resid[nn[i], lambda_ind[i]]);
+        // nu[i] = sum(rep_vector(lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]], D));
+        nu[i] = lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]];
       }
 
       if(any_eta3pl) {

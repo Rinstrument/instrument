@@ -472,8 +472,9 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   }
 
   if(h2_dims > 0) {
-    h2_dim_id_ulist = unlist(h2_dim_id)
-    d_lengths = sapply(h2_dim_id, function(x) {length(x)})
+    # h2_dim_id_ulist = unlist(h2_dim_id)
+    # d_lengths = sapply(h2_dim_id, function(x) {length(x)})
+    d_lengths = as.vector(table(h2_dim_id))
     d_seq_start = 1
     new_id_list = vector(mode = "list", length = D)
     for(i in 1:D) {
@@ -481,14 +482,15 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       d_seq_start = max(new_id_list[[i]]) + 1
     }
     new_id_list = lapply(new_id_list, function(x) {c(x[1], x[length(x)])})
-    irt_data = irt_data[, h2_dim_id_ulist]
+    # irt_data = irt_data[, h2_dim_id_ulist]
     alpha_dstart = array(sapply(new_id_list, function(x) {x[1]}), dim = D)
     alpha_dend = array(sapply(new_id_list, function(x) {x[length(x)]}), dim = D)
-    lambda_ind = c()
-    for(i in 1:D) {
-      lambda_ind = c(lambda_ind, rep(i, d_lengths[i]))
-    }
-    lambda_ind = as.vector(t(replicate(N, lambda_ind)))
+    # lambda_ind = c()
+    # for(i in 1:D) {
+    #   lambda_ind = c(lambda_ind, rep(i, d_lengths[i]))
+    # }
+    # lambda_ind = as.vector(t(replicate(N, lambda_ind)))
+    lambda_ind = rep(h2_dim_id, each = N)
   }
 
   if(D == 1) {

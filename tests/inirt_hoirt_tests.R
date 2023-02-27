@@ -124,7 +124,6 @@ fit = theta2::theta2(
 
 
 
-
 # fit = inirt::inirt(data = fit_data$data, model = fit_data$model, predictors = fit_data$predictors, dims = fit_data$dims, 
 #     h2_dims = fit_data$h2_dims, h2_dim_id = fit_data$h2_dim_id, structural_design = fit_data$structural_design, 
 #     method = fit_data$method, weights = fit_data$weights, iter = fit_data$iter, 
