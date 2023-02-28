@@ -4,7 +4,7 @@ library(rstan)
 stanc(file = "./inst/stan/inirt_hoirt2.stan", verbose = TRUE)
 n = 1000
 d = 4
-j = 20*d
+j = 5*d
 ncat = 2
 ncategi = c(rep(ncat, j))
 ncateg_max = max(ncategi)
@@ -13,8 +13,8 @@ uk = 0
 alpha = matrix(0, d, j)
 a_design = as.matrix(data.frame(x1 = rep(1, n)))
 b_alpha = 1
-alpha_dstart = c(1, 21, 41, 61)
-alpha_dend = c(20, 40, 60, 80)
+alpha_dstart = c(1, 6, 11, 16)
+alpha_dend = c(5, 10, 15, 20)
 for(dd in 1:d) {
   alpha[dd, alpha_dstart[dd]:alpha_dend[dd]] = sort(runif(j/d, -1.5, 1.5))
 }
@@ -25,10 +25,10 @@ for(jj in 1:j) {
   delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
 }
 delta = cbind(0, delta)
-theta_g = rnorm(n, 0, sqrt(1.5)) # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) #
+theta_g = rnorm(n, 0, 0.5) # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) # sqrt(1.5)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
-  theta[, dd] = rnorm(n, 0, sqrt(1.5)) #0.1??????
+  theta[, dd] = rnorm(n, 0, 0.05) #0.1??????
 }
 beta = NULL
 predictors = NULL
@@ -108,17 +108,13 @@ ls()
 
 data = fit_data$data
 colnames(data)
-fit = theta2::theta2(
-  data = data,
-  model = "thetag = theta1 + theta2 + theta3 + theta4
-           theta1 = c(1:20)
-           theta2 = c(21:40)
-           theta3 = c(41:60)
-           theta4 = c(61:80)",
-  itype = "2pl",
-  method = "vb",
-  iter = 10000,
-  tol_rel_obj = 1e-4)
+model = "thetag = theta1 + theta2 + theta3 + theta4
+          theta1 = c(1:5)
+          theta2 = c(6:10)
+          theta3 = c(11:15)
+          theta4 = c(16:20)"
+fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
+  iter = 300, warmup = 150, chains = 4, cores = 4)
 
 library(rstan)
 
@@ -128,7 +124,7 @@ cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta_g)
 plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta_g)
 theta_resid = matrix(rstan::summary(fit, pars = c("theta_resid"))$summary[,1], ncol = 4, byrow = TRUE)
 cor(theta_resid[,1], sim_data$theta[,1])
-plot(theta_resid[,1], sim_data$theta[,1])
+# plot(theta_resid[,1], sim_data$theta[,1])
 cor(theta_resid[,2], sim_data$theta[,2])
 cor(theta_resid[,3], sim_data$theta[,3])
 cor(theta_resid[,4], sim_data$theta[,4])
@@ -136,7 +132,9 @@ cor(theta_resid[,4], sim_data$theta[,4])
 sim_data$lambda
 rstan::summary(fit, pars = c("lambda"))$summary[,1]
 
-traceplot(fit, pars = c("theta"))
+rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
+
+traceplot(fit, pars = c("lambda_identify"))
 
 # fit = inirt::inirt(data = fit_data$data, model = fit_data$model, predictors = fit_data$predictors, dims = fit_data$dims, 
 #     h2_dims = fit_data$h2_dims, h2_dim_id = fit_data$h2_dim_id, structural_design = fit_data$structural_design, 

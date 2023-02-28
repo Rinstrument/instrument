@@ -263,11 +263,11 @@ transformed parameters {
   }
 
 
-  // constrain first lambda to by >= 0 by transformation  Y = log(X - a) 
+  // constrain first lambda to by >= 0 by transformation  Y = log(X - a) <=> log(X - 0.0)
   {
     for(i in 1:D) {
       if(i == 1) {
-        lambda_identify[i] = log(lambda[i] - 1.0);
+        lambda_identify[i] = exp(lambda[i]) + 0.1;
       } else {
         lambda_identify[i] = lambda[i];
       }
@@ -352,7 +352,11 @@ model {
   to_vector(theta) ~ normal(0, 1);
   to_vector(theta_resid) ~ normal(0, 1);
 
-  lambda ~ normal(0, 5);
+  lambda[1] ~ normal(-2, 2);
+  for(i in 2:D) {
+    lambda[i] ~ normal(0, 5);
+  }
+  //lambda ~ normal(0, 5);
   
   if(L) {
     alpha_l ~ normal(-0.5, 1.0);
