@@ -21,3 +21,6 @@ there is that constraint
 
 Tutorial of IRT in stan:
 https://agabrioblog.onrender.com/tutorial/irt-stan/irt-stan/
+
+Add anova() for model comparison: 
+https://methodenlehre.github.io/SGSCLM-R-course/cfa-and-sem-with-lavaan.html

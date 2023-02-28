@@ -73,6 +73,8 @@ data {
   matrix[N, K] x;   // fixed effect design matrix for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=0> DAlpha;  // Copy of D except that it is zero if itype == "1pl" - no alpha parameters estimated in this case
+  int<lower=0> alpha_dstart[D];
+  int<lower=0> alpha_dend[D];
   int<lower=1> nDelta;        // total number of delta parameters
   int<lower=1,upper=D> lambda_ind[N_long]; // which 1st order dim does each obs. belong to? 
   int<lower=0> L;        // number of non-zero loadings
@@ -186,6 +188,7 @@ transformed parameters {
   vector[N_long] nu;
   matrix[N_long, Ncateg_max-1] c;
   vector<lower=0,upper=1>[N_long] eta3pl;
+  vector[D] lambda_identify;  // restrict the first lambda to be >= 0 for identifiability of the model!
 
   {
     if(L) {
@@ -259,6 +262,18 @@ transformed parameters {
     }
   }
 
+
+  // constrain first lambda to by >= 0 by transformation  Y = log(X - a) 
+  {
+    for(i in 1:D) {
+      if(i == 1) {
+        lambda_identify[i] = log(lambda[i] - 1.0);
+      } else {
+        lambda_identify[i] = lambda[i];
+      }
+    }
+  }
+
   {
     for(i in 1:N_long) {
       if(deltaMean) {
@@ -318,11 +333,11 @@ transformed parameters {
       c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
         //nu[i] = dot_product(rep_vector(lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]], D), exp(col(alpha, jj[i]) + ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
-        nu[i] = dot_product(rep_vector( (lambda[lambda_ind[i]]*theta[nn[i], 1]) + theta_resid[nn[i], lambda_ind[i]], D), exp(col(alpha, jj[i]))); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
+        nu[i] = dot_product(rep_vector( (lambda_identify[lambda_ind[i]]*theta[nn[i], 1]) + theta_resid[nn[i], lambda_ind[i]], D), exp(col(alpha, jj[i]))); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
 
       } else {
         // nu[i] = sum(rep_vector(lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]], D));
-        nu[i] = lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]];
+        nu[i] = lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]];
       }
 
       if(any_eta3pl) {

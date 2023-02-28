@@ -595,6 +595,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       x = x, 
       D = D, 
       DAlpha = DAlpha, 
+      alpha_dstart = alpha_dstart,
+      alpha_dend = alpha_dend,
       nDelta = nDelta, 
       lambda_ind = lambda_ind,
       L = L, 
