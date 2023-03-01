@@ -109,10 +109,10 @@ ls()
 data = fit_data$data
 colnames(data)
 model = "thetag = theta1 + theta2 + theta3 + theta4
-          theta1 = c(1:5)
-          theta2 = c(6:10)
-          theta3 = c(11:15)
-          theta4 = c(16:20)"
+         theta1 = c(1:5)
+         theta2 = c(6:10)
+         theta3 = c(11:15)
+         theta4 = c(16:20)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
   iter = 300, warmup = 150, chains = 4, cores = 4)
 
