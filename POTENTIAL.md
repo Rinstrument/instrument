@@ -24,3 +24,8 @@ https://agabrioblog.onrender.com/tutorial/irt-stan/irt-stan/
 
 Add anova() for model comparison: 
 https://methodenlehre.github.io/SGSCLM-R-course/cfa-and-sem-with-lavaan.html
+
+
+M clark has a new set of tutorials that fit the 3pl and 4pl models: 
+https://m-clark.github.io/models-by-example/bayesian-irt.html#three-parameter-irt
+Woo Hoo!!!!

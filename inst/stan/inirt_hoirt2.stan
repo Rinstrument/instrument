@@ -263,7 +263,8 @@ transformed parameters {
   }
 
 
-  // constrain first lambda to by >= 0 by transformation  Y = log(X - a) <=> log(X - 0.0)
+  // constrain first lambda to by >= 0 by transformation: lambda1 must by strictly positive
+  //  (we already assume that the lambda's are all non-zero)
   {
     for(i in 1:D) {
       if(i == 1) {
