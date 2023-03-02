@@ -147,9 +147,10 @@ transformed data {
 
 parameters {
   matrix[N, 1] theta;              // general ability
+  real<lower=0,upper=1> sig_sq_thetag_reg;          // residual uncertainty in thetag regression
   matrix[N, D] theta_resid;        // residual 1st order ability
 
-  vector[D] lambda; // loadings for second order on first, e.g., theta1 = lambda * theta + error
+  vector<lower=-1,upper=1>[D] lambda; // loadings for second order on first, e.g., theta1 = lambda * theta + error
 
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
@@ -268,7 +269,7 @@ transformed parameters {
   {
     for(i in 1:D) {
       if(i == 1) {
-        lambda_identify[i] = exp(lambda[i]) + 0.5;
+        lambda_identify[i] = 0.4 + (0.6)*inv_logit(lambda[i]);//exp(lambda[i]) + 0.5;
       } else {
         lambda_identify[i] = lambda[i];
       }
@@ -351,13 +352,13 @@ transformed parameters {
 }
 model {
   to_vector(theta) ~ normal(0, 1);
-  to_vector(theta_resid) ~ normal(0, 1);
-
-  lambda[1] ~ normal(-0.5, 1); // tighter priors on lambda?
+  sig_sq_thetag_reg ~ uniform(0, 1);
+  to_vector(theta_resid) ~ normal(0, sqrt(sig_sq_thetag_reg));
+  lambda[1] ~ normal(0, 5); // tighter priors on lambda?
   for(i in 2:D) {
-    lambda[i] ~ normal(0, 1);
+    lambda[i] ~ uniform(-1, 1);
   }
-  //lambda ~ normal(0, 5);
+  // lambda ~ uniform(-1, 1);
   
   if(L) {
     alpha_l ~ normal(-0.5, 1.0);
@@ -372,7 +373,7 @@ model {
   }
 
   if(any_eta3pl) {
-    eta3pl_l ~ beta(2, 2); // 5, 23  2, 3
+    eta3pl_l ~ beta(2, 2); // 5,23  2,3  1,19
   }
 
   if(has_treg) {

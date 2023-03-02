@@ -40,6 +40,8 @@ March 2, 2023:
  - Missing data in all places of model now appropriate - need to add
  - hook up the mirt model and confirmatory mirt
 
+ - simulation study: focus on regression coefficient recovery
+ - Can show some tables of measures and recovery/plots of random effects?
 
 ...
  April 28, 2023: 

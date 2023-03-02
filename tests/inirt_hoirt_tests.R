@@ -25,10 +25,10 @@ for(jj in 1:j) {
   delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
 }
 delta = cbind(0, delta)
-theta_g = rnorm(n, 0, 0.5) # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) # sqrt(1.5)
+theta_g = rnorm(n, 0, 5) + 100 # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) # sqrt(1.5)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
-  theta[, dd] = rnorm(n, 0, 1) #0.1??????
+  theta[, dd] = rnorm(n, 0, 2.5) #0.1??????
 }
 beta = NULL
 predictors = NULL
@@ -49,12 +49,30 @@ beta_dend = NULL
 #   }
 # }
 # x = matrix(data = runif(uk*n,-1,1), nrow = n, ncol = uk)
+
 lambda_ind = rep(1:d, each = j/d)
-lambda = c(0.8, 0.9, 1.0, 1.1)
+lambda = c(0.6, 0.5, 0.4, -0.3)
+f_eq = matrix(nrow = n, ncol = j)
+for(i in 1:n) {
+  for(jj in 1:j) {
+    f_eq[i, jj] = (lambda[lambda_ind[jj]]*(theta_g[i])) + theta[i, lambda_ind[jj]] # do I need some jitter on this???
+  }
+}
+# summary(lm(f_eq[,4] ~ theta_g))
+# tg = (theta_g - mean(theta_g))/sd(theta_g)
+# summary(lm(f_eq[,4] ~ tg))
+# rescale f_eq columns
+for(jj in 1:j) {
+  f_eq[, jj] = (f_eq[, jj] - mean(f_eq[, jj])) / sd(f_eq[, jj])
+}
+tg = (theta_g - mean(theta_g))/sd(theta_g)
+summary(lm(f_eq[,1] ~ tg))
+cor(f_eq[,1], tg)
+simmed_cors = c(cor(f_eq[,1], tg), cor(f_eq[,6], tg), cor(f_eq[,11], tg), cor(f_eq[,16], tg))
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
   for(jj in 1:j) { #                                                                      + x[i, ] %*% beta_mat
-    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha*a_design[i,])*(   (lambda[lambda_ind[jj]]*(theta_g[i])) + theta[i, lambda_ind[jj]])) - (delta[jj, 1:ncategi[jj]] + b_delta*d_design[i,])))))
+    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha*a_design[i,])*( f_eq[i, jj] )) - (delta[jj, 1:ncategi[jj]] + b_delta*d_design[i,])))))
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -80,7 +98,7 @@ colnames(data) = c(paste0("x", 1:j)) #, paste0("z", 1:k)
 # h2_dims = 1
 # h2_dim_id = list(1:20, 21:40, 41:60)
 sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta, lambda = lambda,
-    theta_g = theta_g)
+    theta_g = theta_g, simmed_cors = simmed_cors)
 fit_data = list(data = data)
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
@@ -114,7 +132,7 @@ model = "thetag = theta1 + theta2 + theta3 + theta4
          theta3 = c(11:15)
          theta4 = c(16:20)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
-  iter = 400, warmup = 200, chains = 1, cores = 1)
+  iter = 500, warmup = 250, chains = 1, cores = 1)
 
 library(rstan)
 
@@ -126,7 +144,9 @@ theta_resid = matrix(rstan::summary(fit, pars = c("theta_resid"))$summary[,1], n
 tg = rstan::summary(fit, pars = c("theta"))$summary[,1]
 lam = rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
 
-plot(tg, sim_data$theta_g)
+rstan::summary(fit, pars = c("sig_sq_thetag_reg"))
+
+cor(tg, sim_data$theta_g)
 
 plot(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
 
@@ -141,9 +161,25 @@ plot(tg*lam[4] + theta_resid[,4], sim_data$theta_g*sim_data$lambda[4] + sim_data
 hist(tg*lam[1] + theta_resid[,1])
 
 # plot(theta_resid[,1], sim_data$theta[,1])
+cor(tg, sim_data$theta_g)
+plot(tg, sim_data$theta_g)
+plot(theta_resid[,1], sim_data$theta[,1])
+cor(theta_resid[,1], sim_data$theta[,1])
 cor(theta_resid[,2], sim_data$theta[,2])
 cor(theta_resid[,3], sim_data$theta[,3])
 cor(theta_resid[,4], sim_data$theta[,4])
+
+df = data.frame(x1 = tg*lam[1] + theta_resid[,1], 
+                x2 = sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
+ggplot(df) + 
+  aes(x = x1, y = x2) + 
+  geom_point() + 
+  xlim(-1.5, 1.5)
+
+cor(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
+cor(tg*lam[2] + theta_resid[,2], sim_data$theta_g*sim_data$lambda[2] + sim_data$theta[,2])
+cor(tg*lam[3] + theta_resid[,3], sim_data$theta_g*sim_data$lambda[3] + sim_data$theta[,3])
+cor(tg*lam[4] + theta_resid[,4], sim_data$theta_g*sim_data$lambda[4] + sim_data$theta[,4])
 
 sim_data$lambda
 rstan::summary(fit, pars = c("lambda"))$summary[,1]
