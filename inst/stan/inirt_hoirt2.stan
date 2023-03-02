@@ -353,7 +353,7 @@ transformed parameters {
 model {
   to_vector(theta) ~ normal(0, 1);
   sig_sq_thetag_reg ~ uniform(0, 1);
-  to_vector(theta_resid) ~ normal(0, sqrt(sig_sq_thetag_reg));
+  to_vector(theta_resid) ~ normal(0, sig_sq_thetag_reg);
   lambda[1] ~ normal(0, 5); // tighter priors on lambda?
   for(i in 2:D) {
     lambda[i] ~ uniform(-1, 1);
