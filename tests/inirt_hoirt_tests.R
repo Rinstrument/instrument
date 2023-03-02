@@ -25,10 +25,10 @@ for(jj in 1:j) {
   delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
 }
 delta = cbind(0, delta)
-theta_g = rnorm(n, 0, 0.5) # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) # sqrt(1.5)
+theta_g = rnorm(n, 0, 0.8) # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) # sqrt(1.5)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
-  theta[, dd] = rnorm(n, 0, 0.05) #0.1??????
+  theta[, dd] = rnorm(n, 0, 0.15) #0.1??????
 }
 beta = NULL
 predictors = NULL
@@ -114,7 +114,7 @@ model = "thetag = theta1 + theta2 + theta3 + theta4
          theta3 = c(11:15)
          theta4 = c(16:20)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
-  iter = 300, warmup = 150, chains = 4, cores = 4)
+  iter = 300, warmup = 150, chains = 1, cores = 1)
 
 library(rstan)
 
@@ -123,7 +123,21 @@ sim_data$theta_g
 cor(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta_g)
 plot(rstan::summary(fit, pars = c("theta"))$summary[,1], sim_data$theta_g)
 theta_resid = matrix(rstan::summary(fit, pars = c("theta_resid"))$summary[,1], ncol = 4, byrow = TRUE)
-cor(theta_resid[,1], sim_data$theta[,1])
+tg = rstan::summary(fit, pars = c("theta"))$summary[,1]
+lam = rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
+
+plot(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
+
+plot(theta_resid[,1], sim_data$theta[,1])
+plot(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
+plot(theta_resid[,1], sim_data$theta[,1])
+
+
+plot(tg*lam[4] + theta_resid[,4], sim_data$theta_g*sim_data$lambda[4] + sim_data$theta[,4])
+
+
+hist(tg*lam[1] + theta_resid[,1])
+
 # plot(theta_resid[,1], sim_data$theta[,1])
 cor(theta_resid[,2], sim_data$theta[,2])
 cor(theta_resid[,3], sim_data$theta[,3])
@@ -134,7 +148,10 @@ rstan::summary(fit, pars = c("lambda"))$summary[,1]
 
 rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
 
+library(rstan)
 traceplot(fit, pars = c("lambda_identify"))
+
+traceplot(fit, pars = c("theta_resid[1,1]", "theta_resid[2,1]"))
 
 # fit = inirt::inirt(data = fit_data$data, model = fit_data$model, predictors = fit_data$predictors, dims = fit_data$dims, 
 #     h2_dims = fit_data$h2_dims, h2_dim_id = fit_data$h2_dim_id, structural_design = fit_data$structural_design, 

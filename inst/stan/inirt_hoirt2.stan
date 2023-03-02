@@ -264,11 +264,11 @@ transformed parameters {
 
 
   // constrain first lambda to by >= 0 by transformation: lambda1 must by strictly positive
-  //  (we already assume that the lambda's are all non-zero)
+  //  (we already assume that the lambda's are all)
   {
     for(i in 1:D) {
       if(i == 1) {
-        lambda_identify[i] = exp(lambda[i]) + 0.1;
+        lambda_identify[i] = exp(lambda[i]) + 0.5;
       } else {
         lambda_identify[i] = lambda[i];
       }
@@ -350,10 +350,10 @@ transformed parameters {
   }
 }
 model {
-  to_vector(theta) ~ normal(0, 1);
+  to_vector(theta) ~ normal(0, 0.5);
   to_vector(theta_resid) ~ normal(0, 1);
 
-  lambda[1] ~ normal(-2, 2);
+  lambda[1] ~ normal(-2, 2); // tighter priors on lambda?
   for(i in 2:D) {
     lambda[i] ~ normal(0, 5);
   }
@@ -418,5 +418,5 @@ model {
     }
   }
   
-  target += ordered_logistic_log_irt_vec(y, nu, c, eta3pl, Ncategi_jj, N_long, itype) * weights[i];
+  target += ordered_logistic_log_irt_vec(y, nu, c, eta3pl, Ncategi_jj, N_long, itype);
 }

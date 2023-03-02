@@ -28,6 +28,7 @@ Woo Hoo!!!!
 March 1, 2023: 
  - use the clark article to get the 3pl up and running
  - confirm that the higher-order thing is working correctly
+ - is lambda_ind wrong???
 
 March 2, 2023:
  - finish writing introduction
@@ -36,6 +37,7 @@ March 2, 2023:
  - Case study: asti data with covariates
  - Case study from a couple different perspectives with R code
  - Missing data in all places of model now appropriate - need to add
+ - hook up the mirt model and confirmatory mirt
 
 
 ...
