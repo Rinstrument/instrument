@@ -31,6 +31,7 @@ March 1, 2023:
  - is lambda_ind wrong???
 
 March 2, 2023:
+ - may need to exagerate effects and then rescale! - sim step
  - finish writing introduction
  - Write model section
  - Simulation study? - choose a model and settings

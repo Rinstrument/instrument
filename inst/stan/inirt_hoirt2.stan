@@ -350,12 +350,12 @@ transformed parameters {
   }
 }
 model {
-  to_vector(theta) ~ normal(0, 0.5);
+  to_vector(theta) ~ normal(0, 1);
   to_vector(theta_resid) ~ normal(0, 1);
 
-  lambda[1] ~ normal(-2, 2); // tighter priors on lambda?
+  lambda[1] ~ normal(-0.5, 1); // tighter priors on lambda?
   for(i in 2:D) {
-    lambda[i] ~ normal(0, 5);
+    lambda[i] ~ normal(0, 1);
   }
   //lambda ~ normal(0, 5);
   

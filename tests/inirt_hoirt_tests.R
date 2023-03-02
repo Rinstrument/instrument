@@ -25,10 +25,10 @@ for(jj in 1:j) {
   delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
 }
 delta = cbind(0, delta)
-theta_g = rnorm(n, 0, 0.8) # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) # sqrt(1.5)
+theta_g = rnorm(n, 0, 0.5) # seq(-2, 2, length.out = n) #rnorm(n, 0, 2) # sqrt(1.5)
 theta = matrix(0, nrow = n, ncol = d)
 for(dd in 1:d) {
-  theta[, dd] = rnorm(n, 0, 0.15) #0.1??????
+  theta[, dd] = rnorm(n, 0, 1) #0.1??????
 }
 beta = NULL
 predictors = NULL
@@ -114,7 +114,7 @@ model = "thetag = theta1 + theta2 + theta3 + theta4
          theta3 = c(11:15)
          theta4 = c(16:20)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
-  iter = 300, warmup = 150, chains = 1, cores = 1)
+  iter = 400, warmup = 200, chains = 1, cores = 1)
 
 library(rstan)
 
@@ -126,11 +126,13 @@ theta_resid = matrix(rstan::summary(fit, pars = c("theta_resid"))$summary[,1], n
 tg = rstan::summary(fit, pars = c("theta"))$summary[,1]
 lam = rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
 
+plot(tg, sim_data$theta_g)
+
 plot(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
 
 plot(theta_resid[,1], sim_data$theta[,1])
 plot(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
-plot(theta_resid[,1], sim_data$theta[,1])
+plot(theta_resid[,2], sim_data$theta[,2])
 
 
 plot(tg*lam[4] + theta_resid[,4], sim_data$theta_g*sim_data$lambda[4] + sim_data$theta[,4])
