@@ -136,13 +136,13 @@ warmup = 300
 chains = 1
 cores = 1
 
-data = fit_data$data
-colnames(data)
-model = "thetag = theta1 + theta2 + theta3 + theta4
-         theta1 = c(1:20)
-         theta2 = c(21:40)
-         theta3 = c(41:60)
-         theta4 = c(61:80)"
+# data = fit_data$data
+# colnames(data)
+# model = "thetag = theta1 + theta2 + theta3 + theta4
+#          theta1 = c(1:20)
+#          theta2 = c(21:40)
+#          theta3 = c(41:60)
+#          theta4 = c(61:80)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
   iter = 500, warmup = 300, chains = 1, cores = 1)
 
