@@ -114,6 +114,8 @@ ls()
 
 library(devtools)
 library(Rcpp)
+# delfiles <- dir(pattern = "*_pattern.csv")
+# file.remove(file.path(mydir, delfiles))
 compileAttributes()
 load_all()
 data = fit_data$data
@@ -144,7 +146,7 @@ cores = 1
 #          theta3 = c(41:60)
 #          theta4 = c(61:80)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
-  iter = 500, warmup = 300, chains = 1, cores = 1)
+  iter = 50, warmup = 30, chains = 1, cores = 1)
 
 library(rstan)
 
