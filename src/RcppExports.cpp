@@ -12,16 +12,16 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 
-RcppExport SEXP _rcpp_module_boot_stan_fit4inirt_bifac_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4inirt_hoirt_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4inirt_mirt_mod();
-RcppExport SEXP _rcpp_module_boot_stan_fit4inirt_unidim_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4theta2_bifac_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4theta2_mirt_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4theta2_soirt_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4theta2_unidim_mod();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_stan_fit4inirt_bifac_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4inirt_bifac_mod, 0},
-    {"_rcpp_module_boot_stan_fit4inirt_hoirt_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4inirt_hoirt_mod, 0},
-    {"_rcpp_module_boot_stan_fit4inirt_mirt_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4inirt_mirt_mod, 0},
-    {"_rcpp_module_boot_stan_fit4inirt_unidim_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4inirt_unidim_mod, 0},
+    {"_rcpp_module_boot_stan_fit4theta2_bifac_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4theta2_bifac_mod, 0},
+    {"_rcpp_module_boot_stan_fit4theta2_mirt_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4theta2_mirt_mod, 0},
+    {"_rcpp_module_boot_stan_fit4theta2_soirt_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4theta2_soirt_mod, 0},
+    {"_rcpp_module_boot_stan_fit4theta2_unidim_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4theta2_unidim_mod, 0},
     {NULL, NULL, 0}
 };
 

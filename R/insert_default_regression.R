@@ -7,7 +7,7 @@ insert_default_regression = function(model_regression) {
   # model_regression = unlist(str_split(model_regression, "~"))
   # type = model_regression[1]
 
-  split_model = str_split(model_regression, "=")
+  # split_model = str_split(model_regression, "=")
   # dim_names = purrr::map_chr(split_model, function(x) {x[1]})
 
   spec_type = c()
@@ -17,7 +17,7 @@ insert_default_regression = function(model_regression) {
   }
 
   for(i in 1:length(spec_type)) {
-    if(!("theta" %in% spec_type)) {
+    if(!length(spec_type)) {
       model_regression = c(model_regression, "theta~0")
     }
     if(!("alpha" %in% spec_type)) {

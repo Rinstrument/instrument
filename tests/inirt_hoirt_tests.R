@@ -1,7 +1,7 @@
 # INIRT higher-order IRT tests
 devtools::install(dependencies = FALSE)
 library(rstan)
-stanc(file = "./inst/stan/inirt_hoirt2.stan", verbose = TRUE)
+stanc(file = "./inst/stan/theta2_soirt.stan", verbose = TRUE)
 n = 1000
 d = 4
 j = 20*d
@@ -71,10 +71,12 @@ tg = (theta_g - mean(theta_g))/sd(theta_g)
 summary(lm(f_eq[,1] ~ tg))
 cor(f_eq[,1], tg)
 simmed_cors = c(cor(f_eq[,1], tg), cor(f_eq[,21], tg), cor(f_eq[,41], tg), cor(f_eq[,61], tg))
+beta = 1.2
+x = matrix(data = runif(n,-1,1), nrow = n, ncol = 1)
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
   for(jj in 1:j) { #                                                                      + x[i, ] %*% beta_mat
-    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha*a_design[i,])*( f_eq[i, jj] )) - (delta[jj, 1:ncategi[jj]] + b_delta*d_design[i,])))))
+    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha*a_design[i,])*( f_eq[i, jj] + beta*x[i,])) - (delta[jj, 1:ncategi[jj]] + b_delta*d_design[i,])))))
     prb[1] = 1.0
     prb = c(prb, 0)
     prb = prb[-length(prb)] - prb[2:length(prb)]
@@ -82,6 +84,7 @@ for(i in 1:n) {
   }
 }
 apply(data, 2, table)
+data = cbind(data, x)
 # remove_gaps = function(x) {
 #   ord = order(x); vec = sort(x)
 #   old = unique(vec); replace = 1:length(unique(vec))
@@ -92,7 +95,7 @@ apply(data, 2, table)
 # data = apply(data, 2, remove_gaps)
 # apply(data, 2, table)
 # data = cbind(data, x)
-colnames(data) = c(paste0("x", 1:j)) #, paste0("z", 1:k)
+colnames(data) = c(paste0("x", 1:j), "p1") #, paste0("z", 1:k)
 # for(dd in 1:1) {
 #   predictors[[dd]] = predictors[[dd]] + j
 # }
@@ -100,7 +103,7 @@ colnames(data) = c(paste0("x", 1:j)) #, paste0("z", 1:k)
 # h2_dims = 1
 # h2_dim_id = list(1:20, 21:40, 41:60)
 sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta, lambda = lambda,
-    theta_g = theta_g, simmed_cors = simmed_cors)
+    theta_g = theta_g, simmed_cors = simmed_cors, beta = beta)
 fit_data = list(data = data)
 rm(list = setdiff(ls(), c("fit_data", "sim_data")))
 ls()
@@ -109,22 +112,29 @@ ls()
 #     method = fit_data$method, weights = fit_data$weights, tol_rel_obj = fit_data$tol_rel_obj, iter = fit_data$iter, 
 #     init = fit_data$init)
 
-# library(devtools)
-# library(Rcpp)
-# compileAttributes()
-# load_all()
-# data = fit_data$data
-# model = "thetag = theta1 + theta2 + theta3 + theta4
-#          theta1 = c(1:10)
-#          theta2 = c(11:20)
-#          theta3 = c(21:30)
-#          theta4 = c(31:40)"
+library(devtools)
+library(Rcpp)
+compileAttributes()
+load_all()
+data = fit_data$data
+model = "thetag = theta1 + theta2 + theta3 + theta4
+         theta1 = c(1:20)
+         theta2 = c(21:40)
+         theta3 = c(41:60)
+         theta4 = c(61:80)
+         thetag ~ p1"
 # itype = "2pl"
 # method = "vb"
 # iter = 10000
 # tol_rel_obj = 1e-4
 # exploratory = FALSE
 # weights = NULL
+itype = "2pl"
+method = "hmc"
+iter = 500
+warmup = 300
+chains = 1
+cores = 1
 
 data = fit_data$data
 colnames(data)
