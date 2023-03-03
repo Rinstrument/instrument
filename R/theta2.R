@@ -649,11 +649,11 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
   # Select the correct inirt implementation based on input parameters
   if(D == 1) {
-    modl = stanmodels$inirt_unidim
+    modl = stanmodels$theta2_unidim
   } else if(D > 1 & h2_dims == 0) {
-    modl = stanmodels$inirt_mirt
+    modl = stanmodels$theta2_mirt
   } else {    # D > 1 & h2_dims > 0
-    modl = stanmodels$inirt_hoirt2
+    modl = stanmodels$theta2_soirt
   }
 
   # Choose a model estimateion method: variational inference or HMC
