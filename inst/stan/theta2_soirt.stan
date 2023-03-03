@@ -222,7 +222,7 @@ transformed parameters {
       b_upper = beta_dend[1];
       for(i in b_lower:b_upper) {
         bindex = bindex + 1;
-        betat[i, d] = beta_l[bindex];
+        betat[i, 1] = beta_l[bindex];
       }
       // }
     }
@@ -238,7 +238,7 @@ transformed parameters {
       z_upper = zeta_dend[1];
       for(i in z_lower:z_upper) {
         zindex = zindex + 1;
-        zeta[i, d] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
+        zeta[i, 1] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
         // }
       }
     }
