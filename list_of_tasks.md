@@ -31,6 +31,13 @@ March 1, 2023:
  - is lambda_ind wrong???
 
 March 2, 2023:
+ - Didn't get through a lot of these points today, but
+  I think I'm putting the final touches on the second-order
+  MIRT model with regression..
+ - with that in mind: I need to check that regression on
+ - thetag works. How should that regression be specified?
+ it seems as though its one equation for all thetas potentially
+ 
  - may need to exagerate effects and then rescale! - sim step
  - finish writing introduction
  - Write model section
@@ -42,6 +49,12 @@ March 2, 2023:
 
  - simulation study: focus on regression coefficient recovery
  - Can show some tables of measures and recovery/plots of random effects?
+
+March 3, 2023:
+ - Hook up the regression of second-order model
+ - Last look over of second-order model
+ - Hook up exploratory MIRT model
+ - regressions of the same
 
 ...
  April 28, 2023: 

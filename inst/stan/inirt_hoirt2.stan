@@ -334,12 +334,9 @@ transformed parameters {
 
       c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
-        //nu[i] = dot_product(rep_vector(lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]], D), exp(col(alpha, jj[i]) + ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
-        nu[i] = dot_product(rep_vector( (lambda_identify[lambda_ind[i]]*theta[nn[i], 1]) + theta_resid[nn[i], lambda_ind[i]], D), exp(col(alpha, jj[i]))); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
-
+        nu[i] = dot_product(rep_vector(lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + theta_resid[nn[i], lambda_ind[i]] + xb[i], D), exp(col(alpha, jj[i])));
       } else {
-        // nu[i] = sum(rep_vector(lambda[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]], D));
-        nu[i] = lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + xb[i] + theta_resid[nn[i], lambda_ind[i]];
+        nu[i] = lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + theta_resid[nn[i], lambda_ind[i]] + xb[i];
       }
 
       if(any_eta3pl) {
@@ -354,14 +351,13 @@ model {
   to_vector(theta) ~ normal(0, 1);
   sig_sq_thetag_reg ~ uniform(0, 1);
   to_vector(theta_resid) ~ normal(0, sig_sq_thetag_reg);
-  lambda[1] ~ normal(0, 5); // tighter priors on lambda?
+  lambda[1] ~ normal(0, 5);
   for(i in 2:D) {
     lambda[i] ~ uniform(-1, 1);
   }
-  // lambda ~ uniform(-1, 1);
   
   if(L) {
-    alpha_l ~ normal(-0.5, 1.0);
+    alpha_l ~ normal(-0.5, 1.0); // should these priors be wider?
     if(LMean) {
       alpha_r_l ~ normal(-0.5, 1.0);
     }

@@ -4,7 +4,7 @@ library(rstan)
 stanc(file = "./inst/stan/inirt_hoirt2.stan", verbose = TRUE)
 n = 1000
 d = 4
-j = 5*d
+j = 20*d
 ncat = 2
 ncategi = c(rep(ncat, j))
 ncateg_max = max(ncategi)
@@ -13,8 +13,10 @@ uk = 0
 alpha = matrix(0, d, j)
 a_design = as.matrix(data.frame(x1 = rep(1, n)))
 b_alpha = 1
-alpha_dstart = c(1, 6, 11, 16)
-alpha_dend = c(5, 10, 15, 20)
+# alpha_dstart = c(1, 6, 11, 16)
+# alpha_dend = c(5, 10, 15, 20)
+alpha_dstart = c(1, 21, 41, 61)
+alpha_dend = c(20, 40, 60, 80)
 for(dd in 1:d) {
   alpha[dd, alpha_dstart[dd]:alpha_dend[dd]] = sort(runif(j/d, -1.5, 1.5))
 }
@@ -68,7 +70,7 @@ for(jj in 1:j) {
 tg = (theta_g - mean(theta_g))/sd(theta_g)
 summary(lm(f_eq[,1] ~ tg))
 cor(f_eq[,1], tg)
-simmed_cors = c(cor(f_eq[,1], tg), cor(f_eq[,6], tg), cor(f_eq[,11], tg), cor(f_eq[,16], tg))
+simmed_cors = c(cor(f_eq[,1], tg), cor(f_eq[,21], tg), cor(f_eq[,41], tg), cor(f_eq[,61], tg))
 data = matrix(0, nrow = n, ncol = j)
 for(i in 1:n) {
   for(jj in 1:j) { #                                                                      + x[i, ] %*% beta_mat
@@ -127,12 +129,12 @@ ls()
 data = fit_data$data
 colnames(data)
 model = "thetag = theta1 + theta2 + theta3 + theta4
-         theta1 = c(1:5)
-         theta2 = c(6:10)
-         theta3 = c(11:15)
-         theta4 = c(16:20)"
+         theta1 = c(1:20)
+         theta2 = c(21:40)
+         theta3 = c(41:60)
+         theta4 = c(61:80)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
-  iter = 500, warmup = 250, chains = 1, cores = 1)
+  iter = 500, warmup = 300, chains = 1, cores = 1)
 
 library(rstan)
 
@@ -200,13 +202,14 @@ traceplot(fit, pars = c("theta_resid[1,1]", "theta_resid[2,1]"))
 # summary(fit, pars = "alpha")$summary[,"mean"]
 aest = matrix(rstan::summary(fit, pars = "alpha")$summary[,1], nrow = 4, byrow = TRUE)
 aest
-cor(aest[1,1:10], sim_data$alpha[1,1:10])
+plot(exp(aest[aest != 0.0]), exp(sim_data$alpha[sim_data$alpha != 0.0]))
+cor(aest[1,1:5], sim_data$alpha[1,1:5])
 plot(exp(aest[1,1:10]), exp(sim_data$alpha[1,1:10]))
 cor(aest[2,21:40], alpha[2,21:40])
 cor(aest[3,41:60], alpha[3,41:60])
 
-dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 60, byrow = TRUE)
-cor(dest[,1], delta[,2])
+dest = matrix(rstan::summary(fit, pars = c("delta_trans"))$summary[,1], nrow = 20, byrow = TRUE)
+cor(dest[,1], sim_data$delta[,2])
 cor(dest[,2], delta[,3])
 cor(dest[,3], delta[,4])
 
