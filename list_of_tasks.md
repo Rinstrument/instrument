@@ -51,8 +51,10 @@ March 2, 2023:
  - Can show some tables of measures and recovery/plots of random effects?
 
 March 3, 2023:
- - Hook up the regression of second-order model
+ - Hook up the regression of second-order model: theta, alpha, delta
+ - Fixed theta effects in second-order model
  - Last look over of second-order model
+ - DONE???
  - Hook up exploratory MIRT model
  - regressions of the same
 

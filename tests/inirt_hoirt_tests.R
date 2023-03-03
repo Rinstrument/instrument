@@ -193,6 +193,8 @@ traceplot(fit, pars = c("lambda_identify"))
 
 traceplot(fit, pars = c("theta_resid[1,1]", "theta_resid[2,1]"))
 
+rstan::summary(fit, pars = c("sig_sq_thetag_reg"))
+
 # fit = inirt::inirt(data = fit_data$data, model = fit_data$model, predictors = fit_data$predictors, dims = fit_data$dims, 
 #     h2_dims = fit_data$h2_dims, h2_dim_id = fit_data$h2_dim_id, structural_design = fit_data$structural_design, 
 #     method = fit_data$method, weights = fit_data$weights, iter = fit_data$iter, 

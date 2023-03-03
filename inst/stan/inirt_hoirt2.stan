@@ -147,7 +147,7 @@ transformed data {
 
 parameters {
   matrix[N, 1] theta;              // general ability
-  real<lower=0,upper=1> sig_sq_thetag_reg;          // residual uncertainty in thetag regression
+  vector<lower=0,upper=1>[D] sig_thetag_reg;          // residual uncertainty in thetag regression
   matrix[N, D] theta_resid;        // residual 1st order ability
 
   vector<lower=-1,upper=1>[D] lambda; // loadings for second order on first, e.g., theta1 = lambda * theta + error
@@ -348,39 +348,56 @@ transformed parameters {
   }
 }
 model {
+  // prior N(0,1) on general theta dimension (second-order theta)
   to_vector(theta) ~ normal(0, 1);
-  sig_sq_thetag_reg ~ uniform(0, 1);
-  to_vector(theta_resid) ~ normal(0, sig_sq_thetag_reg);
+  // standard deviation of residual in the factor regression model:
+  // theta_d = lambda_d * theta_g + {theta_resid_d}. Estimate one per dimension
+  sig_thetag_reg ~ uniform(0, 1);
+  for(i in 1:D) {
+    to_vector(theta_resid[,i]) ~ normal(0, sig_thetag_reg[i]);
+  }
+  // How does general theta load on the first-order thetas
+  // theta_d = {lambda_d} * theta_g + theta_resid_d
+  // lambda1 is restricted to range 0.4-1.0 using a transformation above
+  // This is for identifiability
+  // Otherwise lambda is scaled to correlation range -1,1
   lambda[1] ~ normal(0, 5);
   for(i in 2:D) {
     lambda[i] ~ uniform(-1, 1);
   }
-  
+  // If 2pl model (i.e., discrimination params), then sample from a normal(-0.5,1)
+  // and transform to a lognormal distribution above since discriminations
+  // must be positive. Transformation preferred so that regression is made 
+  // possible in this context.
   if(L) {
     alpha_l ~ normal(-0.5, 1.0); // should these priors be wider?
     if(LMean) {
       alpha_r_l ~ normal(-0.5, 1.0);
     }
   }
-  
+  // difficulty parameters are always estimated and they have vague normal
+  // priors
   delta_l ~ normal(0, 5);
   if(deltaMean) {
     delta_r_l ~ normal(0, 5);
   }
-
+  // 3pl models have a guessing parameter. Beta prior so that support is between
+  // 0 and 1
   if(any_eta3pl) {
-    eta3pl_l ~ beta(2, 2); // 5,23  2,3  1,19
+    eta3pl_l ~ beta(1, 19); // 5,23  2,3  1,19
   }
-
+  // fixed effects for theta regression model
   if(has_treg) {
     beta_l ~ normal(0, 5);
   }
-
+  // independent random effects for theta regression model. Estimate vector
+  // of random effects and standard deviation in each random effect distribution.
   if(any_rand_ind) {
     zeta_l  ~ normal(0, 1);
     zeta_l_sd ~ cauchy(0, 5);
   }
-
+  // Correlated random effects for theta regression. Matrix of uncertainties.
+  // Multivariate normal prior.
   if(any_rand_cor) {
     tau ~ cauchy(0, 2.5);
     Omega ~ lkj_corr(1);
@@ -388,12 +405,14 @@ model {
       zeta_c[i] ~ multi_normal(zeros_Lzeta_cor, quad_form_diag(Omega, tau));
     }
   }
-
+  // independent random effects for alpha regression model. Estimate vector
+  // of random effects and standard deviation in each random effect distribution.
   if(any_rand_ind_a) {
     aeta_l  ~ normal(0, 1);
     aeta_l_sd ~ cauchy(0, 2); // may need to hammer down on this?
   }
-
+  // Correlated random effects for alpha regression. Matrix of uncertainties.
+  // Multivariate normal prior.
   if(any_rand_cor_a) {
     tau_a ~ normal(0, 2);
     Omega_a ~ lkj_corr(1);
@@ -401,12 +420,14 @@ model {
       aeta_c[i] ~ multi_normal(zeros_Laeta_cor, quad_form_diag(Omega_a, tau_a));
     }
   }
-
+  // independent random effects for delta regression model. Estimate vector
+  // of random effects and standard deviation in each random effect distribution.
   if(any_rand_ind_d) {
     deta_l  ~ normal(0, 1);
     deta_l_sd ~ cauchy(0, 5);
   }
-
+  // Correlated random effects for delta regression. Matrix of uncertainties.
+  // Multivariate normal prior.
   if(any_rand_cor_d) {
     tau_d ~ cauchy(0, 2.5);
     Omega_d ~ lkj_corr(1);
@@ -414,6 +435,6 @@ model {
       deta_c[i] ~ multi_normal(zeros_Ldeta_cor, quad_form_diag(Omega_d, tau_d));
     }
   }
-  
+  // increment the log likelihood (ordered logistic distribution customized for IRT)
   target += ordered_logistic_log_irt_vec(y, nu, c, eta3pl, Ncategi_jj, N_long, itype);
 }
