@@ -17,7 +17,7 @@ data {
   int<lower=1> beta_dend[D];   // beta end index for each dimension
   // int<lower=1> nobeta_dstart[D]; // beta start index for each dimension
   // int<lower=1> nobeta_dend[D];   // beta end index for each dimension
-  real weights[N_long]; // weights for each observation
+  real fweights[N_long]; // weights for each observation
   matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
   int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
   int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
@@ -129,7 +129,7 @@ model {
       } else {
         nu[i] = (theta[nn[i], ])*(col(alpha, jj[i]) + (a_design[nn[i], ]*alpha_r_l)*(col(alpha_zero, jj[i])));
       }
-      target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + d_design[nn[i], ]*delta_r_l) * weights[i];
+      target += ordered_logistic_lpmf(y[i] | nu[i], delta_trans[jj[i]] + d_design[nn[i], ]*delta_r_l) * fweights[i];
     }
   }
 }

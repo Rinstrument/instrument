@@ -15,7 +15,7 @@
 #' 
 #' @export 
 theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc"), 
-  weights = NULL, ...) {
+  fweights = NULL, ...) {
 
   # item_id = NULL
   # predictors = NULL
@@ -60,7 +60,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   regr_alpha_delta = str_detect(names_model_data, "alpha|delta")
   regr_theta = model_data[[which(!regr_alpha_delta)]]
   regr_alpha_delta = model_data[-which(!regr_alpha_delta)]
-  names_model_data = names_model_data[!("theta" == names_model_data)]
+  names_model_data = names_model_data[!(regr_theta$type == names_model_data)] # changed this line from "theta" to generic name
   regr_alpha_data = regr_alpha_delta[str_detect(names_model_data, "alpha")][[1]] # [-1] ???
   regr_delta_data = regr_alpha_delta[str_detect(names_model_data, "delta")][[1]]
 
@@ -452,12 +452,12 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     regress = 1
   }
 
-  # sample weights
-  if(is.null(weights)) {
+  # frequency weights
+  if(is.null(fweights)) {
     if(model_missing_y == 1) {
-      weights = rep(1, N_long_obs)
+      fweights = rep(1, N_long_obs)
     } else {
-      weights = rep(1, N_long)
+      fweights = rep(1, N_long)
     }
   }
 
@@ -525,7 +525,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       beta_dend = beta_dend, 
       zeta_dstart = zeta_dstart, 
       zeta_dend = zeta_dend, 
-      weights = weights, 
+      fweights = fweights, 
       x_miss = x_miss, 
       nDelta_r = nDelta_r, 
       nAlpha_r = nAlpha_r, 
@@ -567,7 +567,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       d_c = d_c)
   } else if(D > 1 & h2_dims == 0) {
     standata = list(N = N, J = J, K = K, Ncateg_max = Ncateg_max, Ncategi = Ncategi, N_long = N_long, nn = nn, jj = jj, y = y, x = x, 
-        D = D, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, weights = weights, x_miss = x_miss, 
+        D = D, nDelta = nDelta, L = L, has_treg = has_treg, beta_dstart = beta_dstart, beta_dend = beta_dend, fweights = fweights, x_miss = x_miss, 
         reg_miss = reg_miss, x_in_row_is_missing = x_in_row_is_missing, nDelta_r = nDelta_r, nAlpha_r = nAlpha_r, d_design = d_design, 
         a_design = a_design)
   } else {    # D > 1 & h2_dims > 0
@@ -605,7 +605,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       beta_dend = beta_dend, 
       zeta_dstart = zeta_dstart, 
       zeta_dend = zeta_dend, 
-      weights = weights, 
+      fweights = fweights, 
       x_miss = x_miss, 
       nDelta_r = nDelta_r, 
       nAlpha_r = nAlpha_r, 
