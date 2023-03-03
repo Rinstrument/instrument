@@ -157,7 +157,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   structural_design_ranef$a_predictors_ranef = regr_alpha_data$new_reg_data[, regr_alpha_data$predictors_ranef]
   structural_design_ranef$a_ranef_id = regr_alpha_data$ranef_id
 
-  structural_design_ranef$d_predictors_ranef = regr_delta_data$new_reg_data[, regr_alpha_data$predictors_ranef]
+  structural_design_ranef$d_predictors_ranef = regr_delta_data$new_reg_data[, regr_delta_data$predictors_ranef]
   structural_design_ranef$d_ranef_id = regr_delta_data$ranef_id
   # }
 
