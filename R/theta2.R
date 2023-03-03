@@ -388,8 +388,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       beta_dstart[1] = start_index
       beta_dend[1] = start_index + length(predictors[[1]]) - 1
       start_index = start_index + length(predictors[[1]])
-      # beta_dstart = array(beta_dstart, dim = 1)
-      # beta_dend = array(beta_dend, dim = 1)
+      beta_dstart = array(beta_dstart, dim = 1)
+      beta_dend = array(beta_dend, dim = 1)
     }
 
     if(h2_dims == 0) {
