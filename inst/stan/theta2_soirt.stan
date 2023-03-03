@@ -217,14 +217,14 @@ transformed parameters {
       int bindex = 0;
       int b_lower = 0;
       int b_upper = 0;
-      for(d in 1:D) {
-        b_lower = beta_dstart[d];
-        b_upper = beta_dend[d];
-        for(i in b_lower:b_upper) {
-          bindex = bindex + 1;
-          betat[i, d] = beta_l[bindex];
-        }
+      // for(d in 1:D) {
+      b_lower = beta_dstart[1];
+      b_upper = beta_dend[1];
+      for(i in b_lower:b_upper) {
+        bindex = bindex + 1;
+        betat[i, d] = beta_l[bindex];
       }
+      // }
     }
   }
 
@@ -233,13 +233,13 @@ transformed parameters {
       int zindex = 0;
       int z_lower = 0;
       int z_upper = 0;
-      for(d in 1:D) {
-        z_lower = zeta_dstart[d];
-        z_upper = zeta_dend[d];
-        for(i in z_lower:z_upper) {
-          zindex = zindex + 1;
-          zeta[i, d] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
-        }
+      // for(d in 1:D) {
+      z_lower = zeta_dstart[1];
+      z_upper = zeta_dend[1];
+      for(i in z_lower:z_upper) {
+        zindex = zindex + 1;
+        zeta[i, d] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
+        // }
       }
     }
   }
