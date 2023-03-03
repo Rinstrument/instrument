@@ -17,7 +17,7 @@ insert_default_regression = function(model_regression) {
   }
 
   for(i in 1:length(spec_type)) {
-    if(!length(spec_type)) {
+    if(!length(spec_type) | is.na(spec_type[1])) {
       model_regression = c(model_regression, "theta~0")
     }
     if(!("alpha" %in% spec_type)) {
