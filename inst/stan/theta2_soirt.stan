@@ -7,8 +7,8 @@
 // stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 // https://github.com/henrixapp/muq2/blob/35d366b07cf1929c03e1ac8b5e6f1f355e12a760/external/include/stan/prob/distributions/univariate/discrete/ordered_logistic.hpp
 functions {
-  real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut, vector eta, 
-    array[] int K, int nlong, array[] int itype) {
+  real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut, 
+    vector eta, array[] int K, int nlong, array[] int itype) {
     real val = 0.0;
     int K_i = 0;
     int y_i = 0;
@@ -159,7 +159,7 @@ parameters {
   vector[nAlpha_r] alpha_r_l;      // structural regression, alpha
   vector<lower=0,upper=1>[nEta3pl] eta3pl_l; //
 
-  vector[K] beta_l;            // regression parameters for each dimension
+  vector<lower=-1,upper=1>[K] beta_l;            // regression parameters for each dimension
 
   vector[Lzeta] zeta_l;          // random regression pars
   vector<lower=0>[Lzeta_sd] zeta_l_sd;          // random regression pars
@@ -181,7 +181,7 @@ parameters {
 }
 transformed parameters {
   matrix[D*(DAlpha ? 1 : 0), J] alpha;                  // connstrain the upper traingular elements to zero 
-  matrix[K, D] betat;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
+  matrix[K, 1] betat; // may generalize to [K,D]              // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
   matrix[J, Ncateg_max-1] delta_trans; // Make excess categories infinite
   vector[N_long] db;
@@ -278,14 +278,6 @@ transformed parameters {
     }
   }
 
-  // {
-  //   for(d in 1:D) {
-  //     for(i in 1:N) {
-  //       sig_thetag_reg_rep[(d-1)*N + i] = sig_thetag_reg[d];
-  //     }
-  //   }
-  // }
-
   {
     for(i in 1:N_long) {
       if(deltaMean) {
@@ -324,9 +316,9 @@ transformed parameters {
 
       if(has_treg) {
         for(k in 1:K) {
-          if(x_miss[i, k] == 0) {
+          // if(x_miss[i, k] == 0) {
             xb[i] += x[nn[i], k] * betat[k,1];
-          }
+          // }
         }
       } else {
         xb[i] = 0.0;
@@ -345,6 +337,7 @@ transformed parameters {
       c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
         nu[i] = dot_product(rep_vector(lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + theta_resid[nn[i], lambda_ind[i]] + xb[i], D), exp(col(alpha, jj[i])));
+        print(nu[i]);
       } else {
         nu[i] = lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + theta_resid[nn[i], lambda_ind[i]] + xb[i];
       }
@@ -367,9 +360,6 @@ model {
   for(d in 1:D) {
     to_vector(theta_resid[,d]) ~ normal(0, sig_thetag_reg[d]);
   }
-
-//  to_vector(theta_resid) ~ normal(0, sig_thetag_reg_rep);
-
   // How does general theta load on the first-order thetas
   // theta_d = {lambda_d} * theta_g + theta_resid_d
   // lambda1 is restricted to range 0.4-1.0 using a transformation above
@@ -402,7 +392,8 @@ model {
   }
   // fixed effects for theta regression model
   if(has_treg) {
-    beta_l ~ normal(0, 5);
+    // beta_l ~ normal(0, 5);
+    beta_l ~ uniform(-1, 1);
   }
   // independent random effects for theta regression model. Estimate vector
   // of random effects and standard deviation in each random effect distribution.

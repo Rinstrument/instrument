@@ -125,8 +125,8 @@ model = "thetag = theta1 + theta2 + theta3 + theta4
          theta1 = c(1:20)
          theta2 = c(21:40)
          theta3 = c(41:60)
-         theta4 = c(61:80)"
-         # thetag ~ p1"
+         theta4 = c(61:80)
+         thetag ~ p1"
 # itype = "2pl"
 # method = "vb"
 # iter = 10000
@@ -135,13 +135,13 @@ model = "thetag = theta1 + theta2 + theta3 + theta4
 # weights = NULL
 
 #---
-# itype = "2pl"
-# method = "hmc"
-# iter = 500
-# warmup = 300
-# chains = 1
-# fweights = NULL
-# cores = 1
+itype = "2pl"
+method = "hmc"
+iter = 500
+warmup = 300
+chains = 1
+fweights = NULL
+cores = 1
 
 # data = fit_data$data
 # colnames(data)
@@ -151,8 +151,11 @@ model = "thetag = theta1 + theta2 + theta3 + theta4
 #          theta3 = c(41:60)
 #          theta4 = c(61:80)"
 fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
+  iter = 50, warmup = 30, chains = 1, cores = 1,
+  init = function(...) {list(beta_l = 0.0)})
+fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
   iter = 50, warmup = 30, chains = 1, cores = 1)
-
+#array(c(0.0), dim = 1)
 library(rstan)
 
 sim_data$theta
