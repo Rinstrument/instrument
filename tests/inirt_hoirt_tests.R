@@ -112,12 +112,14 @@ ls()
 #     method = fit_data$method, weights = fit_data$weights, tol_rel_obj = fit_data$tol_rel_obj, iter = fit_data$iter, 
 #     init = fit_data$init)
 
-library(devtools)
-library(Rcpp)
+# library(devtools)
+# library(Rcpp)
+
 # delfiles <- dir(pattern = "*_pattern.csv")
 # file.remove(file.path(mydir, delfiles))
-compileAttributes()
-load_all()
+
+# compileAttributes()
+# load_all()
 data = fit_data$data
 model = "thetag = theta1 + theta2 + theta3 + theta4
          theta1 = c(1:20)
@@ -200,6 +202,9 @@ cor(tg*lam[4] + theta_resid[,4], sim_data$theta_g*sim_data$lambda[4] + sim_data$
 
 sim_data$lambda
 rstan::summary(fit, pars = c("lambda"))$summary[,1]
+
+
+rstan::summary(fit, pars = c("sig_thetag_reg"))$summary[,1]
 
 rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
 

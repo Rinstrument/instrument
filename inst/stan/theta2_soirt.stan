@@ -147,8 +147,8 @@ transformed data {
 
 parameters {
   matrix[N, 1] theta;              // general ability
-  real<lower=0,upper=1> sig_thetag_reg;
-  // vector<lower=0,upper=1>[D] sig_thetag_reg;          // residual uncertainty in thetag regression
+  // real<lower=0,upper=1> sig_thetag_reg;
+  vector<lower=0,upper=1>[D] sig_thetag_reg;          // residual uncertainty in thetag regression
   matrix[N, D] theta_resid;        // residual 1st order ability
 
   vector<lower=-1,upper=1>[D] lambda; // loadings for second order on first, e.g., theta1 = lambda * theta + error
@@ -363,10 +363,10 @@ model {
   // standard deviation of residual in the factor regression model:
   // theta_d = lambda_d * theta_g + {theta_resid_d}. Estimate one per dimension
   sig_thetag_reg ~ uniform(0, 1);
-  to_vector(theta_resid) ~ normal(0, sig_thetag_reg);
-  // for(i in 1:D) {
-  //   to_vector(theta_resid[,i]) ~ normal(0, sig_thetag_reg_rep);
-  // }
+  // to_vector(theta_resid) ~ normal(0, sig_thetag_reg_rep);
+  for(d in 1:D) {
+    to_vector(theta_resid[,d]) ~ normal(0, sig_thetag_reg[d]);
+  }
 
 //  to_vector(theta_resid) ~ normal(0, sig_thetag_reg_rep);
 
