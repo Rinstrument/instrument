@@ -367,7 +367,7 @@ model {
   to_vector(theta) ~ normal(0, 1);
   // standard deviation of residual in the factor regression model:
   // theta_d = lambda_d * theta_g + {theta_resid_d}. Estimate one per dimension
-  sig_thetag_reg ~ normal(0, 2); //uniform(0, 1);
+  sig_thetag_reg ~ normal(0, 1); //uniform(0, 1);
   // to_vector(theta_resid) ~ normal(0, sig_thetag_reg_rep);
   for(d in 1:D) {
     to_vector(theta_resid[,d]) ~ normal(0, sig_thetag_reg[d]);
@@ -378,7 +378,7 @@ model {
   // This is for identifiability
   // Otherwise lambda is scaled to correlation range -1,1
 
-  lambda ~ normal(0, 5);
+  lambda ~ normal(0, 1);
   // lambda[1] ~ normal(0, 5);
   // for(i in 2:D) {
   //   lambda[i] ~ uniform(-1, 1);

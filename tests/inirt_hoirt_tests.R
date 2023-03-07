@@ -170,7 +170,7 @@ lam = rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
 
 rstan::summary(fit, pars = c("sig_sq_thetag_reg"))
 
-cor(tg, sim_data$theta_g)
+plot(tg, sim_data$theta_g)
 
 plot(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
 
@@ -213,9 +213,11 @@ rstan::summary(fit, pars = c("sig_thetag_reg"))$summary[,1]
 
 rstan::summary(fit, pars = c("lambda_identify"))$summary[,1]
 
+rstan::summary(fit, pars = c("beta_l"))$summary[,1]
+
 library(rstan)
 traceplot(fit, pars = c("lambda_identify"))
-
+traceplot(fit, pars = c("sig_thetag_reg"))
 traceplot(fit, pars = c("theta_resid[1,1]", "theta_resid[2,1]"))
 
 rstan::summary(fit, pars = c("sig_sq_thetag_reg"))
