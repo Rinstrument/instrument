@@ -148,10 +148,11 @@ transformed data {
 parameters {
   matrix[N, 1] theta;              // general ability
   // real<lower=0,upper=1> sig_thetag_reg;
-  vector<lower=0,upper=1>[D] sig_thetag_reg;          // residual uncertainty in thetag regression
+  vector<lower=0>[D] sig_thetag_reg;          // residual uncertainty in thetag regression
   matrix[N, D] theta_resid;        // residual 1st order ability
 
-  vector<lower=-1,upper=1>[D] lambda; // loadings for second order on first, e.g., theta1 = lambda * theta + error
+  vector[D] lambda; // loadings for second order on first, e.g., theta1 = lambda * theta + error
+  // <lower=-1,upper=1>
 
   vector[nDelta] delta_l;          // difficulty
   vector[nDelta_r] delta_r_l;      // structural regression, delta
@@ -197,7 +198,7 @@ transformed parameters {
     if(L) {
       for(d in 1:D) {
         for(j in 1:J) {
-          alpha[d, j] = 0;
+          alpha[d, j] = negative_infinity();
         }
       }
       int aindex = 0;
@@ -273,7 +274,8 @@ transformed parameters {
       if(i == 1) {
         lambda_identify[i] = 0.4 + (0.6)*inv_logit(lambda[i]);//exp(lambda[i]) + 0.5;
       } else {
-        lambda_identify[i] = lambda[i];
+        //lambda_identify[i] = lambda[i];
+        lambda_identify[i] = -1.0 + (2.0)*inv_logit(lambda[i]);
       }
     }
   }
@@ -315,6 +317,7 @@ transformed parameters {
       }
 
       if(has_treg) {
+        xb[i] = 0.0;
         for(k in 1:K) {
           // if(x_miss[i, k] == 0) {
             xb[i] += x[nn[i], k] * betat[k,1];
@@ -336,8 +339,17 @@ transformed parameters {
 
       c[i, ] = delta_trans[jj[i], ] + db[i];
       if(L) {
+        // print("xb[i]", xb[i]);
+        // print("x[nn[i], 1]", x[nn[i], 1]);
+        // print("betat[1,1]", betat[1,1]);
+        // print("lambda_identify[lambda_ind[i]]", lambda_identify[lambda_ind[i]]);
+        // print("lambda[lambda_ind[i]]", lambda[lambda_ind[i]]);
+        // print("theta[nn[i], 1]", theta[nn[i], 1]);
+        // print("theta_resid[nn[i], lambda_ind[i]]", theta_resid[nn[i], lambda_ind[i]]);
+        // print("exp(col(alpha, jj[i]))",exp(col(alpha, jj[i])));
         nu[i] = dot_product(rep_vector(lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + theta_resid[nn[i], lambda_ind[i]] + xb[i], D), exp(col(alpha, jj[i])));
-        print(nu[i]);
+        // print("xb[i]", xb[i]);
+        // print("nu[i]", nu[i]);
       } else {
         nu[i] = lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + theta_resid[nn[i], lambda_ind[i]] + xb[i];
       }
@@ -355,7 +367,7 @@ model {
   to_vector(theta) ~ normal(0, 1);
   // standard deviation of residual in the factor regression model:
   // theta_d = lambda_d * theta_g + {theta_resid_d}. Estimate one per dimension
-  sig_thetag_reg ~ uniform(0, 1);
+  sig_thetag_reg ~ normal(0, 2); //uniform(0, 1);
   // to_vector(theta_resid) ~ normal(0, sig_thetag_reg_rep);
   for(d in 1:D) {
     to_vector(theta_resid[,d]) ~ normal(0, sig_thetag_reg[d]);
@@ -365,10 +377,13 @@ model {
   // lambda1 is restricted to range 0.4-1.0 using a transformation above
   // This is for identifiability
   // Otherwise lambda is scaled to correlation range -1,1
-  lambda[1] ~ normal(0, 5);
-  for(i in 2:D) {
-    lambda[i] ~ uniform(-1, 1);
-  }
+
+  lambda ~ normal(0, 5);
+  // lambda[1] ~ normal(0, 5);
+  // for(i in 2:D) {
+  //   lambda[i] ~ uniform(-1, 1);
+  // }
+
   // If 2pl model (i.e., discrimination params), then sample from a normal(-0.5,1)
   // and transform to a lognormal distribution above since discriminations
   // must be positive. Transformation preferred so that regression is made 
