@@ -1,7 +1,7 @@
 # INIRT higher-order IRT tests
 devtools::install(dependencies = FALSE)
 library(rstan)
-stanc(file = "./inst/stan/theta2_soirt.stan", verbose = TRUE)
+stanc(file = "./inst/stan/theta2_mirt2.stan", verbose = TRUE)
 n = 1000
 d = 4
 j = 20*d
@@ -125,8 +125,8 @@ model = "thetag = theta1 + theta2 + theta3 + theta4
          theta1 = c(1:20)
          theta2 = c(21:40)
          theta3 = c(41:60)
-         theta4 = c(61:80)
-         thetag ~ p1"
+         theta4 = c(61:80)"
+        #  thetag ~ p1"
 # itype = "2pl"
 # method = "vb"
 # iter = 10000
@@ -154,8 +154,8 @@ cores = 1
 #   iter = 50, warmup = 30, chains = 1, cores = 1,
 #   init = function(...) {list(beta_l = 0.0, lambda = c(1, 1, 1, 1))})
 
-fit = theta2::theta2(data = data, model = model, itype = "2pl", method = "hmc", 
-  iter = 500, warmup = 300, chains = 1, cores = 1)
+fit = theta2::theta2(data = data, model = model, itype = "2pl", exploratory = TRUE, 
+  method = "hmc", iter = 500, warmup = 300, chains = 1, cores = 1)
 
 #array(c(0.0), dim = 1)
 library(rstan)

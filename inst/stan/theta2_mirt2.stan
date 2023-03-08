@@ -191,7 +191,7 @@ transformed parameters {
   vector[N_long] nu;
   matrix[N_long, Ncateg_max-1] c;
   vector<lower=0,upper=1>[N_long] eta3pl;
-  vector[D] lambda_identify;  // restrict the first lambda to be >= 0 for identifiability of the model!
+  // vector[D] lambda_identify;  // restrict the first lambda to be >= 0 for identifiability of the model!
   // vector[N*D] sig_thetag_reg_rep;
 
   {
@@ -269,16 +269,16 @@ transformed parameters {
 
   // constrain first lambda to by >= 0 by transformation: lambda1 must by strictly positive
   //  (we already assume that the lambda's are all)
-  {
-    for(i in 1:D) {
-      if(i == 1) {
-        lambda_identify[i] = 0.4 + (0.6)*inv_logit(lambda[i]);//exp(lambda[i]) + 0.5;
-      } else {
-        //lambda_identify[i] = lambda[i];
-        lambda_identify[i] = -1.0 + (2.0)*inv_logit(lambda[i]);
-      }
-    }
-  }
+  // {
+  //   for(i in 1:D) {
+  //     if(i == 1) {
+  //       lambda_identify[i] = 0.4 + (0.6)*inv_logit(lambda[i]);//exp(lambda[i]) + 0.5;
+  //     } else {
+  //       //lambda_identify[i] = lambda[i];
+  //       lambda_identify[i] = -1.0 + (2.0)*inv_logit(lambda[i]);
+  //     }
+  //   }
+  // }
 
   {
     for(i in 1:N_long) {
