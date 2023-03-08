@@ -491,6 +491,11 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     # }
     # lambda_ind = as.vector(t(replicate(N, lambda_ind)))
     lambda_ind = rep(h2_dim_id, each = N)
+  } else if(h2_dims == 0 & exploratory == TRUE){
+    alpha_dstart = array(rep(1, D), dim = D)
+    alpha_dend = array(rep(item_id, D), dim = D)
+  } else if(h2_dims == 0 & exploratory == FALSE) {
+    # update alpha_dstart and alpha_dstart
   }
 
   if(D == 1) {
@@ -590,6 +595,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       x = x, 
       D = D, 
       DAlpha = DAlpha, 
+      alpha_dstart = alpha_dstart,
+      alpha_dend = alpha_dend,
       nDelta = nDelta, 
       L = L, 
       has_treg = has_treg, 

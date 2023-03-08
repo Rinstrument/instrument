@@ -73,6 +73,7 @@ data {
   matrix[N, K] x;   // fixed effect design matrix for observation n
   int<lower=1> D;        // number of first-order dimensions
   int<lower=0> DAlpha;  // Copy of D except that it is zero if itype == "1pl" - no alpha parameters estimated in this case
+  // int<lower=0> exploratory;
   int<lower=0> alpha_dstart[D];
   int<lower=0> alpha_dend[D];
   int<lower=1> nDelta;        // total number of delta parameters
