@@ -121,11 +121,14 @@ library(Rcpp)
 compileAttributes()
 load_all()
 data = fit_data$data
-model = "thetag = theta1 + theta2 + theta3 + theta4
-         theta1 = c(1:20)
-         theta2 = c(21:40)
-         theta3 = c(41:60)
-         theta4 = c(61:80)"
+model = "theta1 = c(1:80)
+         theta2 = c(1:80)
+         theta3 = c(1:80)
+         theta4 = c(1:80)"
+# model = "theta1 = c(1:20)
+#          theta2 = c(21:40)
+#          theta3 = c(41:60)
+#          theta4 = c(61:80)"
         #  thetag ~ p1"
 # itype = "2pl"
 # method = "vb"
@@ -142,6 +145,7 @@ warmup = 300
 chains = 1
 fweights = NULL
 cores = 1
+exploratory = TRUE
 
 # data = fit_data$data
 # colnames(data)
