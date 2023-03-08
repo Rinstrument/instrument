@@ -58,6 +58,10 @@ March 3, 2023:
  - Hook up exploratory MIRT model
  - regressions of the same
 
+
+March 7, 2023
+ - Hook up exploratory MIRT model
+
 ...
  April 28, 2023: 
   - Friday morning - submit revisions to journal

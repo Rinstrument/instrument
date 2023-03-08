@@ -200,7 +200,7 @@ ggplot(df) +
   geom_point() + 
   xlim(-1.5, 1.5)
 
-cor(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
+plot(tg*lam[1] + theta_resid[,1], sim_data$theta_g*sim_data$lambda[1] + sim_data$theta[,1])
 cor(tg*lam[2] + theta_resid[,2], sim_data$theta_g*sim_data$lambda[2] + sim_data$theta[,2])
 cor(tg*lam[3] + theta_resid[,3], sim_data$theta_g*sim_data$lambda[3] + sim_data$theta[,3])
 cor(tg*lam[4] + theta_resid[,4], sim_data$theta_g*sim_data$lambda[4] + sim_data$theta[,4])
@@ -220,7 +220,7 @@ traceplot(fit, pars = c("lambda_identify"))
 traceplot(fit, pars = c("sig_thetag_reg"))
 traceplot(fit, pars = c("theta_resid[1,1]", "theta_resid[2,1]"))
 
-rstan::summary(fit, pars = c("sig_sq_thetag_reg"))
+rstan::summary(fit, pars = c("sig_thetag_reg"))
 
 # fit = inirt::inirt(data = fit_data$data, model = fit_data$model, predictors = fit_data$predictors, dims = fit_data$dims, 
 #     h2_dims = fit_data$h2_dims, h2_dim_id = fit_data$h2_dim_id, structural_design = fit_data$structural_design, 
