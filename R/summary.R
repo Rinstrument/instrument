@@ -22,7 +22,7 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
   all_par_names = names(stanfit@par_dims)
 
   if(pars == "default") {
-    all_par_names = setdiff(all_par_names, c("alpha_l", "eta3pl_l", "delta_trans", 
+    all_par_names = setdiff(all_par_names, c("alpha_l", "eta3pl_l", "delta_l", 
       "eta3pl", "db", "ab", "xb", "nu", "c", "lp__"))
   } else {
     all_par_names = pars

@@ -5,90 +5,9 @@ compileAttributes()
 document()
 devtools::install(dependencies = FALSE)
 rstan::stanc(file = "./inst/stan/theta2_mirt.stan", verbose = TRUE)
-n = 1000
-d = 4
-j = 20*d
-ncat = 2
-ncategi = c(rep(ncat, j))
-ncateg_max = max(ncategi)
-k = 0
-uk = 0
-alpha = matrix(0, d, j)
-a_design = as.matrix(data.frame(x1 = rep(1, n)))
-b_alpha = 1
-alpha_dominant = list(1:20, 21:40, 41:60, 61:80)
-for(dd in 1:d) {
-  alpha[dd, alpha_dominant[[dd]]] = sort(runif(length(alpha_dominant[[dd]]), 1.7, 3.0))
-  alpha[dd, setdiff(unlist(alpha_dominant), alpha_dominant[[dd]])] = sort(runif(length(unlist(alpha_dominant[-dd])), 0.2, 1.0))
-}
-delta = matrix(nrow = j, ncol = ncateg_max - 1)
-d_design = as.matrix(data.frame(x1 = rep(1, n)))
-b_delta = 1
-for(jj in 1:j) {
-  delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
-}
-delta = cbind(0, delta)
-theta = matrix(0, nrow = n, ncol = d)
-for(dd in 1:d) {
-  theta[, dd] = rnorm(n, 0, 1)
-}
-beta = NULL
-predictors = NULL
-start_index = 1
-beta_dstart = NULL
-beta_dend = NULL
 
-data = matrix(0, nrow = n, ncol = j)
-for(i in 1:n) {
-  for(jj in 1:j) { #                                                                      + x[i, ] %*% beta_mat
-    prb = (1 / (1 + exp(-(sum((alpha[, jj] + b_alpha*a_design[i,])*(theta[i, ])) - (delta[jj, 1:ncategi[jj]] + b_delta*d_design[i,])))))
-    prb[1] = 1.0
-    prb = c(prb, 0)
-    prb = prb[-length(prb)] - prb[2:length(prb)]
-    data[i, jj] = sample(1:ncategi[jj], 1, prob = prb)
-  }
-}
-apply(data, 2, table)
-remove_gaps = function(x) {
-  ord = order(x); vec = sort(x)
-  old = unique(vec); replace = 1:length(unique(vec))
-  names(replace) = old; names(vec) = vec
-  new = replace[names(vec)]; names(new) = NULL
-  return(new[ord])
-}
-data = apply(data, 2, remove_gaps)
-# data = cbind(data, x)
-# remove_gaps = function(x) {
-#   ord = order(x); vec = sort(x)
-#   old = unique(vec); replace = 1:length(unique(vec))
-#   names(replace) = old; names(vec) = vec
-#   new = replace[names(vec)]; names(new) = NULL
-#   return(new[ord])
-# }
-# data = apply(data, 2, remove_gaps)
-# apply(data, 2, table)
-# data = cbind(data, x)
-colnames(data) = c(paste0("x", 1:j)) #, paste0("z", 1:k)
-# for(dd in 1:1) {
-#   predictors[[dd]] = predictors[[dd]] + j
-# }
-# dims = 3
-# h2_dims = 1
-# h2_dim_id = list(1:20, 21:40, 41:60)
-sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, beta = beta, theta = theta)
-fit_data = list(data = data)
-rm(list = setdiff(ls(), c("fit_data", "sim_data")))
-ls()
-# library(devtools)
-# library(Rcpp)
-# compileAttributes()
-# load_all()
-data = fit_data$data
-model = "theta1 = c(1:80)
-         theta2 = c(1:80)
-         theta3 = c(1:80)
-         theta4 = c(1:80)"
-
+# source simulation function
+source("tests/sim_mirt_data.R")
 #---
 # itype = "2pl"
 # method = "hmc"
@@ -99,12 +18,22 @@ model = "theta1 = c(1:80)
 # cores = 1
 # exploratory = TRUE
 
+mirt_data = sim_mirt_data(type = "mirt")
+fit_data = mirt_data$fit_data
+sim_data = mirt_data$sim_data
+
+data = fit_data$data
+model = "theta1 = c(1:80)
+         theta2 = c(1:80)
+         theta3 = c(1:80)
+         theta4 = c(1:80)"
+
 fit = theta2::theta2(data = data, model = model, itype = "2pl", exploratory = TRUE, 
   method = "hmc", iter = 10, warmup = 5, chains = 1, cores = 1)
-class(fit)
-summary(fit)
-print(fit)
-traceplot(fit, param = "")
+fit_smy = theta2::summary.theta2Obj(fit)
+
+evaluate_model(fit_smy, mirt_data)
+# theta2::traceplot.theta2Obj(fit, param = "theta[1,1]")
 
 
 
