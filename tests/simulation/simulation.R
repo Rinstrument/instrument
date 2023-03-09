@@ -20,6 +20,10 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
   # locally sourced data simulation function
   source("tests/simulation/sim_mirt_data.R", local = TRUE)
 
+  # study level seed
+  set.seed(07071994)
+  seed_study_level = tail(.Random.seed, 1)
+
   # replace this with parallely
   # Construct cluster
   cl = parallelly::makeClusterPSOCK(n_cores, autoStop = TRUE)
@@ -34,10 +38,11 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
   estimates = foreach::foreach(i = iterators::icount(n_sim),
                                .packages = "theta2") %dopar% {
     # seed with formula 
-    set.seed(i * 10 / pi)
+    seed_replication_level = i * 10 / pi
 
     # simulate mirt data
-    mirt_data = sim_mirt_data(type = "mirt")
+    mirt_data = sim_mirt_data(type = "mirt", seed_study_level = seed_study_level, 
+      seed_replication_level = seed_replication_level)
     fit_data = mirt_data$fit_data  # data for fitting a model
     sim_data = mirt_data$sim_data  # underlying truth
 

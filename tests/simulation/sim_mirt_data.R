@@ -4,7 +4,9 @@
 # "mirt", 
 # "soirt", 
 # "birt"
-sim_mirt_data = function(type) {
+sim_mirt_data = function(type, seed_study_level, seed_replication_level) {
+
+	set.seed(seed_study_level)
 
 	n = 1000
 	d = 4
@@ -46,6 +48,8 @@ sim_mirt_data = function(type) {
 	start_index = 1
 	beta_dstart = NULL
 	beta_dend = NULL
+
+	set.seed(seed_replication_level)
 
 	data = matrix(0, nrow = n, ncol = j)
 	for(i in 1:n) {
