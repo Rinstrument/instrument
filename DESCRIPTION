@@ -1,9 +1,9 @@
 Package: theta2
-Title: Item Response Theory Tools
+Title: Explanatory Bayesian Multivariate Item Response Theory Models
 Version: 1.5
 Authors@R: 
     person("Michael", "Kleinsasser", , "mjkleinsa@gmail.com", role = c("aut", "cre"))
-Description: Item Response Theory Tools
+Description: Estimate multivariate item response theory models using Stan. 
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -17,7 +17,8 @@ Imports:
     RcppParallel (>= 5.0.1),
     rstan (>= 2.18.1),
     rstantools (>= 2.2.0),
-    stringr (>= 1.5.0)
+    stringr (>= 1.5.0),
+    data.table
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
