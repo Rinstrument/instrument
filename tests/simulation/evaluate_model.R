@@ -1,5 +1,5 @@
 
-get_bias  function(sim_data, fit_smy) {
+get_bias = function(sim_data, fit_smy) {
 
 }
 
