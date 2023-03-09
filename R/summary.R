@@ -34,10 +34,18 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
   draws = data.table::dcast(draws, iterations + chains ~ parameters, 
     value.var = "value")
 
-  summary_theta2Obj = function(x, probs) {c(mean(x), quantile(x, probs = probs))}
+  summary_theta2Obj = function(x, probs) {c(mean(x), sd(x), quantile(x, probs = probs))}
 
   draws = draws[, lapply(.SD[, -c(1, 2)], summary_theta2Obj, probs = probs)]
+
+  draws = draws[, summary := c("mean", "sd", paste0("quantile_", probs))]
+
+  draws = data.table::transpose(draws, keep.names = "parameter", make.names = "summary")
 
   return(draws)
 
 }
+
+# write a function that takes a pattern and gives the parameter summaries for filtering
+# using my data.table summary function... getPar("theta", dim = 1), getPar("theta")
+# just translates into the right filter function
