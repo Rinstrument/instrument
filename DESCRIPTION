@@ -7,7 +7,7 @@ Description: Estimate multivariate item response theory models using Stan.
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Biarch: true
 Depends: 
     R (>= 3.4.0)

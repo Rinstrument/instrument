@@ -7,9 +7,10 @@
 theta2(
   data,
   model,
+  itype,
   exploratory = FALSE,
   method = c("vb", "hmc"),
-  weights = NULL,
+  fweights = NULL,
   ...
 )
 }
@@ -29,6 +30,8 @@ theta2(
 \item{ranef_id}{id for which items belong to the current random effect.}
 
 \item{predictors_ranef_corr}{list of correlated random effect parameters for each dimension.}
+
+\item{stuff}{stuff}
 
 \item{dims}{dimensions}
 }

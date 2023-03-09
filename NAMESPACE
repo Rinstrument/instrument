@@ -4,5 +4,32 @@ export(theta2)
 import(Rcpp)
 import(methods)
 import(stringr)
-importFrom(rstan,sampling)
 useDynLib(theta2, .registration = TRUE)
+
+# S3 method exports
+S3method(summary, theta2Obj)
+export(summary.theta2Obj)
+S3method(traceplot, theta2Obj)
+export(traceplot.theta2Obj)
+
+# From rstan
+importFrom(rstan, sampling)
+importFrom(rstan, extract)
+importFrom(rstan, traceplot)
+importFrom(rstan, vb)
+
+# from data.table
+importFrom(data.table, transpose)
+importFrom(data.table, dcast)
+importFrom(data.table, as.data.table)
+
+# from purrr
+importFrom(purrr, map)
+
+# from stringr
+importFrom(stringr, str_split)
+importFrom(stringr, str_replace_all)
+importFrom(stringr, str_detect)
+
+
+
