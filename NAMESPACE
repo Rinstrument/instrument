@@ -1,9 +1,15 @@
 # Edit by hand (not managed by Roxygen)
 
+# Main model fitting function of package
 export(theta2)
+
+# Rcpp
 import(Rcpp)
+
+# Methods
 import(methods)
-import(stringr)
+
+# Use compiled code (Stan -> cpp -> theta2)
 useDynLib(theta2, .registration = TRUE)
 
 # S3 method exports
@@ -27,12 +33,10 @@ importFrom(data.table, as.data.table)
 importFrom(purrr, map)
 
 # from stringr
+# import(stringr)
 importFrom(stringr, str_split)
 importFrom(stringr, str_replace_all)
 importFrom(stringr, str_detect)
 importFrom(stringr, str_subset)
 importFrom(stringr, str_squish)
 importFrom(stringr, str_remove_all)
-
-
-
