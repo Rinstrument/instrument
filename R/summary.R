@@ -1,18 +1,32 @@
 
 #' Summarize a theta2 object
 #' 
+#' Produce summary matrix for theta2 output.
+#' 
+#' @param object theta2Obj model object
+#' @param pars "default" will give the default parameters of the model.
+#' Other options will give only the specified vector of parameter names.
+#' For example, pars = c("theta", "alpha").
+#' @param probs probability vector for quantiles of posterior estiamtes
+#' @param ... not used
+#' 
+#' @return a `data.table` of draws
+#' 
 #' @importFrom rstan summary
 #' @export
 #' 
 summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.975), ...) {
-  probs = c(0.025, 0.50, 0.975)
-  object = fit
+
   stanfit = object$stanfit
 
   all_par_names = names(stanfit@par_dims)
 
-  all_par_names = setdiff(all_par_names, c("alpha_l", "eta3pl_l", "delta_trans", 
-    "eta3pl", "db", "ab", "xb", "nu", "c", "lp__"))
+  if(pars == "default") {
+    all_par_names = setdiff(all_par_names, c("alpha_l", "eta3pl_l", "delta_trans", 
+      "eta3pl", "db", "ab", "xb", "nu", "c", "lp__"))
+  } else {
+    all_par_names = pars
+  }
   
   draws = data.table::as.data.table(rstan::extract(stanfit, pars = all_par_names, permute = FALSE))
 
