@@ -29,7 +29,7 @@ mod = "t1 = x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
 #        tg = t1 + t2 + t3
 library(stringr)
 
-mod = unlist(str_split(mod, "\\n"))
+mod = unlist(stringr::str_split(mod, "\\n"))
 mod
 
 model = "    
@@ -214,8 +214,8 @@ parse_regression_eq = function(model, data) {
   model = unlist(str_split(model, "~"))
   mod_lhs = str_squish(model[1])
   mod_rhs = str_squish(model[2])
-  mod_fixed = str_replace_all(mod_rhs, "\\s*\\([^\\)]+\\)", "")
-  mod_fixed = str_subset(str_squish(unlist(str_split(mod_fixed, "\\+"))), ".+")
+  mod_fixed = stringr::str_replace_all(mod_rhs, "\\s*\\([^\\)]+\\)", "")
+  mod_fixed = stringr::str_subset(stringr::str_squish(unlist(stringr::str_split(mod_fixed, "\\+"))), ".+")
 
   if(length(mod_fixed[1]) > 0 & mod_fixed[1] != "0") {
     predictors = which(names(data) %in% mod_fixed)

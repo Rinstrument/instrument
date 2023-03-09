@@ -35,17 +35,17 @@ parse_regression_eq = function(model, data) {
   d_dims = dim(data)
 
   # Check if user defined the regression equations using correct syntax
-  if(!str_detect(model, "~")) {
+  if(!stringr::str_detect(model, "~")) {
     stop("regression equations require a ~ between response and predictors. E.g. a ~ b.")
   }
 
   # remove all spaces from model definition right away
-  model = str_replace_all(model, pattern=" ", repl="")
+  model = stringr::str_replace_all(model, pattern=" ", repl="")
 
   # if equation breaks to a new line, e.g., t1 ~ x1 + 
   #                                              x2 + x3
   # remove the line break \n
-  model = str_replace_all(model, "[\r\n]" , "")
+  model = stringr::str_replace_all(model, "[\r\n]" , "")
 
   # instantiate return values. these values store the quantities which define
   # the model for the inirt::inirt() internals
@@ -56,12 +56,12 @@ parse_regression_eq = function(model, data) {
   n_pranef_cor = NULL
 
   # split left hand side and right had side of model
-  model = unlist(str_split(model, "~"))
+  model = unlist(stringr::str_split(model, "~"))
   type = model[1]
   mod_rhs = model[2]
   # fixed effect portion of model definition
-  mod_fixed = str_replace_all(mod_rhs, "\\s*\\([^\\)]+\\)", "")
-  mod_fixed = str_subset(unlist(str_split(mod_fixed, "\\+")), ".+")
+  mod_fixed = stringr::str_replace_all(mod_rhs, "\\s*\\([^\\)]+\\)", "")
+  mod_fixed = stringr::str_subset(unlist(stringr::str_split(mod_fixed, "\\+")), ".+")
 
   if(identical(mod_fixed, character(0)) || mod_fixed[1] == "0") {
     mod_fixed = NULL
@@ -75,7 +75,7 @@ parse_regression_eq = function(model, data) {
 
   # parse and store the random effect portion of the regression equation
   mod_ranef = unlist(str_match_all(mod_rhs, "(?<=\\().*?(?=\\))"))
-  mod_ranef = str_split(mod_ranef, "\\|")
+  mod_ranef = stringr::str_split(mod_ranef, "\\|")
 
   # Random effects take some sorting out. They can be either uncorrelated or 
   # correlated and there can be multiple separate definitions in one formula
@@ -93,7 +93,7 @@ parse_regression_eq = function(model, data) {
       M = table(M)
       # M = table(stack(setNames(strsplit(paste0(var, data[[var]]), "/"), 1:400))[2:1])
       M = matrix(M, ncol = ncol(M), dimnames = dimnames(M))
-      lhs = str_split(current[1], "\\+")[[1]]
+      lhs = stringr::str_split(current[1], "\\+")[[1]]
       if(length(lhs) > 1) {
         n_pranef_cor = length(lhs)
         for(j in 2:n_pranef_cor) {

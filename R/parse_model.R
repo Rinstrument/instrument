@@ -15,16 +15,16 @@
 parse_model = function(model, data, exploratory = FALSE){
 
   # Remove all whitespace from model definition
-  model = str_replace_all(model, pattern=" ", repl="")
+  model = stringr::str_replace_all(model, pattern=" ", repl="")
 
   # remove all '+\n' where model definition is broked to a new line by user
   # e.g., y ~ x1 + x2 + 
   #          x3 + x4
-  model = str_replace_all(model, "\\+\n", "+")
+  model = stringr::str_replace_all(model, "\\+\n", "+")
 
   # Splot the sub-models into a vector; each sub-model is separated by a new line 
   # by the user; no semi-colors are permitted to break lines
-  model = str_split(model, "\n")[[1]]
+  model = stringr::str_split(model, "\n")[[1]]
 
   # remove extra newlines if the user inserted them; usually occur at the 
   # beginning or the end of the model definition
@@ -32,7 +32,7 @@ parse_model = function(model, data, exploratory = FALSE){
 
   # separate latent dimension definitions from regression equations, collect
   # latent dimension definitions into one vector
-  latent_models = str_detect(model, "=")
+  latent_models = stringr::str_detect(model, "=")
   # separate the two problems
   model_latent = model[latent_models]
   model_regression = model[!latent_models]

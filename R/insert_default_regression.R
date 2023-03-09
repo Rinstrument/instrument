@@ -12,7 +12,7 @@ insert_default_regression = function(model_regression) {
 
   spec_type = c()
   for(i in 1:length(model_regression)) {
-    type = unlist(str_split(model_regression[i], "~"))[1]
+    type = unlist(stringr::str_split(model_regression[i], "~"))[1]
     spec_type = c(spec_type, type)
   }
 

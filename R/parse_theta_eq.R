@@ -41,25 +41,25 @@
 parse_theta_eq = function(model, data, exploratory = FALSE) {
 
   # Check if user defined the latent dimensions using correct syntax
-  if(!all(str_detect(model, "="))) {
+  if(!all(stringr::str_detect(model, "="))) {
     stop("latent factor equations require a '=' between factor name and items. E.g. t1 = c(1:25).")
   }
 
   # remove all spaces from model definition right away
-  model = str_replace_all(model, pattern=" ", repl="")
+  model = stringr::str_replace_all(model, pattern=" ", repl="")
 
   # if equation breaks to a new line after a '+', e.g., t1 = x1 + 
   #                                                       x2 + x3
   # remove the line break \n
-  model = str_replace_all(model, "[\r\n]" , "")
+  model = stringr::str_replace_all(model, "[\r\n]" , "")
 
   # split left hand side anr right hand side; lhs defines names; rhs defines model
-  split_model = str_split(model, "=")
+  split_model = stringr::str_split(model, "=")
 
   # store parts of model
   dim_names = purrr::map_chr(split_model, function(x) {x[1]})
   models = purrr::map_chr(split_model, function(x) {x[2]})
-  model_order = str_detect(models, paste0(dim_names, collapse = "|"))
+  model_order = stringr::str_detect(models, paste0(dim_names, collapse = "|"))
 
   # instantiate return values. these values store the quantities which define
   # the model for the inirt::inirt() internals
@@ -76,10 +76,10 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
     second_order = models[model_order]
     h2_dims = (!is.null(second_order)) * 1
     for(i in 1:length(first_order)) {
-      model = str_split(first_order[i], c("\\+|\\,"))[[1]]
-      model = unlist(str_split(str_remove_all(model, "^c\\(|\\)"), ","))
+      model = stringr::str_split(first_order[i], c("\\+|\\,"))[[1]]
+      model = unlist(stringr::str_split(stringr::str_remove_all(model, "^c\\(|\\)"), ","))
 
-      presence = str_detect(model, ":") | str_detect(model, "\\D", negate = TRUE)
+      presence = stringr::str_detect(model, ":") | stringr::str_detect(model, "\\D", negate = TRUE)
 
       for(j in 1:length(model)) {
         if(presence[j]) {
@@ -97,10 +97,10 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
     h2_dims = 0
     # fit an exploratory muldimensional model?
     if(exploratory == TRUE) {
-      model = str_split(first_order[1], c("\\+|\\,"))[[1]]
-      model = unlist(str_split(str_remove_all(model, "^c\\(|\\)"), ","))
+      model = stringr::str_split(first_order[1], c("\\+|\\,"))[[1]]
+      model = unlist(stringr::str_split(stringr::str_remove_all(model, "^c\\(|\\)"), ","))
 
-      presence = str_detect(model, ":") | str_detect(model, "\\D", negate = TRUE)
+      presence = stringr::str_detect(model, ":") | stringr::str_detect(model, "\\D", negate = TRUE)
 
       for(j in 1:length(model)) {
         if(presence[j]) {
@@ -113,10 +113,10 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
       }
     } else {
       for(i in 1:length(first_order)) {
-        model = str_split(first_order[i], c("\\+|\\,"))[[1]]
-        model = unlist(str_split(str_remove_all(model, "^c\\(|\\)"), ","))
+        model = stringr::str_split(first_order[i], c("\\+|\\,"))[[1]]
+        model = unlist(stringr::str_split(stringr::str_remove_all(model, "^c\\(|\\)"), ","))
 
-        presence = str_detect(model, ":") | str_detect(model, "\\D", negate = TRUE)
+        presence = stringr::str_detect(model, ":") | stringr::str_detect(model, "\\D", negate = TRUE)
 
         for(j in 1:length(model)) {
           if(presence[j]) {

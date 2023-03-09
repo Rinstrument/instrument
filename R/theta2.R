@@ -57,12 +57,12 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   nEta3pl = sum(all_3pl)
 
   # What type of IRT regression are we fitting? - parsed, translated to input parameters
-  regr_alpha_delta = str_detect(names_model_data, "alpha|delta")
+  regr_alpha_delta = stringr::str_detect(names_model_data, "alpha|delta")
   regr_theta = model_data[[which(!regr_alpha_delta)]]
   regr_alpha_delta = model_data[-which(!regr_alpha_delta)]
   names_model_data = names_model_data[!(regr_theta$type == names_model_data)] # changed this line from "theta" to generic name
-  regr_alpha_data = regr_alpha_delta[str_detect(names_model_data, "alpha")][[1]] # [-1] ???
-  regr_delta_data = regr_alpha_delta[str_detect(names_model_data, "delta")][[1]]
+  regr_alpha_data = regr_alpha_delta[stringr::str_detect(names_model_data, "alpha")][[1]] # [-1] ???
+  regr_delta_data = regr_alpha_delta[stringr::str_detect(names_model_data, "delta")][[1]]
 
   # For a single theta
   predictors = regr_theta$predictors
