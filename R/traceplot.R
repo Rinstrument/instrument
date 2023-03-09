@@ -13,8 +13,8 @@
 #' 
 #' @return a ggplot2 plot is prited upon return.
 #' 
-#'
-#' 
+#' @importFrom rstan traceplot
+#' @export 
 traceplot.theta2Obj = function(object, pars, ...) {
 
 	stanfit = object$stanfit
