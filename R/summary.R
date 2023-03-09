@@ -1,4 +1,3 @@
-
 #' Summarize a theta2 object
 #' 
 #' Produce summary matrix for theta2 output.
