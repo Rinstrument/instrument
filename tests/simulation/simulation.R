@@ -12,6 +12,16 @@ library(foreach)
 #-------------------------------------------------------------------------------
 # Globally sources files
 source("tests/simulation/evaluate_model.R")
+source("tests/simulation/sim_mirt_data.R")
+
+#-------------------------------------------------------------------------------
+# study level seed
+seed_study_level = 422578599
+set.seed(seed_study_level)
+
+#-------------------------------------------------------------------------------
+# simulate one set of truth values
+true_values = sim_mirt_pars("mirt")
 
 #-------------------------------------------------------------------------------
 # make a cluster and run simulation in parallel
@@ -21,8 +31,8 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
   source("tests/simulation/sim_mirt_data.R", local = TRUE)
 
   # study level seed
-  set.seed(07071994)
-  seed_study_level = tail(.Random.seed, 1)
+  
+  # seed_study_level = tail(.Random.seed, 1)
 
   # replace this with parallely
   # Construct cluster
@@ -37,12 +47,13 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
   # Execute for loop in parallel to get simulation results
   estimates = foreach::foreach(i = iterators::icount(n_sim),
                                .packages = "theta2") %dopar% {
+
     # seed with formula 
-    seed_replication_level = i * 10 / pi
+    seed_replication_level = i * 10000 / pi
+    set.seed(seed_replication_level)
 
     # simulate mirt data
-    mirt_data = sim_mirt_data(type = "mirt", seed_study_level = seed_study_level, 
-      seed_replication_level = seed_replication_level)
+    mirt_data = sim_mirt_data(type = "mirt", pars = true_values)
     fit_data = mirt_data$fit_data  # data for fitting a model
     sim_data = mirt_data$sim_data  # underlying truth
 
@@ -70,10 +81,12 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
 
     # return summary
     fit_smy
+
   }
 
   # Release results
   return(estimates)
+  
 }
 
 #-------------------------------------------------------------------------------

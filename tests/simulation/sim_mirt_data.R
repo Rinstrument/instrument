@@ -4,9 +4,8 @@
 # "mirt", 
 # "soirt", 
 # "birt"
-sim_mirt_data = function(type, seed_study_level, seed_replication_level) {
 
-	set.seed(seed_study_level)
+sim_mirt_pars = function(type) {
 
 	n = 1000
 	d = 4
@@ -49,7 +48,40 @@ sim_mirt_data = function(type, seed_study_level, seed_replication_level) {
 	beta_dstart = NULL
 	beta_dend = NULL
 
-	set.seed(seed_replication_level)
+	return(list(n = n, d = d, j = j, ncat = ncat, ncategi = ncategi, 
+		ncateg_max = ncateg_max, k = k, uk = uk, alpha = alpha, a_design = a_design, 
+		b_alpha = b_alpha, alpha_dominant = alpha_dominant, delta = delta, 
+		d_design = d_design, b_delta = b_delta, theta = theta, beta = beta, 
+		predictors = predictors, start_index = start_index, beta_dstart = beta_dstart, 
+		beta_dend = beta_dend))
+
+}
+
+sim_mirt_data = function(type, pars) {
+
+	n = pars$n
+	d = pars$d
+	j = pars$j 
+	ncat = pars$ncat
+	ncategi = pars$ncategi
+	ncateg_max = pars$ncateg_max
+	k = pars$k
+	uk = pars$uk
+	alpha = pars$alpha
+	a_design = pars$a_design
+	b_alpha = pars$b_alpha
+	alpha_dominant = pars$alpha_dominant
+	delta = pars$delta
+	d_design = pars$d_design
+	b_delta = pars$b_delta
+	theta = pars$theta
+	beta = pars$beta
+	predictors = pars$predictors
+	start_index = pars$start_index
+	beta_dstart = pars$beta_dstart
+	beta_dend = pars$beta_dend
+
+	# set.seed(seed_replication_level)
 
 	data = matrix(0, nrow = n, ncol = j)
 	for(i in 1:n) {

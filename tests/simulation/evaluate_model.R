@@ -1,6 +1,8 @@
 
 evaluate_model = function(res) {
 
+	cbind(res[[1]][, 'true'], res[[2]][, 'true'], res[[3]][, 'true'], res[[4]][, 'true'], res[[5]][, 'true'])
+
 	# number of parallel apply operations
 	n_res = length(res)
 
