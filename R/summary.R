@@ -15,7 +15,8 @@
 #' @importFrom rstan summary
 #' @export
 #' 
-summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.975), ...) {
+summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.975), 
+  ...) {
 
   stanfit = object$stanfit
 
@@ -28,7 +29,8 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
     all_par_names = pars
   }
   
-  draws = data.table::as.data.table(rstan::extract(stanfit, pars = all_par_names, permute = FALSE))
+  draws = data.table::as.data.table(rstan::extract(stanfit, pars = all_par_names, 
+    permute = FALSE))
 
   draws = data.table::dcast(draws, iterations + chains ~ parameters, 
     value.var = "value")
