@@ -46,9 +46,10 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
 
   # Execute for loop in parallel to get simulation results
   estimates = foreach::foreach(i = iterators::icount(n_sim),
-                               .packages = "theta2") %dopar% {
+                               .packages = "theta2",
+                               .export = "true_values") %dopar% {
 
-    # seed with formula 
+    # seed with formula (for random sampling using true values sampled earlier)
     seed_replication_level = i * 10000 / pi
     set.seed(seed_replication_level)
 
@@ -86,7 +87,7 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
 
   # Release results
   return(estimates)
-  
+
 }
 
 #-------------------------------------------------------------------------------
