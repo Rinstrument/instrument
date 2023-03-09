@@ -1,7 +1,10 @@
 # INIRT higher-order IRT tests
+library(devtools)
+library(Rcpp)
+compileAttributes()
+document()
 devtools::install(dependencies = FALSE)
-library(rstan)
-stanc(file = "./inst/stan/theta2_mirt.stan", verbose = TRUE)
+rstan::stanc(file = "./inst/stan/theta2_mirt.stan", verbose = TRUE)
 n = 1000
 d = 4
 j = 20*d
@@ -97,7 +100,7 @@ model = "theta1 = c(1:80)
 # exploratory = TRUE
 
 fit = theta2::theta2(data = data, model = model, itype = "2pl", exploratory = TRUE, 
-  method = "hmc", iter = 100, warmup = 50, chains = 1, cores = 1)
+  method = "hmc", iter = 10, warmup = 5, chains = 1, cores = 1)
 class(fit)
 summary(fit)
 print(fit)
