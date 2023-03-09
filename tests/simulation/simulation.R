@@ -1,14 +1,19 @@
+#-------------------------------------------------------------------------------
 # Author: Michael J Kleinsasser
 # Title: Simulation Study of theta2 for the manuscript ___
 # Date: March 9, 2023
+#-------------------------------------------------------------------------------
 
+#-------------------------------------------------------------------------------
 # import packages
 library(theta2)
 library(foreach)
 
+#-------------------------------------------------------------------------------
 # Globally sources files
 source("tests/simulation/evaluate_model.R")
 
+#-------------------------------------------------------------------------------
 # make a cluster and run simulation in parallel
 make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores()) {
 
@@ -66,8 +71,10 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
   return(estimates)
 }
 
+#-------------------------------------------------------------------------------
 # run simulation
 res = make_parallel_compute(n_sim = 5, n_cores = 6)
 
+#-------------------------------------------------------------------------------
 # assess model with metrics: mse, bias, etc.
 mod_assessment = evaluate_model(res)
