@@ -1,20 +1,31 @@
+# retrieve all columns of the same name from the output from each iteration
+# of the simulation
+retrieve_by_name = function(res, name) {
 
+	n = length(res)
+
+	out = vector(mode = "list", length = n)
+
+	for(i in 1:n) {
+    out[[i]] = res[[i]][, ..name]
+	}
+
+	out = data.table::data.table(do.call(cbind, out))
+
+	return(out)
+
+}
+
+# Evaluate simulation output using the standard metrics like mse, bias, etc...
 evaluate_model = function(res) {
 
-	cbind(res[[1]][, 'true'], res[[2]][, 'true'], res[[3]][, 'true'], res[[4]][, 'true'], res[[5]][, 'true'])
-
-	# number of parallel apply operations
-	n_res = length(res)
-
-	# first element of summary
-	est_sum_nres = res[[1]][, 'mean']
-
+	# true values are equal across the res[[i]]'s since they were sampled once
 	truth = res[[1]][, 'true']
 
-	# 2 to n_res elements fo summary
-	for(i in 2:n_res) {
-		est_sum_nres = est_sum_nres + res[[i]][, "mean"] 
-	}
+	# posterior estimate table for all parameters
+	estimates = retrieve_by_name(res, 'mean')
+
+	
 
 	# mean of model estimates
 	est_mean_nres = est_sum_nres / n_res
