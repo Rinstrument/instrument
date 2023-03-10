@@ -12,14 +12,16 @@ library(foreach)
 # source simulation function
 # source("tests/sim_mirt_data.R")
 #---
-# itype = "2pl"
-# method = "hmc"
-# iter = 500
-# warmup = 300
-# chains = 1
-# fweights = NULL
-# cores = 1
-# exploratory = TRUE
+library(devtools)
+load_all()
+itype = "2pl"
+method = "hmc"
+iter = 500
+warmup = 300
+chains = 1
+fweights = NULL
+cores = 1
+exploratory = TRUE
 
 # make a cluster and run simulation in parallel
 make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores()) {

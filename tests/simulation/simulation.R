@@ -70,11 +70,29 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
     model = "theta1 = c(1:80)
              theta2 = c(1:80)
              theta3 = c(1:80)
-             theta4 = c(1:80)"
+             theta4 = c(1:80)
+             theta1 ~ z1 + z2 + z3
+             theta2 ~ z1 + z2 + z3
+             theta3 ~ z1 + z2 + z3
+             theta4 ~ z1 + z2 + z3
+             alpha  ~ z1 + z2 + z3
+             delta  ~ z1 + z2 + z3"
+
+    # model
+    model = "theta1 = c(1:80)
+             theta2 = c(1:80)
+             theta3 = c(1:80)
+             theta4 = c(1:80)
+             theta1 ~ z1 + z2 + z3 + (1 + age | school)
+             theta2 ~ z1 + z2 + z3 + (1 + age | school)
+             theta3 ~ z1 + z2 + z3 + (1 + age | school)
+             theta4 ~ z1 + z2 + z3 + (1 + age | school)
+             alpha  ~ z1 + z2 + z3
+             delta  ~ z1 + z2 + z3"
     
     # fit model
     fit = theta2::theta2(data = data, model = model, itype = "2pl", exploratory = TRUE, 
-      method = "hmc", iter = 10, warmup = 5, chains = 1, cores = 1)
+      method = "hmc", iter = 500, warmup = 300, chains = 1, cores = 1)
 
     # produce summary
     fit_smy = theta2::summary.theta2Obj(fit)

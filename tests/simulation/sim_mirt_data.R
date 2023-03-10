@@ -49,8 +49,8 @@ sim_mirt_pars = function(type) {
   # Dominant alphas follow Unif(1.7, 3.0)
 	# non-dominant alphas follow Unif(0.2, 1.0)
 	for(dd in 1:d) {
-		alpha[dd, alpha_dominant[[dd]]] = sort(runif(length(alpha_dominant[[dd]]), 1.7, 3.0))
-		alpha[dd, setdiff(unlist(alpha_dominant), alpha_dominant[[dd]])] = sort(runif(length(unlist(alpha_dominant[-dd])), 0.2, 1.0))
+		alpha[dd, alpha_dominant[[dd]]] = sort(runif(length(alpha_dominant[[dd]]), 2, 5))
+		alpha[dd, setdiff(unlist(alpha_dominant), alpha_dominant[[dd]])] = sort(runif(length(unlist(alpha_dominant[-dd])), 0.2, 1.5))
 	}
 	
 	# delta - difficulty parameters
@@ -95,6 +95,7 @@ sim_mirt_pars = function(type) {
 }
 
 # Given the set of parameters we generated, sample a new data set
+# pars = sim_mirt_pars()
 sim_mirt_data = function(type, pars) {
 
 	# pull values from sim_mirt_pars() output
@@ -130,8 +131,14 @@ sim_mirt_data = function(type, pars) {
 	# each level of the response
 	for(i in 1:n) {
 		for(jj in 1:j) {
+			# alpha 
+			ar = as.vector(b_alpha %*% a_design[i,])
+			# delta 
+			dr = as.vector(b_delta %*% d_design[i,])
+			# theta
+			tr = as.vector(beta %*% ff[i, ])
 			# regression equation
-			nu = sum((alpha[, jj] + b_alpha*a_design[i,])*(theta[i, ] + x[i, ] %*% beta_mat)) - (delta[jj, 1:ncategi[jj]] + b_delta*d_design[i,])
+			nu = sum((t(alpha[, jj] + ar) %*% (theta[i, ] + tr))/5) - (delta[jj, 1:ncategi[jj]] + dr)
 			# inverse logit
 			prb = (1 / (1 + exp(-(nu))))
 			# first level is 1
@@ -159,6 +166,9 @@ sim_mirt_data = function(type, pars) {
 	
 	# apply the remove gaps function
 	data = apply(data, 2, remove_gaps)
+
+	# preview the data
+	apply(data, 2, table)
 
 	# bind sampled data and predictor variables
 	data = cbind(data, ff)
