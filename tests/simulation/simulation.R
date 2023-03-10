@@ -14,6 +14,7 @@ library(tidyverse)
 # Globally sources files
 source("tests/simulation/evaluate_model.R")
 source("tests/simulation/sim_mirt_data.R")
+source("tests/simulation/tables.R")
 
 #-------------------------------------------------------------------------------
 # study level seed
@@ -93,7 +94,7 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
 
 #-------------------------------------------------------------------------------
 # run simulation
-res = make_parallel_compute(n_sim = 5, n_cores = 6)
+res = make_parallel_compute(n_sim = 1, n_cores = 1)
 
 #-------------------------------------------------------------------------------
 # assess model with metrics: mse, bias, etc.
