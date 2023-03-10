@@ -81,7 +81,7 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
     # merge summary output with truth
     fit_smy = fit_smy[true, on = 'parameter']
 
-    # return summary
+    # return summary from foreach iteration i
     fit_smy
 
   }
