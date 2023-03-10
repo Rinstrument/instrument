@@ -3,8 +3,8 @@
 // Description:
 // Stan program meant to be used by the theta2::theta2() R function
 // Example (test if it compiles to c++):
-// mod = rstan::stan_model(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
-// stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
+// mod = rstan::stan_model(file = "./inst/stan/theta2_mirt.stan", verbose = TRUE)
+// rstan::stanc(file = "./inst/stan/theta2_mirt.stan", verbose = TRUE)
 // https://github.com/henrixapp/muq2/blob/35d366b07cf1929c03e1ac8b5e6f1f355e12a760/external/include/stan/prob/distributions/univariate/discrete/ordered_logistic.hpp
 functions {
   real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut, 
@@ -355,7 +355,7 @@ transformed parameters {
       if(any_rand_ind) {
         for(k in 1:Lzeta) {
           for(d in 1:D) {
-            xb[i, d] += z[nn[i], k] * zeta[k,d];
+            xb[i, d] += z[nn[i], k] * zeta[k, d];
           }
         }
       }
@@ -417,8 +417,7 @@ model {
   }
   // fixed effects for theta regression model
   if(has_treg) {
-    // beta_l ~ normal(0, 5);
-    beta_l ~ uniform(-1, 1);
+    beta_l ~ normal(0, 5);
   }
   // independent random effects for theta regression model. Estimate vector
   // of random effects and standard deviation in each random effect distribution.
