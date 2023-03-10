@@ -66,7 +66,7 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
     # simulated data set
     data = fit_data$data
 
-    # model
+    # model: first test this
     model = "theta1 = c(1:80)
              theta2 = c(1:80)
              theta3 = c(1:80)
@@ -78,7 +78,7 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
              alpha  ~ z1 + z2 + z3
              delta  ~ z1 + z2 + z3"
 
-    # model
+    # model: base simulation on this
     model = "theta1 = c(1:80)
              theta2 = c(1:80)
              theta3 = c(1:80)

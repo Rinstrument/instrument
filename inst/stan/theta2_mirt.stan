@@ -188,7 +188,7 @@ transformed parameters {
   matrix[J, Ncateg_max-1] delta; // Make excess categories infinite
   vector[N_long] db;
   vector[N_long*(DAlpha ? 1 : 0)] ab;
-  vector[N_long] xb;
+  matrix[N_long, D] xb;
   vector[N_long] nu;
   matrix[N_long, Ncateg_max-1] c;
   vector<lower=0,upper=1>[N_long] eta3pl;
@@ -251,13 +251,13 @@ transformed parameters {
       int zindex = 0;
       int z_lower = 0;
       int z_upper = 0;
-      // for(d in 1:D) {
-      z_lower = zeta_dstart[1];
-      z_upper = zeta_dend[1];
-      for(i in z_lower:z_upper) {
-        zindex = zindex + 1;
-        zeta[i, 1] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
-        // }
+      for(d in 1:D) {
+        z_lower = zeta_dstart[d];
+        z_upper = zeta_dend[d];
+        for(i in z_lower:z_upper) {
+          zindex = zindex + 1;
+          zeta[i, d] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
+        }
       }
     }
   }
@@ -332,42 +332,37 @@ transformed parameters {
       }
 
       if(has_treg) {
-        xb[i] = 0.0;
-        for(k in 1:K) {
-          // if(x_miss[i, k] == 0) {
-          xb[i] += x[nn[i], k] * betat[k,1];
-          // }
+        for(d in 1:D) {
+          xb[i, d] = 0.0;
+          for(k in 1:K) {
+            // if(x_miss[i, k] == 0) {
+            xb[i, d] += x[nn[i], k] * betat[k, d];
+            // }
+          }
         }
       } else {
-        xb[i] = 0.0;
+        for(d in 1:D) {
+          xb[i, d] = 0.0;
+        }
       }
       if(any_rand_cor) {
         for(k in 1:Lzeta_cor) {
-          xb[i] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+          for(d in 1:D) {
+            xb[i, d] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+          }
         }
       }
       if(any_rand_ind) {
         for(k in 1:Lzeta) {
-          xb[i] += z[nn[i], k] * zeta[k,1];
+          for(d in 1:D) {
+            xb[i, d] += z[nn[i], k] * zeta[k,d];
+          }
         }
       }
 
       c[i, ] = delta[jj[i], ] + db[i];
-      // if(L) {
-        // print("xb[i]", xb[i]);
-        // print("x[nn[i], 1]", x[nn[i], 1]);
-        // print("betat[1,1]", betat[1,1]);
-        // print("lambda_identify[lambda_ind[i]]", lambda_identify[lambda_ind[i]]);
-        // print("lambda[lambda_ind[i]]", lambda[lambda_ind[i]]);
-        // print("theta[nn[i], 1]", theta[nn[i], 1]);
-        // print("theta_resid[nn[i], lambda_ind[i]]", theta_resid[nn[i], lambda_ind[i]]);
-        // print("exp(col(alpha, jj[i]))",exp(col(alpha, jj[i])));
-      nu[i] = dot_product(theta[nn[i], ] + xb[i], exp(col(alpha, jj[i])));
-        // print("xb[i]", xb[i]);
-        // print("nu[i]", nu[i]);
-      // } else {
-      //   nu[i] = lambda_identify[lambda_ind[i]]*theta[nn[i], 1] + theta_resid[nn[i], lambda_ind[i]] + xb[i];
-      // }
+      
+      nu[i] = dot_product(theta[nn[i], ] + xb[i, ], exp(col(alpha, jj[i])));
 
       if(any_eta3pl) {
         eta3pl[i] = (itype[i] == 3) ? eta3pl_l[find_eta3pl[i]] : 0.0;
