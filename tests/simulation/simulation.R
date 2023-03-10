@@ -8,6 +8,7 @@
 # import packages
 library(theta2)
 library(foreach)
+library(tidyverse)
 
 #-------------------------------------------------------------------------------
 # Globally sources files
@@ -85,7 +86,7 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
 
   }
 
-  # Release results
+  # Return results
   return(estimates)
 
 }
@@ -100,3 +101,7 @@ mod_assessment = evaluate_model(res)
 
 #-------------------------------------------------------------------------------
 # Tables
+tables = make_gt_tables(mod_assessment)
+
+# Then end
+#-------------------------------------------------------------------------------

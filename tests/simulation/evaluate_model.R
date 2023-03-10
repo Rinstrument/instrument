@@ -83,7 +83,7 @@ evaluate_model = function(res) {
 	ci[, `:=`(avg_cov_mcse = sqrt((avg_cov*(1-avg_cov))/n_sim))]
 
 	# return results to the user
-	out = cbind(pnames, estimates, ci)
+	out = cbind(pnames, estimates[, true := NULL], ci[, true := NULL])
 
 	return(out)
 
