@@ -152,8 +152,8 @@ sim_mirt_data = function(type, pars) {
 	# structure the delta's in long format for comparison with estiamtes
 	delta = data.table::data.table(true = as.vector(sim_data$delta))
 	d_names = c()
-	for(ncat in 1:ncateg_max) {
-		for(jj in 1:j) {
+	for(jj in 1:j) {
+		for(ncat in 1:ncateg_max) {
 			d_names = c(d_names, paste0("delta[", jj, ",", ncat, "]"))
 		}
 	}
