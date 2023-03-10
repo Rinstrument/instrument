@@ -19,7 +19,7 @@ retrieve_by_name = function(res, name) {
 # Evaluate simulation output using the standard metrics like mse, bias, etc...
 evaluate_model = function(res) {
 
-	n_sim = length(res)
+	n_sim = length(res) # length of simulation
 
 	# true values are equal across the res[[i]]'s since they were sampled once
 	truth = res[[1]][, 'true']
@@ -27,11 +27,32 @@ evaluate_model = function(res) {
 	# posterior estimate table for all parameters
 	estimates = retrieve_by_name(res, 'mean')
 
+	# distinct names for all mean parameters
 	data.table::setnames(estimates, paste0('mean', 1:n_sim))
 
+	# Merge the truth
 	estimates = cbind(estimates, truth)
 
-	estimates[, .SD - true, .SDcols = grep('mean', colnames(estimates))]
+	# Average result over simulation iterations
+	estimates[ , `:=`(avg_sim = rowMeans(.SD)), .SDcols = grep('mean', colnames(estimates))]
+
+	# Bias
+  estimates[ , `:=`(bias = avg_sim - true)]
+
+	# Bias Monte Carlo SE
+	estimates[, `:=`(bias_mcse = sqrt((1 / (n_sim*(n_sim-1)))*rowSums((.SD - avg_sim)^2))), .SDcols = grep('mean', colnames(estimates))]
+
+	# MSE
+	estimates[, `:=`(mse = (1/n_sim)*rowSums((.SD - true)^2)), .SDcols = grep('mean', colnames(estimates))]
+
+	# MSE Monte Carlo SE
+	estimates[, `:=`(mse_mcse = sqrt(rowSums((((.SD - true)^2) - mse)^2) / (n_sim*(n_sim-1)))), .SDcols = grep('mean', colnames(estimates))]
+
+	# Empirical SE
+	estimates[, `:=`(emp_se = sqrt((1/(n_sim-1))*rowSums((.SD - avg_sim)^2))), .SDcols = grep('mean', colnames(estimates))]
+
+	# Empirical SE Monte Carlo SE
+	estimates[, `:=`(emp_se_mcse = emp_se/sqrt(2*(n_sim-1)))]
 
 	estimates[, `:=`(avg_sim = rowMeans(.SD)), .SDcols = grep('mean', colnames(estimates))]
 
