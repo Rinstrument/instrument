@@ -97,3 +97,6 @@ res = make_parallel_compute(n_sim = 5, n_cores = 6)
 #-------------------------------------------------------------------------------
 # assess model with metrics: mse, bias, etc.
 mod_assessment = evaluate_model(res)
+
+#-------------------------------------------------------------------------------
+# Tables

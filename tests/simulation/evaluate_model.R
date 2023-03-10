@@ -21,6 +21,9 @@ evaluate_model = function(res) {
 
 	n_sim = length(res) # length of simulation
 
+	# Parameter names
+	pnames = res[[1]][, 'parameter']
+
 	# true values are equal across the res[[i]]'s since they were sampled once
 	truth = res[[1]][, 'true']
 
@@ -29,6 +32,17 @@ evaluate_model = function(res) {
 
 	# distinct names for all mean parameters
 	data.table::setnames(estimates, paste0('mean', 1:n_sim))
+
+	# CI lower bounds for each iteration
+	ci_lower = retrieve_by_name(res, 'quantile_0.025')
+	data.table::setnames(ci_lower, paste0('quantile_0.025_', 1:n_sim))
+
+	# CI upper bound estimates for each iteration
+	ci_upper = retrieve_by_name(res, 'quantile_0.975')
+	data.table::setnames(ci_upper, paste0('quantile_0.975_', 1:n_sim))
+
+	# merge CI data
+	ci = cbind(ci_lower, ci_upper, truth)
 
 	# Merge the truth
 	estimates = cbind(estimates, truth)
@@ -54,30 +68,23 @@ evaluate_model = function(res) {
 	# Empirical SE Monte Carlo SE
 	estimates[, `:=`(emp_se_mcse = emp_se/sqrt(2*(n_sim-1)))]
 
-	estimates[, `:=`(avg_sim = rowMeans(.SD)), .SDcols = grep('mean', colnames(estimates))]
+	# Confidence interval coverage
+	for(i in 1:n_sim) {
+		lower = paste0('quantile_0.025_', i)
+		upper = paste0('quantile_0.975_', i)
+		name = paste0('cover_', i)
+		ci[, (name) := 1*(..lower <= true & true <= ..upper)]
+	}
 
-	estimates[, lapply(.SD, \(x, y) {x - y}, y = avg_sim), .SDcols = grep('mean', colnames(estimates))]
+	# Estimated coverage
+	ci[, `:=`(avg_cov = rowMeans(.SD)), .SDcols = grep('cover', colnames(ci))]
 
-	estimates[, `:=`(new = .SD - 2), .SDcols = grep('mean', colnames(estimates))]
+	# Estimated coverage Monte Carlo SE
+	ci[, `:=`(avg_cov_mcse = sqrt((avg_cov*(1-avg_cov))/n_sim))]
 
-	estimates[ , `:=`(avg_sim = rowMeans(.SD)), .SDcols = grep('mean', colnames(estimates))][
-						 , `:=`(bias = avg_sim - true)][
-						 , `:=`(sq_dev_mean = rowSums((.SD))), .SDcols = grep('mean', colnames(estimates))
-						 ][
-						 , `:=`(sq_dev_mean = rowSums((.SD - avg_sim)^2)), .SDcols = grep('mean', colnames(estimates))][
-						 , `:=`(bias_mcse = sqrt((1 / (n_sim*(n_sim-1)))*rowSums(.SD))), .SDcols = grep('mean', colnames(estimates))]
+	# return results to the user
+	out = cbind(pnames, estimates, ci)
 
-	# mean of model estimates
-	est_mean_nres = est_sum_nres / n_res
-
-	bias = est_mean_nres - truth
-
-	bias_mcse = sqrt((1 / (n_res*(n_res - 1))) * sum((est_mean_nres)^2))
-
-	mse = mean((est_mean_nres - truth)^2)
-
-	rmse = sqrt(mse)
-
-
+	return(out)
 
 }
