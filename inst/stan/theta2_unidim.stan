@@ -175,7 +175,7 @@ transformed parameters {
   matrix[DAlpha, J] alpha;                  // connstrain the upper traingular elements to zero 
   matrix[K, D] betat;               // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
-  matrix[J, Ncateg_max-1] delta_trans; // Make excess categories infinite
+  matrix[J, Ncateg_max-1] delta; // Make excess categories infinite
   vector[N_long] db;
   vector[N_long*(DAlpha ? 1 : 0)] ab;
   vector[N_long] xb;
@@ -237,10 +237,10 @@ transformed parameters {
       vector[Ncategi[j]-1] ds_ind = sort_asc(delta_l[(d_index+1):(d_index+Ncategi[j]-1)]);
       for(i in 1:(Ncategi[j]-1)) {
         d_index = d_index + 1;
-        delta_trans[j, i] = ds_ind[i];
+        delta[j, i] = ds_ind[i];
       }
       for(i in (Ncategi[j]):(Ncateg_max-1)) {
-        delta_trans[j, i] = 1e7 + idx;
+        delta[j, i] = 1e7 + idx;
         idx = idx + 1;
       }
     }
@@ -302,7 +302,7 @@ transformed parameters {
         }
       }
 
-      c[i, ] = delta_trans[jj[i], ] + db[i];
+      c[i, ] = delta[jj[i], ] + db[i];
       if(L) {
         nu[i] = dot_product(theta[nn[i], ] + xb[i], exp(col(alpha, jj[i]) + ab[i])); //(theta[nn[i], ] + xb[i])*(exp(col(alpha, jj[i]) + ab[i]));
       } else {
