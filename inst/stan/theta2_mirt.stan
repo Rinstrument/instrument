@@ -336,7 +336,10 @@ transformed parameters {
           xb[i, d] = 0.0;
           for(k in 1:K) {
             // if(x_miss[i, k] == 0) {
+            print("betat[k, d] ", betat[k, d]);
+            print("x[nn[i], k] ", x[nn[i], k]);
             xb[i, d] += x[nn[i], k] * betat[k, d];
+            print("x[nn[i], k] after ", x[nn[i], k]);
             // }
           }
         }
@@ -363,6 +366,11 @@ transformed parameters {
       c[i, ] = delta[jj[i], ] + db[i];
       
       nu[i] = dot_product(theta[nn[i], ] + xb[i, ], exp(col(alpha, jj[i])));
+
+      print(nu[i]);
+      print(c[i, ]);
+      print(xb[i, ]);
+      print(col(alpha, jj[i]));
 
       if(any_eta3pl) {
         eta3pl[i] = (itype[i] == 3) ? eta3pl_l[find_eta3pl[i]] : 0.0;

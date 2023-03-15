@@ -78,6 +78,8 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
              alpha  ~ z1 + z2 + z3
              delta  ~ z1 + z2 + z3"
 
+    library(Rcpp)
+    compileAttributes()
     library(devtools)
     load_all()
     itype = "2pl"
