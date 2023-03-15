@@ -79,16 +79,16 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
              delta  ~ z1 + z2 + z3"
 
     # model: base simulation on this
-    model = "theta1 = c(1:80)
-             theta2 = c(1:80)
-             theta3 = c(1:80)
-             theta4 = c(1:80)
-             theta1 ~ z1 + z2 + z3 + (1 + age | school)
-             theta2 ~ z1 + z2 + z3 + (1 + age | school)
-             theta3 ~ z1 + z2 + z3 + (1 + age | school)
-             theta4 ~ z1 + z2 + z3 + (1 + age | school)
-             alpha  ~ z1 + z2 + z3
-             delta  ~ z1 + z2 + z3"
+    # model = "theta1 = c(1:80)
+    #          theta2 = c(1:80)
+    #          theta3 = c(1:80)
+    #          theta4 = c(1:80)
+    #          theta1 ~ z1 + z2 + z3 + (1 + age | school)
+    #          theta2 ~ z1 + z2 + z3 + (1 + age | school)
+    #          theta3 ~ z1 + z2 + z3 + (1 + age | school)
+    #          theta4 ~ z1 + z2 + z3 + (1 + age | school)
+    #          alpha  ~ z1 + z2 + z3
+    #          delta  ~ z1 + z2 + z3"
     
     # fit model
     fit = theta2::theta2(data = data, model = model, itype = "2pl", exploratory = TRUE, 
@@ -112,7 +112,8 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
 
 #-------------------------------------------------------------------------------
 # run simulation
-res = make_parallel_compute(n_sim = 1, n_cores = 1)
+res = make_parallel_compute(n_sim = 5, n_cores = 5)
+system.time(make_parallel_compute(n_sim = 5, n_cores = 5))
 
 #-------------------------------------------------------------------------------
 # assess model with metrics: mse, bias, etc.
