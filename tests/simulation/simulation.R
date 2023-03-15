@@ -78,6 +78,17 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
              alpha  ~ z1 + z2 + z3
              delta  ~ z1 + z2 + z3"
 
+    library(devtools)
+    load_all()
+    itype = "2pl"
+    method = "hmc"
+    iter = 500
+    warmup = 300
+    chains = 1
+    fweights = NULL
+    cores = 1
+    exploratory = TRUE
+
     # model: base simulation on this
     # model = "theta1 = c(1:80)
     #          theta2 = c(1:80)

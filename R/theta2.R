@@ -59,16 +59,21 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   # What type of IRT regression are we fitting? - parsed, translated to input parameters
   regr_alpha_delta = stringr::str_detect(names_model_data, "alpha|delta")
   regr_theta = model_data[which(!regr_alpha_delta)] #[[]] ???
-  regr_alpha_delta = model_data[-which(!regr_alpha_delta)]
-  names_model_data = names_model_data[!(regr_theta$type == names_model_data)] # changed this line from "theta" to generic name
+  names_regr_theta = unlist(sapply(regr_theta, \(x) {x["type"]}))
+  regr_alpha_delta = model_data[which(regr_alpha_delta)]
+  names_model_data = names_model_data[!(names_model_data %in% names_regr_theta)] # changed this line from "theta" to generic name
   regr_alpha_data = regr_alpha_delta[stringr::str_detect(names_model_data, "alpha")][[1]] # [-1] ???
   regr_delta_data = regr_alpha_delta[stringr::str_detect(names_model_data, "delta")][[1]]
 
-  # For a single theta
-  predictors = regr_theta$predictors
-  if(!is.null(predictors)) {
-    predictors = list(regr_theta$predictors)
+  if(length(regr_theta) == 1) {  # For a single theta
+    predictors = regr_theta$predictors
+    if(!is.null(predictors)) {
+      predictors = list(regr_theta$predictors)
+    }
+  } else {
+    predictors = lapply(regr_theta, \(x) {x$predictors})
   }
+  
   predictors_ranef = regr_theta$predictors_ranef
   ranef_id = regr_theta$ranef_id
   predictors_ranef_corr = regr_theta$predictors_ranef_cor
@@ -493,7 +498,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     lambda_ind = rep(h2_dim_id, each = N)
   } else if(h2_dims == 0 & exploratory == TRUE){
     alpha_dstart = array(rep(1, D), dim = D)
-    alpha_dend = array(rep(item_id, D), dim = D)
+    alpha_dend = array(rep(max(item_id), D), dim = D)
   } else if(h2_dims == 0 & exploratory == FALSE) {
     # update alpha_dstart and alpha_dstart
   }
