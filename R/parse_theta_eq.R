@@ -136,7 +136,7 @@ parse_theta_eq = function(model, data, exploratory = FALSE) {
   # return quantities for inirt::inirt() to set up and fit model given the 
   # parsed model definition
   return(list(item_id = item_id, dims = dims, dim_id = dim_id, h2_dims = h2_dims, 
-    h2_dim_id = h2_dim_id))
+    h2_dim_id = h2_dim_id, dim_names = dim_names))
 
 }
 

@@ -98,25 +98,46 @@ data {
   int<lower=0> Lzeta;        // Number of uncorrelated random eff. parms
   int<lower=0> Laeta;
   int<lower=0> Ldeta;
-  
-  int<lower=0> u_Lzeta_cor;      // number of corr ranef par vectors
-  int<lower=0> l_Lzeta_cor;      // length of corr ranef par vectors
+
+  int<lower=0> which_dim_cor_reg[D];
+  int<lower=0,upper=1> rand_cor_g1;
+  int<lower=0,upper=1> rand_cor_g2;
+
+  int<lower=0> u_Lzeta_cor;      // number of corr ranef par vectors per dimension with regression
+  int<lower=0> u_Lzeta_cor_2;
+  int<lower=0> u_Lzeta_cor_3;
+
+  int<lower=0> l_Lzeta_cor;      // length of corr ranef par vectors per dimension with regression
+  int<lower=0> l_Lzeta_cor_2;
+  int<lower=0> l_Lzeta_cor_3;
+
   int<lower=0> u_Laeta_cor;
   int<lower=0> l_Laeta_cor; 
   int<lower=0> u_Ldeta_cor;
   int<lower=0> l_Ldeta_cor; 
   
-  int<lower=0> Lzeta_cor;    // total number of correlated random eff. parms
+  int<lower=0> Lzeta_cor;
+
+  int<lower=0> Lzeta_cor_2;
+  int<lower=0> Lzeta_cor_3;
+  // int<lower=0> Lzeta_cor[n_rand_cor_sets];    // total number of correlated random eff. parms
+
   int<lower=0> Laeta_cor;
   int<lower=0> Ldeta_cor;
+
   matrix[N, Lzeta] z;   // design matrix for the uncorrelated random effects
   matrix[N, Laeta] ar;
   matrix[N, Ldeta] dr;
 
   int<lower=0> Lzeta_sd;     // number of sd pars
   int<lower=0> zeta_sd_ind[Lzeta]; // sd index for each column of z
+
   int<lower=0> cor_z_item_ind[Lzeta_cor]; // item index for each column of z for correlated random effs.
   int<lower=0> cor_z_item_elem_ind[Lzeta_cor]; // element within item index for each column of z for correlated random effs.
+  int<lower=0> cor_z_item_ind_2[Lzeta_cor_2];
+  int<lower=0> cor_z_item_elem_ind_2[Lzeta_cor_2];
+  int<lower=0> cor_z_item_ind_3[Lzeta_cor_3];
+  int<lower=0> cor_z_item_elem_ind_3[Lzeta_cor_3];
 
   int<lower=0> Laeta_sd;
   int<lower=0> alindex[Laeta];
@@ -131,13 +152,24 @@ data {
   int<lower=0> cor_d_item_elem_ind[Ldeta_cor];
 
   matrix[N, Lzeta_cor] z_c;   // design matrix for the correlated random effects
+
+  // extra slots of z_c
+  matrix[N, Lzeta_cor_2] z_c_2;
+  matrix[N, Lzeta_cor_3] z_c_3;
+
   matrix[N, Laeta_cor] a_c;
   matrix[N, Ldeta_cor] d_c;
+
 }
 
 transformed data {
   vector[l_Lzeta_cor] zeros_Lzeta_cor;
   zeros_Lzeta_cor = rep_vector(0, l_Lzeta_cor);
+
+  vector[l_Lzeta_cor_2] zeros_Lzeta_cor_2;
+  zeros_Lzeta_cor_2 = rep_vector(0, l_Lzeta_cor_2);
+  vector[l_Lzeta_cor_3] zeros_Lzeta_cor_3;
+  zeros_Lzeta_cor_3 = rep_vector(0, l_Lzeta_cor_3);
 
   vector[l_Laeta_cor] zeros_Laeta_cor;
   zeros_Laeta_cor = rep_vector(0, l_Laeta_cor);
@@ -172,12 +204,24 @@ parameters {
 
   corr_matrix[l_Lzeta_cor] Omega;        // prior correlation
   vector<lower=0>[l_Lzeta_cor] tau;              // prior scale
-  corr_matrix[l_Laeta_cor] Omega_a;     
+
+  // extra slots in the case of multiple separate regressions
+  corr_matrix[l_Lzeta_cor_2] Omega_2;
+  vector<lower=0>[l_Lzeta_cor_2] tau_2;
+  corr_matrix[l_Lzeta_cor_3] Omega_3;
+  vector<lower=0>[l_Lzeta_cor_3] tau_3;
+
+  corr_matrix[l_Laeta_cor] Omega_a;
   vector<lower=0>[l_Laeta_cor] tau_a;
-  corr_matrix[l_Ldeta_cor] Omega_d;     
+  corr_matrix[l_Ldeta_cor] Omega_d;
   vector<lower=0>[l_Ldeta_cor] tau_d;
 
   vector[l_Lzeta_cor] zeta_c[u_Lzeta_cor];          // random regression pars
+
+  // extra slots in the case of multiple separate regressions
+  vector[l_Lzeta_cor_2] zeta_c_2[u_Lzeta_cor_2];
+  vector[l_Lzeta_cor_3] zeta_c_3[u_Lzeta_cor_3];
+
   vector[l_Laeta_cor] aeta_c[u_Laeta_cor];
   vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
 }
@@ -229,9 +273,20 @@ transformed parameters {
     //   }
     // }
   }
+
+  // {
+  //   if(has_treg) {
+      
+  //   }
+  // }
     
   {
     if(has_treg) {
+      for(k in 1:K) {
+        for(d in 1:D) {
+          betat[k, d] = 0.0;
+        }
+      }
       int bindex = 0;
       int b_lower = 0;
       int b_upper = 0;
@@ -281,20 +336,6 @@ transformed parameters {
     }
   }
 
-
-  // constrain first lambda to by >= 0 by transformation: lambda1 must by strictly positive
-  //  (we already assume that the lambda's are all)
-  // {
-  //   for(i in 1:D) {
-  //     if(i == 1) {
-  //       lambda_identify[i] = 0.4 + (0.6)*inv_logit(lambda[i]);//exp(lambda[i]) + 0.5;
-  //     } else {
-  //       //lambda_identify[i] = lambda[i];
-  //       lambda_identify[i] = -1.0 + (2.0)*inv_logit(lambda[i]);
-  //     }
-  //   }
-  // }
-
   {
     for(i in 1:N_long) {
       if(deltaMean) {
@@ -336,10 +377,13 @@ transformed parameters {
           xb[i, d] = 0.0;
           for(k in 1:K) {
             // if(x_miss[i, k] == 0) {
-            print("betat[k, d] ", betat[k, d]);
-            print("x[nn[i], k] ", x[nn[i], k]);
+            // print("betat[k, d] ", betat[k, d]);
+            // print("x[nn[i], k] ", x[nn[i], k]);
             xb[i, d] += x[nn[i], k] * betat[k, d];
-            print("x[nn[i], k] after ", x[nn[i], k]);
+            // print("k ", k);
+            // print("d ", d);
+            // print("betat[k, d] ", betat[k, d]);
+            // print("x[nn[i], k] after ", x[nn[i], k]);
             // }
           }
         }
@@ -349,11 +393,34 @@ transformed parameters {
         }
       }
       if(any_rand_cor) {
+        
         for(k in 1:Lzeta_cor) {
-          for(d in 1:D) {
-            xb[i, d] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+          xb[i, which_dim_cor_reg[1]] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+        }
+
+        if(rand_cor_g1) {
+          for(k in 1:Lzeta_cor_2) {
+            xb[i, which_dim_cor_reg[2]] += z_c_2[nn[i], k] * zeta_c_2[cor_z_item_ind_2[k]][cor_z_item_elem_ind_2[k]];
           }
         }
+
+        if(rand_cor_g2) {
+          for(k in 1:Lzeta_cor_3) {
+            xb[i, which_dim_cor_reg[3]] += z_c_3[nn[i], k] * zeta_c_3[cor_z_item_ind_3[k]][cor_z_item_elem_ind_3[k]];
+          }
+        }
+        
+        // for(rg in 1:n_rand_cor_sets) {
+        //   for(k in 1:lzeta_cor[rg]) {
+        //     xb[i, rg] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+        //   }
+        // }
+
+        // for(k in 1:Lzeta_cor) {
+        //   for(d in 1:D) {
+        //     xb[i, d] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+        //   }
+        // }
       }
       if(any_rand_ind) {
         for(k in 1:Lzeta) {
@@ -367,10 +434,10 @@ transformed parameters {
       
       nu[i] = dot_product(theta[nn[i], ] + xb[i, ], exp(col(alpha, jj[i])));
 
-      print(nu[i]);
-      print(c[i, ]);
-      print(xb[i, ]);
-      print(col(alpha, jj[i]));
+      // print(nu[i]);
+      // print(c[i, ]);
+      // print(xb[i, ]);
+      // print(col(alpha, jj[i]));
 
       if(any_eta3pl) {
         eta3pl[i] = (itype[i] == 3) ? eta3pl_l[find_eta3pl[i]] : 0.0;
@@ -440,6 +507,20 @@ model {
     Omega ~ lkj_corr(1);
     for(i in 1:u_Lzeta_cor) {
       zeta_c[i] ~ multi_normal(zeros_Lzeta_cor, quad_form_diag(Omega, tau));
+    }
+    if(rand_cor_g1) {
+      tau_2 ~ cauchy(0, 2.5);
+      Omega_2 ~ lkj_corr(1);
+      for(i in 1:u_Lzeta_cor_2) {
+        zeta_c_2[i] ~ multi_normal(zeros_Lzeta_cor_2, quad_form_diag(Omega_2, tau_2));
+      }
+    }
+    if(rand_cor_g2) {
+      tau_3 ~ cauchy(0, 2.5);
+      Omega_3 ~ lkj_corr(1);
+      for(i in 1:u_Lzeta_cor_3) {
+        zeta_c_3[i] ~ multi_normal(zeros_Lzeta_cor_3, quad_form_diag(Omega_3, tau_3));
+      }
     }
   }
   // independent random effects for alpha regression model. Estimate vector

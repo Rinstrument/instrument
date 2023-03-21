@@ -9,16 +9,16 @@
 sim_mirt_pars = function(type) {
 
 	# n = number of observations (sample size)
-	n = 1000
+	n = 200
 
 	# d = number of dimensions (1st order)
-	d = 4
+	d = 3
 
 	# j is number of total questions (20 q's per dimension)
-	j = 20*d
+	j = 5*d
 	
 	# number of response categories
-	ncat = 5
+	ncat = 2
 
 	# number of categories per item
 	ncategi = c(rep(ncat, j))
@@ -32,7 +32,21 @@ sim_mirt_pars = function(type) {
 
 	# two common fixed effects shared across theta, delta, and alpha
 	ff = as.matrix(data.frame(x1 = sample(c(0, 1), n, TRUE),
-		x2.1 = sample(c(0, 1), n, TRUE), x2.2 = sample(c(0, 1), n, TRUE)))
+		x2 = sample(c(0, 1), n, TRUE)))
+
+	# two correlated random effects (one intercept, one slope)
+	n_per_level = 10
+	Lz = n / n_per_level
+	sigma = matrix(c(4, 3.5, 3.5, 3.8), nrow = 2)
+	int_slope = mvtnorm::rmvnorm(Lz, mean = c(0, 0), sigma = sigma)
+	cov(int_slope)
+	z_c_int = matrix(rep(diag(Lz), each = n_per_level), nrow = n)
+	zc_is = z_c_int %*% int_slope[, 1]
+	z_c_slope = z_c_int
+	z_c_slope[z_c_slope == 1] = rnorm(n)
+	zc_is = zc_is + z_c_slope %*% int_slope[, 2]
+	z_c = cbind(z_c_int, z_c_slope)
+	z = cbind.data.frame(school = rep(paste0("school", 1:Lz), each = n_per_level), pred = z_c_slope[z_c_slope != 0])
 	
 	# alpha - discrimination parameter (slope from factor analysis)
 	alpha = matrix(0, d, j)
@@ -41,10 +55,10 @@ sim_mirt_pars = function(type) {
 	a_design = ff
 	
 	# effects for alpha regression pars (defined in ff)
-	b_alpha = c(0.5, 1.0, 1.5)
+	b_alpha = c(1.0, 1.5)
 
 	# define the dominant alphas for each dimension
-	alpha_dominant = list(1:20, 21:40, 41:60, 61:80)
+	alpha_dominant = list(1:5, 6:10, 11:15)
 	
   # Dominant alphas follow Unif(1.7, 3.0)
 	# non-dominant alphas follow Unif(0.2, 1.0)
@@ -60,7 +74,7 @@ sim_mirt_pars = function(type) {
 	d_design = ff
 
 	# effects on difficult due to the fixed effects of ff
-	b_delta = c(-1.5, 1, -0.5)
+	b_delta = c(-1.5, 1)
 
 	# deltas are ordered and follow N(0, 1)
 	for(jj in 1:j) {
@@ -79,7 +93,7 @@ sim_mirt_pars = function(type) {
 	}
 	
 	# fixed effects on the theta's
-	beta = c(1.5, 1, -1)
+	beta = c(1.5, -1)
 
 	# 
 	# start_index = 1
@@ -90,7 +104,7 @@ sim_mirt_pars = function(type) {
 		ncateg_max = ncateg_max, k = k, uk = uk, alpha = alpha, a_design = a_design, 
 		b_alpha = b_alpha, alpha_dominant = alpha_dominant, delta = delta, 
 		d_design = d_design, b_delta = b_delta, theta = theta, beta = beta,
-		ff = ff))
+		ff = ff, z = z, z_c = z_c, sigma, int_slope))
 
 }
 
@@ -118,6 +132,10 @@ sim_mirt_data = function(type, pars) {
 	beta = pars$beta
 	predictors = pars$predictors
 	ff = pars$ff
+	z = pars$z
+	z_c = pars$z_c
+	sigma = pars$sigma
+	int_slope = pars$int_slope
 	# start_index = pars$start_index
 	# beta_dstart = pars$beta_dstart
 	# beta_dend = pars$beta_dend
@@ -127,6 +145,15 @@ sim_mirt_data = function(type, pars) {
 	# sample data set
 	data = matrix(0, nrow = n, ncol = j)
 
+	# rescale theta values 
+	for(i in 1:n) {
+		tr = as.vector(beta %*% ff[i, ] + sum(z_c[i, ]))
+		theta[i, ] = theta[i, ] + tr
+	}
+
+	# theta mean = 0, sd = 1
+	theta = apply(theta, 2, \(x) {(x - mean(x)) / sd(x)})
+
 	# for individual i and question j, calculate the probability for responding at
 	# each level of the response
 	for(i in 1:n) {
@@ -135,10 +162,14 @@ sim_mirt_data = function(type, pars) {
 			ar = as.vector(b_alpha %*% a_design[i,])
 			# delta 
 			dr = as.vector(b_delta %*% d_design[i,])
-			# theta
-			tr = as.vector(beta %*% ff[i, ])
+			# # theta
+			# tr = as.vector(beta %*% ff[i, ] + sum(z_c[i, ]))
+			# # assign theta
+			# theta.tr = theta[i, ] + tr
+			# # rescale theta 
+
 			# regression equation
-			nu = sum((t(alpha[, jj] + ar) %*% (theta[i, ] + tr))/5) - (delta[jj, 1:ncategi[jj]] + dr)
+			nu = sum((t(alpha[, jj] + ar) %*% (theta[i, ]))) - (delta[jj, 1:ncategi[jj]] + dr)
 			# inverse logit
 			prb = (1 / (1 + exp(-(nu))))
 			# first level is 1
@@ -154,31 +185,27 @@ sim_mirt_data = function(type, pars) {
 	
 	# preview the data
 	apply(data, 2, table)
-	
-	# remove gaps in response options, e.g., no 1,2,4,5 -> 1,2,3,4
-	remove_gaps = function(x) {
-		ord = order(x); vec = sort(x)
-		old = unique(vec); replace = 1:length(unique(vec))
-		names(replace) = old; names(vec) = vec
-		new = replace[names(vec)]; names(new) = NULL
-		return(new[ord])
+
+	# remove empty categories
+	collapse_categories = function(x) {
+		return(apply(x, 2, \(y){ match(y, sort(unique(y))) }))
 	}
-	
+
 	# apply the remove gaps function
-	data = apply(data, 2, remove_gaps)
+	data = collapse_categories(data)
 
 	# preview the data
 	apply(data, 2, table)
 
 	# bind sampled data and predictor variables
-	data = cbind(data, ff)
+	data = cbind(data, ff, z)
 	
 	# assign variable names to data
-	colnames(data) = c(paste0('x', 1:j), paste0('z', 1:ncol(ff))) #, paste0("z", 1:k)
+	colnames(data) = c(paste0('x', 1:j), paste0('z', 1:ncol(ff)), "school", "pred") #, paste0("z", 1:k)
 	
 	# store simulated data
 	sim_data = list(alpha = alpha, b_alpha = b_alpha, delta = delta, b_delta = b_delta, 
-		beta = beta, theta = theta)
+		beta = beta, theta = theta, sigma = sigma, int_slope = int_slope)
 
 	# store data for fitting the model
 	fit_data = list(data = data)
@@ -232,3 +259,5 @@ sim_mirt_data = function(type, pars) {
 	return(list(sim_data = sim_data, fit_data = fit_data))
 
 }
+
+# sim_mirt_data(pars = sim_mirt_pars())

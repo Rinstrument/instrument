@@ -65,19 +65,23 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   regr_alpha_data = regr_alpha_delta[stringr::str_detect(names_model_data, "alpha")][[1]] # [-1] ???
   regr_delta_data = regr_alpha_delta[stringr::str_detect(names_model_data, "delta")][[1]]
 
-  if(length(regr_theta) == 1) {  # For a single theta
+  if(length(regr_theta) == 0) { # base case
+    which_dim_cor_reg = rep(0, dims)
+  } else if(length(regr_theta) == 1) { # For a single theta
+    which_dim_cor_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - 1))
     predictors = regr_theta$predictors
     if(!is.null(predictors)) {
       predictors = list(regr_theta$predictors)
     }
   } else {
     predictors = lapply(regr_theta, \(x) {x$predictors})
+    which_dim_cor_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - length(names_regr_theta)))
   }
   
-  predictors_ranef = regr_theta$predictors_ranef
-  ranef_id = regr_theta$ranef_id
-  predictors_ranef_corr = regr_theta$predictors_ranef_cor
-  n_pranef_cor = regr_theta$n_pranef_cor
+  predictors_ranef = lapply(regr_theta, \(x) {x$predictors_ranef})
+  ranef_id = lapply(regr_theta, \(x) {x$ranef_id})
+  predictors_ranef_corr = lapply(regr_theta, \(x) {x$predictors_ranef_cor})
+  n_pranef_cor = lapply(regr_theta, \(x) {x$n_pranef_cor})
 
   irt_data = as.matrix(data[, item_id, drop = FALSE])
   irt_data = collapse_categories(irt_data)  # collapse missing categories in IRT data set
@@ -203,7 +207,9 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     }
   }
 
-  if(!is.null(predictors_ranef)) {
+  Lzeta = 0 # necessito?
+  z = array(0, dim = c(N, 0)) # necessito?
+  if(!is.null(unlist(predictors_ranef))) {
     has_treg = 1
     any_rand = 1
     any_rand_ind = 1
@@ -216,25 +222,59 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     }
   }
 
-  u_Lzeta_cor = 0
-  l_Lzeta_cor = 0
-  Lzeta_cor = 0
-  cor_z_item_ind = array(0, dim = c(0))
-  cor_z_item_elem_ind = array(0, dim = c(0))
-  z_c = array(0, dim = c(N, 0))
+  u_Lzeta_cor = 0 # number of correlated random effect params
+  l_Lzeta_cor = 0 # length of random effect parameter vector
 
-  if(!is.null(predictors_ranef_corr)) {
+  Lzeta_cor = 0 # total number of first set of correlated random effects
+
+  cor_z_item_ind = array(0, dim = c(0)) # index random effect vector
+  cor_z_item_elem_ind = array(0, dim = c(0)) # index the position within random effect vectors
+  z_c = array(0, dim = c(N, 0)) # random effect design matrix
+
+  # extra memory slots used if more than one set of correlated random effects
+  # is to be estimates
+
+  extra_mem_slots = 32
+  for(i in 2:extra_mem_slots) {
+    eval(parse(text = paste0("rand_cor_g", i - 1, " = 0")))
+    eval(parse(text = paste0("u_Lzeta_cor_", i, " = 0")))
+    eval(parse(text = paste0("l_Lzeta_cor_", i, " = 0")))
+    eval(parse(text = paste0("Lzeta_cor_", i, " = 0")))
+    eval(parse(text = paste0("cor_z_item_ind_", i, " = array(0, dim = c(0))")))
+    eval(parse(text = paste0("cor_z_item_elem_ind_", i, " = array(0, dim = c(0))")))
+    eval(parse(text = paste0("z_c_", i, " = array(0, dim = c(N, 0))")))
+  }
+
+  if(!is.null(unlist(predictors_ranef_corr))) {
     has_treg = 1
     any_rand = 1
     any_rand_cor = 1
-    predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
-    reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
-    Lzeta_cor = ncol(reg_data_ranef_cor)
-    z_c = reg_data_ranef_cor
-    l_Lzeta_cor = n_pranef_cor
+    # predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
+    # reg_data_ranef_cor = data[, predictors_ranef_corr_ulist, drop = FALSE]
+
+    # reg_data_ranef_cor = lapply(predictors_ranef_corr, \(x, d) {d[, x, drop = FALSE]}, d = data)
+
+    reg_data_ranef_cor = lapply(regr_theta, \(x) {x$new_reg_data})
+
+    Lzeta_cor = ncol(reg_data_ranef_cor[[1]])
+    z_c = reg_data_ranef_cor[[1]]
+    l_Lzeta_cor = n_pranef_cor[[1]]
     u_Lzeta_cor = Lzeta_cor / l_Lzeta_cor
     cor_z_item_ind = rep(1:u_Lzeta_cor, l_Lzeta_cor)
     cor_z_item_elem_ind = rep(1:l_Lzeta_cor, each = u_Lzeta_cor)
+
+    if(length(regr_theta) > 1) {
+      for(i in 2:length(regr_theta)) {
+        eval(parse(text = paste0("rand_cor_g", i - 1, " = 1")))
+        eval(parse(text = paste0("Lzeta_cor_", i, paste0(" = ncol(reg_data_ranef_cor[[", i, "]])"))))
+        eval(parse(text = paste0("z_c_", i, paste0(" = reg_data_ranef_cor[[", i, "]]"))))
+        eval(parse(text = paste0("l_Lzeta_cor_", i, paste0(" = n_pranef_cor[[", i, "]]"))))
+        eval(parse(text = paste0("u_Lzeta_cor_", i, paste0(" = Lzeta_cor_", i, " / ", "l_Lzeta_cor_", i))))
+        eval(parse(text = paste0("cor_z_item_ind_", i, paste0(" = rep(1:u_Lzeta_cor_", i, ", l_Lzeta_cor_", i, ")"))))
+        eval(parse(text = paste0("cor_z_item_elem_ind_", i, paste0(" = rep(1:l_Lzeta_cor_", i, ", each = u_Lzeta_cor_", i, ")"))))
+      }
+    }
+
   }
 
   # ar = array(0, dim = c(N, 0))
@@ -430,7 +470,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   }
 
   # Independent random effects in the theta regression (theta ~ rand1 + rand2 + ....)
-  if(!is.null(predictors_ranef)) {
+  if(!is.null(unlist(predictors_ranef))) {
     regress = 1
     start_index = 1
     zeta_dstart = numeric(D)
@@ -453,7 +493,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     zeta_dend = array(0, dim = c(0))
   }
   
-  if(!is.null(predictors_ranef_corr)) {
+  if(!is.null(unlist(predictors_ranef_corr))) {
     regress = 1
   }
 
@@ -620,13 +660,22 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       Lzeta = Lzeta, 
       Laeta = Laeta, 
       Ldeta = Ldeta, 
+      which_dim_cor_reg = which_dim_cor_reg,
+      rand_cor_g1 = rand_cor_g1,
+      rand_cor_g2 = rand_cor_g2,
       u_Lzeta_cor = u_Lzeta_cor, 
+      u_Lzeta_cor_2 = u_Lzeta_cor_2, 
+      u_Lzeta_cor_3 = u_Lzeta_cor_3, 
       l_Lzeta_cor = l_Lzeta_cor, 
+      l_Lzeta_cor_2 = l_Lzeta_cor_2,
+      l_Lzeta_cor_3 = l_Lzeta_cor_3,
       u_Laeta_cor = u_Laeta_cor, 
       l_Laeta_cor = l_Laeta_cor, 
       u_Ldeta_cor = u_Ldeta_cor, 
       l_Ldeta_cor = l_Ldeta_cor, 
-      Lzeta_cor = Lzeta_cor, 
+      Lzeta_cor = Lzeta_cor,
+      Lzeta_cor_2 = Lzeta_cor_2,
+      Lzeta_cor_3 = Lzeta_cor_3,
       Laeta_cor = Laeta_cor, 
       Ldeta_cor = Ldeta_cor, 
       z = z, 
@@ -636,6 +685,10 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       zeta_sd_ind = zeta_sd_ind, 
       cor_z_item_ind = cor_z_item_ind, 
       cor_z_item_elem_ind = cor_z_item_elem_ind, 
+      cor_z_item_ind_2 = cor_z_item_ind_2, 
+      cor_z_item_elem_ind_2 = cor_z_item_elem_ind_2, 
+      cor_z_item_ind_3 = cor_z_item_ind_3, 
+      cor_z_item_elem_ind_3 = cor_z_item_elem_ind_3, 
       Laeta_sd = Laeta_sd, 
       alindex = alindex, 
       aeta_sd_ind = aeta_sd_ind, 
@@ -647,6 +700,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       cor_d_item_ind = cor_d_item_ind, 
       cor_d_item_elem_ind = cor_d_item_elem_ind,
       z_c = z_c,
+      z_c_2 = z_c_2,
+      z_c_3 = z_c_3,
       a_c = a_c, 
       d_c = d_c)
   } else {    # D > 1 & h2_dims > 0

@@ -50,8 +50,9 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
   estimates = foreach::foreach(i = iterators::icount(n_sim),
                                .packages = "theta2",
                                .export = "true_values") %dopar% {
-
+    
     # seed with formula (for random sampling using true values sampled earlier)
+    i = 1
     seed_replication_level = i * 10000 / pi
     set.seed(seed_replication_level)
 
@@ -67,16 +68,40 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
     data = fit_data$data
 
     # model: first test this
-    model = "theta1 = c(1:80)
-             theta2 = c(1:80)
-             theta3 = c(1:80)
-             theta4 = c(1:80)
-             theta1 ~ z1 + z2 + z3
-             theta2 ~ z1 + z2 + z3
-             theta3 ~ z1 + z2 + z3
-             theta4 ~ z1 + z2 + z3
-             alpha  ~ z1 + z2 + z3
-             delta  ~ z1 + z2 + z3"
+    # model = "theta1 = c(1:80)
+    #          theta2 = c(1:80)
+    #          theta3 = c(1:80)
+    #          theta4 = c(1:80)
+    #          theta1 ~ z1 + z2 + z3
+    #          theta2 ~ z1 + z2 + z3
+    #          theta3 ~ z1 + z2 + z3
+    #          theta4 ~ z1 + z2 + z3
+    #          alpha  ~ z1 + z2 + z3
+    #          delta  ~ z1 + z2 + z3"
+
+    # model: first test this
+    model = "theta1 = c(1:15)
+             theta2 = c(1:15)
+             theta3 = c(1:15)
+             theta1 ~ z1 + z2 + (1 + pred | school)
+             theta2 ~ z1 + z2 + (1 + pred | school)
+             theta3 ~ z1 + z2 + (1 + pred | school)
+             alpha  ~ z1 + z2
+             delta  ~ z1 + z2"
+
+    # model = "theta1 = c(1:15)
+    #          theta2 = c(1:15)
+    #          theta3 = c(1:15)
+    #          theta3 ~ z1 + z2 + (1 + pred | school)
+    #          alpha  ~ z1 + z2
+    #          delta  ~ z1 + z2"
+
+    # model = "theta1 = c(1:15)
+    #          theta2 = c(1:15)
+    #          theta3 = c(1:15)
+    #          theta3 ~ z1 + z2 + (1 + pred | school)
+    #          alpha  ~ z1 + z2
+    #          delta  ~ z1 + z2"
 
     library(Rcpp)
     compileAttributes()
@@ -105,7 +130,10 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
     
     # fit model
     fit = theta2::theta2(data = data, model = model, itype = "2pl", exploratory = TRUE, 
-      method = "hmc", iter = 500, warmup = 300, chains = 1, cores = 1)
+      method = "vb", iter = 15000, tol_rel_obj = 0.001)
+
+    fit = theta2::theta2(data = data, model = model, itype = "2pl", exploratory = TRUE, 
+      method = "hmc", iter = 500, chains = 1)
 
     # produce summary
     fit_smy = theta2::summary.theta2Obj(fit)
