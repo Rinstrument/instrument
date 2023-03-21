@@ -9,7 +9,7 @@
 sim_mirt_pars = function(type) {
 
 	# n = number of observations (sample size)
-	n = 200
+	n = 200 * 5
 
 	# d = number of dimensions (1st order)
 	d = 3
@@ -18,7 +18,7 @@ sim_mirt_pars = function(type) {
 	j = 5*d
 	
 	# number of response categories
-	ncat = 2
+	ncat = 3
 
 	# number of categories per item
 	ncategi = c(rep(ncat, j))
@@ -185,6 +185,8 @@ sim_mirt_data = function(type, pars) {
 	
 	# preview the data
 	apply(data, 2, table)
+
+	hist(apply(data, 1, sum))
 
 	# remove empty categories
 	collapse_categories = function(x) {
