@@ -9,13 +9,13 @@
 sim_mirt_pars = function(type) {
 
 	# n = number of observations (sample size)
-	n = 200 * 5
+	n = 200 * 3
 
 	# d = number of dimensions (1st order)
 	d = 3
 
 	# j is number of total questions (20 q's per dimension)
-	j = 5*d
+	j = 10*d
 	
 	# number of response categories
 	ncat = 3
@@ -58,12 +58,13 @@ sim_mirt_pars = function(type) {
 	b_alpha = c(1.0, 1.5)
 
 	# define the dominant alphas for each dimension
-	alpha_dominant = list(1:5, 6:10, 11:15)
+	# alpha_dominant = list(1:5, 6:10, 11:15)
+	alpha_dominant = list(1:10, 11:20, 21:30)
 	
   # Dominant alphas follow Unif(1.7, 3.0)
 	# non-dominant alphas follow Unif(0.2, 1.0)
 	for(dd in 1:d) {
-		alpha[dd, alpha_dominant[[dd]]] = sort(runif(length(alpha_dominant[[dd]]), 2, 5))
+		alpha[dd, alpha_dominant[[dd]]] = sort(runif(length(alpha_dominant[[dd]]), 2, 4))
 		alpha[dd, setdiff(unlist(alpha_dominant), alpha_dominant[[dd]])] = sort(runif(length(unlist(alpha_dominant[-dd])), 0.2, 1.5))
 	}
 	
@@ -78,7 +79,12 @@ sim_mirt_pars = function(type) {
 
 	# deltas are ordered and follow N(0, 1)
 	for(jj in 1:j) {
-		delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 1))
+		# delta[jj, 1:(ncategi[jj]-1)] = sort(rnorm(ncategi[jj] - 1, 0, 2.5))
+		dval = c()
+		for(d_pos in 1:(ncategi[jj] - 1)) {
+			dval = c(dval, rnorm(1, -1 + d_pos, 2.5))
+		}
+		delta[jj, 1:(ncategi[jj]-1)] = sort(dval)
 	}
 
 	# first level of deltas are zero for estimability
@@ -111,7 +117,7 @@ sim_mirt_pars = function(type) {
 # Given the set of parameters we generated, sample a new data set
 # pars = sim_mirt_pars()
 sim_mirt_data = function(type, pars) {
-
+	# pars = sim_mirt_pars()
 	# pull values from sim_mirt_pars() output
 	n = pars$n
 	d = pars$d
@@ -148,11 +154,12 @@ sim_mirt_data = function(type, pars) {
 	# rescale theta values 
 	for(i in 1:n) {
 		tr = as.vector(beta %*% ff[i, ] + sum(z_c[i, ]))
+		tr = 0
 		theta[i, ] = theta[i, ] + tr
 	}
 
 	# theta mean = 0, sd = 1
-	theta = apply(theta, 2, \(x) {(x - mean(x)) / sd(x)})
+	theta = apply(theta, 2, \(x) {(x - mean(x)) / (sd(x))})
 
 	# for individual i and question j, calculate the probability for responding at
 	# each level of the response
@@ -167,6 +174,8 @@ sim_mirt_data = function(type, pars) {
 			# # assign theta
 			# theta.tr = theta[i, ] + tr
 			# # rescale theta 
+			ar = 0
+			dr = 0
 
 			# regression equation
 			nu = sum((t(alpha[, jj] + ar) %*% (theta[i, ]))) - (delta[jj, 1:ncategi[jj]] + dr)
@@ -214,6 +223,7 @@ sim_mirt_data = function(type, pars) {
 
 	# structure the alpha's in long format for comparison with estiamtes
 	alpha = data.table::data.table(true = as.vector(sim_data$alpha))
+	# alpha = data.table::data.table(true = log(as.vector(sim_data$alpha)))
 
 	# update alpha parameter names for later use
 	a_names = c()
@@ -226,13 +236,22 @@ sim_mirt_data = function(type, pars) {
 	# assign new names to long parameter data
 	alpha[, parameter := a_names]
 
+	# cor(
+  #     sim_data$alpha[1, ],
+  #     alpha[
+  #       grep('alpha', parameter),
+  #     ][
+  #       grep('\\[1,', parameter), true
+  #     ]
+  #   )
+
 	# structure the theta's in long format for comparison with estiamtes
 	theta = data.table::data.table(true = as.vector(sim_data$theta))
 
 	# update alpha parameter names for later use
 	t_names = c()
-	for(i in 1:n) {
-		for(dd in 1:d) {
+	for(dd in 1:d) {
+		for(i in 1:n) {
 			t_names = c(t_names, paste0("theta[", i, ",", dd, "]"))
 		}
 	}
@@ -241,11 +260,11 @@ sim_mirt_data = function(type, pars) {
 	theta[, parameter := t_names]
 
 	# structure the delta's in long format for comparison with estiamtes
-	delta = data.table::data.table(true = as.vector(sim_data$delta))
+	delta = data.table::data.table(true = as.vector(sim_data$delta[, -1]))
 
 	# update alpha parameter names for later use
 	d_names = c()
-	for(ncat in ncateg_max:1) {
+	for(ncat in 1:(ncateg_max-1)) {
 		for(jj in 1:j) {
 			d_names = c(d_names, paste0("delta[", jj, ",", ncat, "]"))
 		}
@@ -256,6 +275,15 @@ sim_mirt_data = function(type, pars) {
 
 	# bind true parameter values together
 	sim_data$true = data.table::rbindlist(list(alpha, delta, theta))
+
+	# cor(
+  #     sim_data$alpha[3, ],
+  #     sim_data$true[
+  #       grep('alpha', parameter),
+  #     ][
+  #       grep('\\[3,', parameter), true
+  #     ]
+  #   )
 
 	# list of return values
 	return(list(sim_data = sim_data, fit_data = fit_data))

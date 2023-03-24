@@ -65,7 +65,9 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   regr_alpha_data = regr_alpha_delta[stringr::str_detect(names_model_data, "alpha")][[1]] # [-1] ???
   regr_delta_data = regr_alpha_delta[stringr::str_detect(names_model_data, "delta")][[1]]
 
-  if(length(regr_theta) == 0) { # base case
+  predictors = NULL
+
+  if(all(sapply(regr_theta, \(x) {is.null(x$predictors_ranef_cor)}))) { # base case
     which_dim_cor_reg = rep(0, dims)
   } else if(length(regr_theta) == 1) { # For a single theta
     which_dim_cor_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - 1))
