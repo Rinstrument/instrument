@@ -7,6 +7,8 @@
 library(tidyverse)
 library(data.table)
 library(haven)
+# devtools::install()
+library(theta2)
 
 # ------------------------------------------------------------------------------
 # process data
@@ -139,9 +141,9 @@ dL = as.data.frame(dL)
 
 # ------------------------------------------------------------------------------
 # fit model
-model = 'theta1 = g2a + g2g + g2c + g2d + g2e
-         theta2 = f4n + f4q + f4s + f4e + f4f
-         theta2 = f4j + f41a + f42a + f4b
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
          theta1 ~ (1 + wave | id)
          theta2 ~ (1 + wave | id)
          theta3 ~ (1 + wave | id)'
@@ -151,6 +153,7 @@ fit = theta2::theta2(data = dL, model = model, itype = "2pl",
 
 data = dL; model = model; itype = "2pl"; 
 exploratory = TRUE; method = "hmc"; iter = 500; chains = 1
+fweights = NULL
 library(devtools)
 load_all()
 # ------------------------------------------------------------------------------

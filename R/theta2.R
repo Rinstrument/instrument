@@ -198,7 +198,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   model_missing_x = 0
   model_missing_x_rand = 0
 
-  if(!is.null(predictors)) {
+  if(any(!is.null(unlist(predictors)))) {
     has_treg = 1
     predictor_ulist = unlist(predictors)
     reg_data = data[, predictor_ulist, drop = FALSE]
@@ -381,24 +381,45 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
   }
 
-  if(model_missing_y == 0) {
-    Ncateg_max = max(irt_data)
-    Ncategi = as.integer(apply(irt_data, 2, max))
-    names(Ncategi) = NULL
-  } else {
-    Ncateg_max = max(as.vector(irt_data)[!is.na(as.vector(irt_data))])
-    Ncategi = as.integer(apply(irt_data, 2, max)) # neex to update this to account for missingness!
-    names(Ncategi) = NULL
-  }
+  # if(model_missing_y == 0) {
+  Ncategi = as.integer(apply(irt_data, 2, \(x) {max(x, na.rm = TRUE)}))
+  Ncateg_max = max(Ncategi)
+  names(Ncategi) = NULL
+  # } else {
+    # Ncategi = as.integer(apply(irt_data, 2, \(x) {max(x, na.rm = TRUE)}))
+    # Ncateg_max = max(Ncategi)
+    # names(Ncategi) = NULL
+  # }
   
   Ncategi_jj = rep(Ncategi, each = N)
   y = as.vector(irt_data)
   nn = rep(1:N, J)
   jj = rep(1:J, each = N)
+
+  # missing values in the item observation matrix
+  N_miss = 0
+  if(model_missing_y == 1) {
+    Ncategi_jj = Ncategi_jj[!is.na(y)]
+    N_miss = sum(is.na(irt_data))
+    N_long = N_long - N_miss
+    nn = nn[!is.na(y)]
+    jj = jj[!is.na(y)]
+    y = y[!is.na(y)]
+  }
+
   D = dims
   match_eta3pl = match(itype, 3, nomatch = 0)
   find_eta3pl = rep(cumsum(match_eta3pl) * match_eta3pl, each = N)
+
+  if(model_missing_y == 1) {
+    find_eta3pl = find_eta3pl[1:N_long]
+  }
+
   itype = rep(itype, each = N)
+
+  if(model_missing_y == 1) {
+    itype = itype[1:N_long]
+  }
   
   if(h2_dims == 0) {
     if(all(itype >= 2)) {
@@ -499,23 +520,23 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     regress = 1
   }
 
+  # # missing values in the item observation matrix
+  # N_miss = 0
+  # if(model_missing_y == 1) {
+  #   N_miss = sum(is.na(irt_data))
+  #   N_long = N_long - N_miss
+  #   nn = nn[!is.na(y)]
+  #   jj = jj[!is.na(y)]
+  #   y = y[!is.na(y)]
+  # }
+
   # frequency weights
   if(is.null(fweights)) {
     if(model_missing_y == 1) {
-      fweights = rep(1, N_long_obs)
+      fweights = rep(1, N_long)
     } else {
       fweights = rep(1, N_long)
     }
-  }
-
-  # missing values in the item observation matrix
-  N_miss = 0
-  if(model_missing_y == 1) {
-    N_miss = sum(is.na(irt_data))
-    N_long_obs = N_long - N_miss
-    nn = nn[!is.na(y)]
-    jj = jj[!is.na(y)]
-    y = y[!is.na(y)]
   }
 
   if(h2_dims > 0) {
