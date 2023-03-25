@@ -155,7 +155,7 @@ make_parallel_compute = function(n_sim = 100, n_cores = parallel::detectCores())
 
     # temporary: evaluate model fit
     fit_smy[
-      intersect(grep('theta', parameter), grep(',3]', parameter)), 
+      intersect(grep('theta', parameter), grep(',2]', parameter)), 
     ][
       , cor(mean, true)
     ]

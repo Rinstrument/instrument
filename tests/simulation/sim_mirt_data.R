@@ -55,7 +55,7 @@ sim_mirt_pars = function(type) {
 	a_design = ff
 	
 	# effects for alpha regression pars (defined in ff)
-	b_alpha = c(1.0, 1.5)
+	b_alpha = c(0.3, 0.6)
 
 	# define the dominant alphas for each dimension
 	# alpha_dominant = list(1:5, 6:10, 11:15)
@@ -64,8 +64,8 @@ sim_mirt_pars = function(type) {
   # Dominant alphas follow Unif(1.7, 3.0)
 	# non-dominant alphas follow Unif(0.2, 1.0)
 	for(dd in 1:d) {
-		alpha[dd, alpha_dominant[[dd]]] = sort(runif(length(alpha_dominant[[dd]]), 2, 4))
-		alpha[dd, setdiff(unlist(alpha_dominant), alpha_dominant[[dd]])] = sort(runif(length(unlist(alpha_dominant[-dd])), 0.2, 1.5))
+		alpha[dd, alpha_dominant[[dd]]] = sort(runif(length(alpha_dominant[[dd]]), 1.5, 2))
+		alpha[dd, setdiff(unlist(alpha_dominant), alpha_dominant[[dd]])] = sort(runif(length(unlist(alpha_dominant[-dd])), 0.2, 1))
 	}
 	
 	# delta - difficulty parameters
@@ -75,7 +75,7 @@ sim_mirt_pars = function(type) {
 	d_design = ff
 
 	# effects on difficult due to the fixed effects of ff
-	b_delta = c(-1.5, 1)
+	b_delta = c(-1, 0.5)
 
 	# deltas are ordered and follow N(0, 1)
 	for(jj in 1:j) {
@@ -99,7 +99,7 @@ sim_mirt_pars = function(type) {
 	}
 	
 	# fixed effects on the theta's
-	beta = c(1.5, -1)
+	beta = c(0.7, -0.5)
 
 	# 
 	# start_index = 1
@@ -154,7 +154,7 @@ sim_mirt_data = function(type, pars) {
 	# rescale theta values 
 	for(i in 1:n) {
 		tr = as.vector(beta %*% ff[i, ] + sum(z_c[i, ]))
-		tr = 0
+		# tr = 0
 		theta[i, ] = theta[i, ] + tr
 	}
 
@@ -163,6 +163,7 @@ sim_mirt_data = function(type, pars) {
 
 	# for individual i and question j, calculate the probability for responding at
 	# each level of the response
+	nu = array(0, dim = c(n, j, ncateg_max))
 	for(i in 1:n) {
 		for(jj in 1:j) {
 			# alpha 
@@ -174,13 +175,40 @@ sim_mirt_data = function(type, pars) {
 			# # assign theta
 			# theta.tr = theta[i, ] + tr
 			# # rescale theta 
-			ar = 0
-			dr = 0
+			# ar = 0
+			# dr = 0
 
 			# regression equation
-			nu = sum((t(alpha[, jj] + ar) %*% (theta[i, ]))) - (delta[jj, 1:ncategi[jj]] + dr)
+			nu[i, jj, ] = sum((t(alpha[, jj] + ar) %*% (theta[i, ]))) - (delta[jj, 1:ncategi[jj]] + dr)
+		}
+	}
+
+	# nu = (nu / sd(nu)) * 1.5
+
+	for(i in 1:j) {
+		nu[, i, ] = (nu[, i, ] / sd(nu[, i, ])) * 1.5
+	}
+
+	sd(nu)
+
+	for(i in 1:n) {
+		for(jj in 1:j) {
+			# alpha 
+			# ar = as.vector(b_alpha %*% a_design[i,])
+			# # delta 
+			# dr = as.vector(b_delta %*% d_design[i,])
+			# # # theta
+			# # tr = as.vector(beta %*% ff[i, ] + sum(z_c[i, ]))
+			# # # assign theta
+			# # theta.tr = theta[i, ] + tr
+			# # # rescale theta 
+			# ar = 0
+			# # dr = 0
+
+			# # regression equation
+			# nu = sum((t(alpha[, jj] + ar) %*% (theta[i, ]))) - (delta[jj, 1:ncategi[jj]] + dr)
 			# inverse logit
-			prb = (1 / (1 + exp(-(nu))))
+			prb = (1 / (1 + exp(-(nu[i, jj, ]))))
 			# first level is 1
 			prb[1] = 1.0
 			# last level is 0
