@@ -212,7 +212,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   Lzeta = 0 # necessito?
   z = array(0, dim = c(N, 0)) # necessito?
   if(!is.null(unlist(predictors_ranef))) {
-    has_treg = 1
+    # has_treg = 1
     any_rand = 1
     any_rand_ind = 1
     predictor_ranef_ulist = unlist(predictors_ranef)
@@ -248,7 +248,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   }
 
   if(!is.null(unlist(predictors_ranef_corr))) {
-    has_treg = 1
+    # has_treg = 1
     any_rand = 1
     any_rand_cor = 1
     # predictors_ranef_corr_ulist = unlist(predictors_ranef_corr)
