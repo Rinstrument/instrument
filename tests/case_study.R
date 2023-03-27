@@ -139,6 +139,8 @@ colnames(dL)
 
 dL = as.data.frame(dL)
 
+dL$wave = as.numeric(dL$wave)
+
 # ------------------------------------------------------------------------------
 # fit model
 model = 'theta1 = c(3:16)
@@ -149,7 +151,7 @@ model = 'theta1 = c(3:16)
          theta3 ~ (1 + wave | id)'
 
 fit = theta2::theta2(data = dL, model = model, itype = "2pl", 
-  exploratory = TRUE, method = "hmc", iter = 500, chains = 1)
+  exploratory = TRUE, method = "hmc", iter = 5, chains = 1)
 
 data = dL; model = model; itype = "2pl"; 
 exploratory = TRUE; method = "hmc"; iter = 500; chains = 1

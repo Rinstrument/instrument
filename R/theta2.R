@@ -447,7 +447,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   beta_dstart = array(0, dim = c(0))
   beta_dend = array(0, dim = c(0))
 
-  if(!is.null(predictors)) {
+  if(!any(is.null(unlist(predictors)))) {
     regress = 1
     start_index = 1
     if(h2_dims > 0) {
