@@ -67,16 +67,18 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
   predictors = NULL
 
+  predictors = lapply(regr_theta, \(x) {x$predictors})
+
+  # predictors = regr_theta$predictors
+  #   if(!is.null(predictors)) {
+  #     predictors = list(regr_theta$predictors)
+  #   }
+
   if(all(sapply(regr_theta, \(x) {is.null(x$predictors_ranef_cor)}))) { # base case
     which_dim_cor_reg = rep(0, dims)
   } else if(length(regr_theta) == 1) { # For a single theta
     which_dim_cor_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - 1))
-    predictors = regr_theta$predictors
-    if(!is.null(predictors)) {
-      predictors = list(regr_theta$predictors)
-    }
   } else {
-    predictors = lapply(regr_theta, \(x) {x$predictors})
     which_dim_cor_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - length(names_regr_theta)))
   }
   
@@ -447,7 +449,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   beta_dstart = array(0, dim = c(0))
   beta_dend = array(0, dim = c(0))
 
-  if(!any(is.null(unlist(predictors)))) {
+  if(any(!is.null(unlist(predictors)))) {
     regress = 1
     start_index = 1
     if(h2_dims > 0) {
@@ -461,13 +463,20 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     }
 
     if(h2_dims == 0) {
+      # lapply(predictors, \(x) {is.null(x)})
+      # sapply(regr_theta, \(x) {x[['type']]}) ### here ###
+      # irt_model$dim_names
+      # names_regr_theta
+      predictors_by_dim = irt_model$dim_names %in% names_regr_theta
       start_index = 1
       beta_dstart = numeric(D)
       beta_dend = numeric(D)
       for(d in 1:D) {
-        beta_dstart[d] = start_index
-        beta_dend[d] = start_index + length(predictors[[d]]) - 1
-        start_index = start_index + length(predictors[[d]])
+        if(predictors_by_dim[d]) {
+          beta_dstart[d] = start_index
+          beta_dend[d] = start_index + length(predictors[[d]]) - 1
+          start_index = start_index + length(predictors[[d]])
+        }
       }
       beta_dstart = array(beta_dstart, dim = D)
       beta_dend = array(beta_dend, dim = D)

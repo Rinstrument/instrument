@@ -141,17 +141,38 @@ dL = as.data.frame(dL)
 
 dL$wave = as.numeric(dL$wave)
 
+# how many don't have missing values
+# dL %>% 
+#   mutate(rsums = rowSums(is.na(.[3:16])) < 2) %>%
+#   group_by(id) %>%
+#   summarize(no_na = (sum(rsums) == 0) * 1) %>%
+#   pull(no_na) %>%
+#   hist()
+
+# begin with 100 random participants
+set.seed(7794)
+f100 = dL$id %>% unique() %>% sample(., size = 100)
+
+ds = 
+  dL %>%
+  filter(id %in% f100)
+
 # ------------------------------------------------------------------------------
 # fit model
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta1 ~ (1 + wave | id)
-         theta2 ~ (1 + wave | id)
-         theta3 ~ (1 + wave | id)'
+         theta1 ~ wave + (1 + wave | id)
+         theta2 ~ wave + (1 + wave | id)
+         theta3 ~ wave + (1 + wave | id)'
 
-fit = theta2::theta2(data = dL, model = model, itype = "2pl", 
-  exploratory = TRUE, method = "hmc", iter = 5, chains = 1)
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta1 ~ wave + (1 + wave | id)'
+
+fit = theta2::theta2(data = ds, model = model, itype = "2pl", 
+  exploratory = TRUE, method = "hmc", iter = 500, chains = 1)
 
 data = dL; model = model; itype = "2pl"; 
 exploratory = TRUE; method = "hmc"; iter = 500; chains = 1
@@ -160,6 +181,6 @@ library(devtools)
 load_all()
 # ------------------------------------------------------------------------------
 # summarize results
-
-
+out = summary.theta2Obj(fit)
+grep('beta', out$param)
 # ------------------------------------------------------------------------------
