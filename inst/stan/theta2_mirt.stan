@@ -85,7 +85,7 @@ data {
   int<lower=0> zeta_dstart[any_rand_ind ? D : 0]; // zeta start index for each dimension
   int<lower=0> zeta_dend[any_rand_ind ? D : 0];   // zeta end index for each dimension
   real fweights[N_long]; // weights for each observation
-  matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
+  matrix[N, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
   // int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
   // int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
   int<lower=0> nDelta_r;            // number of delta structural regression parameters

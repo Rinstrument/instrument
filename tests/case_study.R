@@ -174,7 +174,7 @@ model = 'theta1 = c(3:16)
 fit = theta2::theta2(data = ds, model = model, itype = "2pl", 
   exploratory = TRUE, method = "hmc", iter = 500, chains = 1)
 
-data = dL; model = model; itype = "2pl"; 
+data = ds; model = model; itype = "2pl"; 
 exploratory = TRUE; method = "hmc"; iter = 500; chains = 1
 fweights = NULL
 library(devtools)

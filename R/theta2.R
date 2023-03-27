@@ -401,12 +401,13 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   # missing values in the item observation matrix
   N_miss = 0
   if(model_missing_y == 1) {
-    Ncategi_jj = Ncategi_jj[!is.na(y)]
+    y_nonMiss = !is.na(y)
+    Ncategi_jj = Ncategi_jj[y_nonMiss]
     N_miss = sum(is.na(irt_data))
     N_long = N_long - N_miss
-    nn = nn[!is.na(y)]
-    jj = jj[!is.na(y)]
-    y = y[!is.na(y)]
+    nn = nn[y_nonMiss]
+    jj = jj[y_nonMiss]
+    y = y[y_nonMiss]
   }
 
   D = dims
@@ -442,7 +443,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   nDelta = sum(Ncategi - 1)
 
   regress = 0
-  x_miss = array(0, dim = c(N_long, 0))
+  x_miss = array(0, dim = c(N, 0))
   # reg_miss = 0
   # x_miss = 0
   # x_in_row_is_missing = 0
@@ -484,7 +485,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
     if(model_missing_x == 0) {
       reg_miss = is.na(reg_data) * 1
-      x_miss = matrix(rep(t(reg_miss), J), ncol = K, byrow = TRUE)
+      x_miss = reg_miss
+      # x_miss = matrix(rep(t(reg_miss), J), ncol = K, byrow = TRUE)
       x_in_row_is_missing = apply(x, 1, function(x) {any(is.na(x))}) * 1
     }
 
