@@ -470,7 +470,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       # names_regr_theta
       predictors_by_dim = irt_model$dim_names %in% names_regr_theta
       start_index = 1
-      beta_dstart = numeric(D)
+      beta_dstart = numeric(D) + 1
       beta_dend = numeric(D)
       for(d in 1:D) {
         if(predictors_by_dim[d]) {
@@ -610,7 +610,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       zeta_dstart = zeta_dstart, 
       zeta_dend = zeta_dend, 
       fweights = fweights, 
-      x_miss = x_miss, 
+      # x_miss = x_miss, 
       nDelta_r = nDelta_r, 
       nAlpha_r = nAlpha_r, 
       LMean = LMean, 
@@ -684,7 +684,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       zeta_dstart = zeta_dstart, 
       zeta_dend = zeta_dend, 
       fweights = fweights, 
-      x_miss = x_miss, 
+      # x_miss = x_miss, 
       nDelta_r = nDelta_r, 
       nAlpha_r = nAlpha_r, 
       LMean = LMean, 
@@ -774,7 +774,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       zeta_dstart = zeta_dstart, 
       zeta_dend = zeta_dend, 
       fweights = fweights, 
-      x_miss = x_miss, 
+      # x_miss = x_miss, 
       nDelta_r = nDelta_r, 
       nAlpha_r = nAlpha_r, 
       LMean = LMean, 
