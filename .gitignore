@@ -11,3 +11,4 @@ docs
 .lintr
 .DS_Store
 .vscode
+tests/case_study_results/
