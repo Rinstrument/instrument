@@ -1,5 +1,10 @@
-
+# ------------------------------------------------------------------------------
+# libraries
 library(theta2)
+
+# ------------------------------------------------------------------------------
+# data
+data(familyrisk)
 
 # ------------------------------------------------------------------------------
 # fit model
@@ -29,8 +34,8 @@ model = 'theta1 = c(3:16)
          theta3 = c(3:16)
          theta1 ~ wave + (1 | id)'
 
-fit = theta2::theta2(data = dL, model = model, itype = '2pl', 
-  exploratory = TRUE, method = 'hmc', iter = 500, chains = 1)
+fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
+  exploratory = TRUE, method = 'hmc', iter = 5, chains = 1)
 
 save(fit, file = "tests/case_study_results/fit_exploratory_3dim.RData")
 
