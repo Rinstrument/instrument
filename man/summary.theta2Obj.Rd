@@ -21,5 +21,5 @@ For example, pars = c("theta", "alpha").}
 a \code{data.table} of draws
 }
 \description{
-Produce summary matrix for theta2 output.
+Produce summary data table for theta2 output.
 }

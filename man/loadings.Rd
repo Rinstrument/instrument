@@ -4,7 +4,7 @@
 \alias{loadings}
 \title{Loadings from a thata2 model fit object}
 \usage{
-loadings(x, rotate = c("varimax", "promax"), ...)
+loadings(x, rotate = c("varimax", "promax", "oblimin"), ...)
 }
 \arguments{
 \item{x}{model fit object from theta2, i.e., x = theta2(data, ...)}
@@ -22,4 +22,27 @@ loading parameters.
 }
 \description{
 Get factor loadings (rotated and unrotated) from a theta2 model fit object.
+}
+\examples{
+
+library(theta2)
+load('tests/case_study_results/fit_exploratory_3dim.RData')
+
+ld = loadings(fit, 'varimax')
+ld['unrotated']
+ld['rotated']
+ld['posterior']
+
+ld = loadings(fit, 'promax')
+ld['unrotated']
+ld['rotated']
+ld['posterior']
+
+ld = loadings(fit, 'oblimin')
+ld['unrotated']
+ld['rotated']
+ld['posterior']
+
+
+
 }

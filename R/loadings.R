@@ -12,10 +12,25 @@
 #' to the rotate argument, and the matrix of posterior estimates of the unrotated 
 #' loading parameters. 
 #' 
-#' @example 
+#' @examples
 #' 
+#' library(theta2)
+#' load('tests/case_study_results/fit_exploratory_3dim.RData')
 #' 
-#'
+#' ld = loadings(fit, 'varimax')
+#' ld['unrotated']
+#' ld['rotated']
+#' ld['posterior']
+#' 
+#' ld = loadings(fit, 'promax')
+#' ld['unrotated']
+#' ld['rotated']
+#' ld['posterior']
+#' 
+#' ld = loadings(fit, 'oblimin')
+#' ld['unrotated']
+#' ld['rotated']
+#' ld['posterior']
 #' 
 #'
 #' 
