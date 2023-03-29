@@ -19,12 +19,11 @@
 #' 
 #'
 #' 
-loadings = function(x, rotate = c('varimax', 'promax'), ...) {
-
-  rotate = c('varimax', 'promax')
+loadings = function(x, rotate = c('varimax', 'promax', 'oblimin'), ...) {
 
   # output
   out = vector('list', 3)
+
   names(out) = c('unrotated', 'rotated', 'posterior')
   
   # default to varimax
@@ -39,28 +38,43 @@ loadings = function(x, rotate = c('varimax', 'promax'), ...) {
     ]
 
   # find dimensions of alpha
-  posterior[['parameter']]
-  
-  ?stringr::str_sub()
+  par_names = posterior[['parameter']]
 
-  # order alpha into a matrix
-  posterior
-
-  # return stacked format as a separate matrix
+  # dimensions of alpha
+  a_dims = as.double(
+      stringr::str_extract_all(par_names[length(par_names)], '(\\d)+', 
+        simplify = TRUE)
+    )
   
+  # unrotated factor loadings (posterior means)
+  unrotated = t(
+      matrix(posterior[['mean']], a_dims[1], a_dims[2], byrow = FALSE)
+    )
+
+  # select rotation
   if(rotate == 'varimax') {
-    lrot = varimax(l, ...)
+    
+    rotated = GPArotation::Varimax(unrotated, ...)
+
   } else if(rotate == 'promax') {
-    lrot = promax(l, ...)
+
+    rotated = promax(unrotated, ...)
+
+  } else if(rotate == 'oblimin') {
+
+    rotated = GPArotation::oblimin(unrotated, ...)
+
   } else {
-    stop('Invalid method selected. Select either varimax or promax.')
+
+    stop('Invalid method selected. Select either varimax, promax, or oblimin.')
+
   }
 
   # unrotated factor loadings
-  out['unrotated']
+  out['unrotated'] = unrotated
 
   # rotation according to rotate
-  out['rotated']
+  out['rotated'] = rotated
   
   # posterior summaries for loadigns
   out['posterior'] = posterior
