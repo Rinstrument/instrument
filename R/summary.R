@@ -19,6 +19,12 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
   
   stanfit = object$stanfit
 
+  str(stanfit)
+  all_names = stanfit@sim$fnames_oi
+
+  
+  all_names = all_names[grep(paste0(all_par_names, collapse = '|'), all_names)]
+
   all_par_names = names(stanfit@par_dims)
 
   if(pars == "default") {
@@ -27,24 +33,39 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
   } else {
     all_par_names = pars
   }
-  
-  draws = data.table::as.data.table(rstan::extract(stanfit, pars = all_par_names, 
-    permute = FALSE))
 
-  draws = data.table::dcast(draws, iterations + chains ~ factor(parameters,levels=unique(parameters)), 
+  # w = data.table(a = letters[1:10], b = 1:10)
+  # match(w$a, letters[10:1])
+
+  # w[a == order(letters[1:10], rev = TRUE), ]
+  # setorder()
+  
+  draws = as.data.table(rstan::extract(stanfit, pars = all_par_names, permute = FALSE))
+
+  ordered_par_names = unique(draws[['parameters']])
+
+  draws = data.table::as.data.table(draws)
+
+  draws = data.table::dcast(draws, iterations + chains ~ parameters, 
     value.var = "value")
 
   par_names = colnames(draws)[-c(1:2)]
 
-  par_names = par_names[grep('alpha', par_names)]
+  match_order = match(ordered_par_names, par_names)
+
+  # draws = draws[
+  #   , match_order := ..match_order
+  # ]
+
+  alpha_par_names = par_names[grep('alpha', par_names)]
 
   draws = draws[
-      , ..par_names
-    ][
-      , (par_names) := lapply(.SD, \(x) { exp(x) })
+      , (alpha_par_names) := lapply(.SD, \(x) { exp(x) }), .SDcols = alpha_par_names
     ]
 
-  summary_theta2Obj = function(x, probs) { c(mean(x), sd(x), quantile(x, probs = probs)) }
+  summary_theta2Obj = function(x, probs) { 
+      c(mean(x), sd(x), quantile(x, probs = probs)) 
+    }
 
   draws = draws[, lapply(.SD[, -c(1, 2)], summary_theta2Obj, probs = probs)]
 
@@ -52,6 +73,11 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
 
   draws = data.table::transpose(draws, keep.names = "parameter", make.names = "summary")
 
+  draws = draws[
+      , match := match_order
+    ]
+
+  setorder(draws, match)
   # draws = draws[order(parameter)
 
   return(draws)
