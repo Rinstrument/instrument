@@ -37,8 +37,15 @@ loadings = function(x, rotate = c('varimax', 'promax'), ...) {
   posterior = fit_smy[
       grep('alpha', parameter),
     ]
+
+  # find dimensions of alpha
+  posterior[['parameter']]
   
+  ?stringr::str_sub()
+
   # order alpha into a matrix
+  posterior
+
   # return stacked format as a separate matrix
   
   if(rotate == 'varimax') {
@@ -56,7 +63,7 @@ loadings = function(x, rotate = c('varimax', 'promax'), ...) {
   out['rotated']
   
   # posterior summaries for loadigns
-  out['posterior']
+  out['posterior'] = posterior
 
   return(out)
 
