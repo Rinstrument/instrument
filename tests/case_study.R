@@ -84,3 +84,12 @@ ggplot(bdat) + aes(x = x, y = y, group = ln) +
 
 c(1:10)[rep(c(T, F), 5)]
 # ------------------------------------------------------------------------------
+
+# work out the loading piece
+library(theta2)
+load('tests/case_study_results/fit_exploratory_3dim.RData')
+
+x = fit
+object = fit
+pars = "default"
+probs = c(0.025, 0.50, 0.975)

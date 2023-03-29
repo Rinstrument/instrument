@@ -16,7 +16,7 @@
 #' 
 summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.975), 
   ...) {
-
+  
   stanfit = object$stanfit
 
   all_par_names = names(stanfit@par_dims)
@@ -31,16 +31,28 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
   draws = data.table::as.data.table(rstan::extract(stanfit, pars = all_par_names, 
     permute = FALSE))
 
-  draws = data.table::dcast(draws, iterations + chains ~ parameters, 
+  draws = data.table::dcast(draws, iterations + chains ~ factor(parameters,levels=unique(parameters)), 
     value.var = "value")
 
-  summary_theta2Obj = function(x, probs) {c(mean(x), sd(x), quantile(x, probs = probs))}
+  par_names = colnames(draws)[-c(1:2)]
+
+  par_names = par_names[grep('alpha', par_names)]
+
+  draws = draws[
+      , ..par_names
+    ][
+      , (par_names) := lapply(.SD, \(x) { exp(x) })
+    ]
+
+  summary_theta2Obj = function(x, probs) { c(mean(x), sd(x), quantile(x, probs = probs)) }
 
   draws = draws[, lapply(.SD[, -c(1, 2)], summary_theta2Obj, probs = probs)]
 
   draws = draws[, summary := c("mean", "sd", paste0("quantile_", probs))]
 
   draws = data.table::transpose(draws, keep.names = "parameter", make.names = "summary")
+
+  # draws = draws[order(parameter)
 
   return(draws)
 

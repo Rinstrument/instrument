@@ -21,6 +21,8 @@
 #' 
 loadings = function(x, rotate = c('varimax', 'promax'), ...) {
 
+  rotate = c('varimax', 'promax')
+
   # output
   out = vector('list', 3)
   names(out) = c('unrotated', 'rotated', 'posterior')
@@ -32,7 +34,7 @@ loadings = function(x, rotate = c('varimax', 'promax'), ...) {
   fit_smy = theta2::summary.theta2Obj(x)
   
   # subset loading estimates
-  alpha = fit_smy[
+  posterior = fit_smy[
       grep('alpha', parameter),
     ]
   
