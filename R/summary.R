@@ -14,7 +14,7 @@
 #' @importFrom rstan summary
 #' @export
 #' 
-summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.975), 
+summary.theta2Obj = function(object, pars = 'default', probs = c(0.025, 0.50, 0.975), 
   ...) {
   
   stanfit = object$stanfit
@@ -25,9 +25,9 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
   all_par_names = stanfit@model_pars
 
   # remove unused parameter names
-  if(pars == "default") {
-    all_par_names = setdiff(all_par_names, c("alpha_l", "eta3pl_l", "delta_l", 
-      "eta3pl", "db", "ab", "xb", "nu", "c", "lp__"))
+  if(pars == 'default') {
+    all_par_names = setdiff(all_par_names, c('alpha_l', 'eta3pl_l', 'delta_l', 
+      'eta3pl', 'db', 'ab', 'xb', 'nu', 'c', 'lp__'))
   } else {
     all_par_names = pars
   }
@@ -44,7 +44,7 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
 
   # parameters pivoted longer
   draws = data.table::dcast(draws, iterations + chains ~ parameters, 
-    value.var = "value")
+    value.var = 'value')
 
   par_names = colnames(draws)[-c(1:2)]
 
@@ -71,12 +71,12 @@ summary.theta2Obj = function(object, pars = "default", probs = c(0.025, 0.50, 0.
 
   # summary names
   draws = draws[
-      , summary := c("mean", "sd", paste0("quantile_", probs))
+      , summary := c('mean', 'sd', paste0('quantile_', probs))
     ]
 
   # transpose data to long format (column are summary statistics)
-  draws = data.table::transpose(draws, keep.names = "parameter", 
-    make.names = "summary")
+  draws = data.table::transpose(draws, keep.names = 'parameter', 
+    make.names = 'summary')
 
   # reorder result for convenience
   draws = draws[

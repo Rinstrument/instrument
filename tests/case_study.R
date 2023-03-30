@@ -26,18 +26,18 @@ model = 'theta1 = c(3:16)
          theta3 = c(3:16)
          theta1 ~ wave'
 
-# report the rotation. Are there three dimensions?
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
-         theta1 ~ wave + (1 + wave | id)'
-
 # fit three models with (1 + wave | id)
 # if slopes small, fit (1 | id)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
          theta1 ~ wave + (1 | id)'
+
+# report the rotation. Are there three dimensions?
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta1 ~ wave + (1 + wave | id)'
 
 data = familyrisk
 model = model
@@ -52,7 +52,7 @@ fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl',
 
 save(fit, file = "tests/case_study_results/fit_exploratory_3dim_wave.RData")
 
-
+object = fit
 
 
 
