@@ -96,6 +96,9 @@ data {
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
   
   int<lower=0> Lzeta;        // Number of uncorrelated random eff. parms
+  int<lower=0> Lzeta_2;
+  int<lower=0> Lzeta_3;
+
   int<lower=0> Laeta;
   int<lower=0> Ldeta;
 
@@ -126,11 +129,18 @@ data {
   int<lower=0> Ldeta_cor;
 
   matrix[N, Lzeta] z;   // design matrix for the uncorrelated random effects
+  matrix[N, Lzeta_2] z_2;
+  matrix[N, Lzeta_3] z_3;
+
   matrix[N, Laeta] ar;
   matrix[N, Ldeta] dr;
 
   int<lower=0> Lzeta_sd;     // number of sd pars
   int<lower=0> zeta_sd_ind[Lzeta]; // sd index for each column of z
+  int<lower=0> Lzeta_sd_2;
+  int<lower=0> zeta_sd_ind_2[Lzeta_2];
+  int<lower=0> Lzeta_sd_3;
+  int<lower=0> zeta_sd_ind_3[Lzeta_3];
 
   int<lower=0> cor_z_item_ind[Lzeta_cor]; // item index for each column of z for correlated random effs.
   int<lower=0> cor_z_item_elem_ind[Lzeta_cor]; // element within item index for each column of z for correlated random effs.

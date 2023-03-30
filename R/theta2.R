@@ -211,6 +211,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     }
   }
 
+  # start here tomorrow
   Lzeta = 0 # necessito?
   z = array(0, dim = c(N, 0)) # necessito?
   if(!is.null(unlist(predictors_ranef))) {
