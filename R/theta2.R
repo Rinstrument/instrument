@@ -79,12 +79,32 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   #     predictors = list(regr_theta$predictors)
   #   }
 
-  if(all(sapply(regr_theta, \(x) {is.null(x$predictors_ranef_cor)}))) { # base case
+  if(all(sapply(regr_theta, \(x) { is.null(x$predictors_ranef_cor) }))) {
+    # base case
     which_dim_cor_reg = rep(0, dims)
-  } else if(length(regr_theta) == 1) { # For a single theta
+
+  } else if(length(regr_theta) == 1) { 
+    # For a single theta
     which_dim_cor_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - 1))
+
   } else {
+    # all or multiple thetas?
     which_dim_cor_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - length(names_regr_theta)))
+
+  }
+
+  if(all(sapply(regr_theta, \(x) { is.null(x$predictors_ranef) }))) {
+    # base case
+    which_dim_ind_reg = rep(0, dims)
+
+  } else if(length(regr_theta) == 1) { 
+    # For a single theta
+    which_dim_ind_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - 1))
+
+  } else {
+    # all or multiple thetas?
+    which_dim_ind_reg = c(which(names_regr_theta == irt_model$dim_names), rep(0, dims - length(names_regr_theta)))
+
   }
   
   predictors_ranef = lapply(regr_theta, \(x) {x$predictors_ranef})
@@ -732,6 +752,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         deltaMean = deltaMean, 
         d_design = d_design, 
         a_design = a_design, 
+        which_dim_ind_reg = which_dim_ind_reg,
         rand_ind_g1 = rand_ind_g1,
         rand_ind_g2 = rand_ind_g2,
         Lzeta = Lzeta, 

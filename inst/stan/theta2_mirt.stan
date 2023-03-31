@@ -95,6 +95,7 @@ data {
   matrix[N, nDelta_r] d_design;     // delta structural design matrix
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
   
+  int<lower=0> which_dim_ind_reg[D];
   // whether to use extra slots for independend ranef matrices
   int<lower=0,upper=1> rand_ind_g1;
   int<lower=0,upper=1> rand_ind_g2;
