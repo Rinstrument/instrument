@@ -95,6 +95,10 @@ data {
   matrix[N, nDelta_r] d_design;     // delta structural design matrix
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
   
+  // whether to use extra slots for independend ranef matrices
+  int<lower=0,upper=1> rand_ind_g1;
+  int<lower=0,upper=1> rand_ind_g2;
+
   int<lower=0> Lzeta;        // Number of uncorrelated random eff. parms
   int<lower=0> Lzeta_2;
   int<lower=0> Lzeta_3;

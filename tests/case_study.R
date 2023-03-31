@@ -46,6 +46,8 @@ exploratory = TRUE
 method = 'hmc'
 iter = 500
 chains = 1
+library(devtools)
+load_all()
 
 fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
   exploratory = TRUE, method = 'hmc', iter = 500, chains = 1)

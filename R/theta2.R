@@ -1,15 +1,20 @@
-#' Item Response Theory
+#' Bayesian Explanatory Multidimensional Item Response Theory
+#' 
+#' Fit a multidimensional item response theory model using Stan.
+#' See github.com/theta2pack/doc for examples, tutorials, and documentation.
 #'
-#' @export
-#' @param data data frame
-#' @param model text specification of the model. Not yet implemented. Instead use the other arguments
-#' @param predictors list of predictors for each dimension. Each element of the list gives the predictors for the given dimension.
-#' @param predictors_ranef list of random effect parameters for each dimension.
+#' @param data a named `data.frame` or `matrix`
+#' @param model text specification of the model. See examples or website.
+#' @param itype item type of the items. Options are '1pl', '2pl', '3pl' 
 #' @param ranef_id id for which items belong to the current random effect.
-#' @param predictors_ranef_corr list of correlated random effect parameters for each dimension.
-#' @param stuff stuff
-#' @param dims dimensions
-#' @param method Choose estimation method. Choices are method = 'vb' (default) for variational Bayes, or method = 'hmc' for Hamiltonian Monte Carlo.
+#' @param exploratory fit exploratory MIRT model? Only used with multidimensional
+#' model that is not higher-order or bifactor
+#' @param method Choose estimation method. Use method = 'hmc' for Hamiltonian 
+#' Monte Carlo. Other option is method = 'vb' for Variational Bayes. HMC should 
+#' be the default for published results. VB is experimental.
+#' @param fweights frequency weights. These weights represent how many times
+#' each row of the data should be repeated in the analysis. fweights weight
+#' the likelihood function.
 #' @param ... Arguments passed to `rstan::sampling` (e.g. iter, chains).
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
@@ -211,20 +216,50 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     }
   }
 
-  # start here tomorrow
-  Lzeta = 0 # necessito?
-  z = array(0, dim = c(N, 0)) # necessito?
+  # extra memory slots used if more than one set of correlated random effects
+  # is to be estimates
+  extra_mem_slots = 32
+
+  if(length(regr_theta) > 1) {
+    for(i in 2:extra_mem_slots) {
+      eval(parse(text = paste0("rand_ind_g", i - 1, " = 0")))
+      eval(parse(text = paste0("Lzeta_", i, " = 0")))
+      eval(parse(text = paste0("Lzeta_sd_", i, " = 0")))
+      eval(parse(text = paste0("zeta_sd_ind_", i, " = array(0, dim = N)")))
+      eval(parse(text = paste0("z_", i, " = array(0, dim = c(N, 0))")))
+    }
+  }
+
+  Lzeta = 0
+  z = array(0, dim = c(N, 0))
+  Lzeta_sd = 0
+  zeta_sd_ind = array(0, dim = c(0))
+    # z = matrix(0, nrow = N, ncol = Lzeta)
   if(!is.null(unlist(predictors_ranef))) {
     # has_treg = 1
     any_rand = 1
     any_rand_ind = 1
-    predictor_ranef_ulist = unlist(predictors_ranef)
-    reg_data_ranef = data[, predictor_ranef_ulist, drop = FALSE]
-    Lzeta = ncol(reg_data_ranef)
-    z = reg_data_ranef
-    if(any(is.na(reg_data_ranef))) {
-        model_missing_x_rand = 1
+
+    # how to distringuish
+    reg_data_ranef = lapply(regr_theta, \(x) { x$new_reg_data })
+    Lzeta_sd_list = lapply(regr_theta, \(x) { length(unique(x[['ranef_id']])) })
+    zeta_sd_ind_list = lapply(regr_theta, \(x) { x[['ranef_id']] })
+
+    Lzeta = ncol(reg_data_ranef[[1]])
+    z_c = reg_data_ranef[[1]]
+    Lzeta_sd = Lzeta_sd_list[[1]]
+    zeta_sd_ind = zeta_sd_ind_list[[1]]
+    
+    if(length(regr_theta) > 1) {
+      for(i in 2:extra_mem_slots) {
+        eval(parse(text = paste0("rand_ind_g", i - 1, " = 1")))
+        eval(parse(text = paste0("Lzeta_", i, " = ncol(reg_data_ranef[[", i, "]])")))
+        eval(parse(text = paste0("Lzeta_sd_", i, " = Lzeta_sd_list[[", i, "]]")))
+        eval(parse(text = paste0("zeta_sd_ind_", i, " = zeta_sd_ind_list[[", i, "]]")))
+        eval(parse(text = paste0("z_", i, " = reg_data_ranef[[", i, "]]")))
+      }
     }
+    
   }
 
   u_Lzeta_cor = 0 # number of correlated random effect params
@@ -236,19 +271,20 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   cor_z_item_elem_ind = array(0, dim = c(0)) # index the position within random effect vectors
   z_c = array(0, dim = c(N, 0)) # random effect design matrix
 
-  # extra memory slots used if more than one set of correlated random effects
-  # is to be estimates
+ 
 
-  extra_mem_slots = 32
-  for(i in 2:extra_mem_slots) {
-    eval(parse(text = paste0("rand_cor_g", i - 1, " = 0")))
-    eval(parse(text = paste0("u_Lzeta_cor_", i, " = 0")))
-    eval(parse(text = paste0("l_Lzeta_cor_", i, " = 0")))
-    eval(parse(text = paste0("Lzeta_cor_", i, " = 0")))
-    eval(parse(text = paste0("cor_z_item_ind_", i, " = array(0, dim = c(0))")))
-    eval(parse(text = paste0("cor_z_item_elem_ind_", i, " = array(0, dim = c(0))")))
-    eval(parse(text = paste0("z_c_", i, " = array(0, dim = c(N, 0))")))
+  if(length(regr_theta) > 1) {
+    for(i in 2:extra_mem_slots) {
+      eval(parse(text = paste0("rand_cor_g", i - 1, " = 0")))
+      eval(parse(text = paste0("u_Lzeta_cor_", i, " = 0")))
+      eval(parse(text = paste0("l_Lzeta_cor_", i, " = 0")))
+      eval(parse(text = paste0("Lzeta_cor_", i, " = 0")))
+      eval(parse(text = paste0("cor_z_item_ind_", i, " = array(0, dim = c(0))")))
+      eval(parse(text = paste0("cor_z_item_elem_ind_", i, " = array(0, dim = c(0))")))
+      eval(parse(text = paste0("z_c_", i, " = array(0, dim = c(N, 0))")))
+    }
   }
+  
 
   if(!is.null(unlist(predictors_ranef_corr))) {
     # has_treg = 1
@@ -510,20 +546,20 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     start_index = 1
     zeta_dstart = numeric(D)
     zeta_dend = numeric(D)
-    for(d in 1:D) {
+    for(d in 1:D) { # insert which_ thing here (equivalent to correlated case)
       zeta_dstart[d] = start_index
       zeta_dend[d] = start_index + length(predictors_ranef[[d]]) - 1
       start_index = start_index + length(predictors_ranef[[d]])
     }
     zeta_dstart = array(zeta_dstart, dim = D)
     zeta_dend = array(zeta_dend, dim = D)
-    Lzeta_sd = length(unique(ranef_id))
-    zeta_sd_ind = ranef_id
+    # Lzeta_sd = length(unique(ranef_id))
+    # zeta_sd_ind = ranef_id
   } else {
     Lzeta = 0
-    Lzeta_sd = 0
-    zeta_sd_ind = array(0, dim = c(0))
-    z = matrix(0, nrow = N, ncol = Lzeta)
+    # Lzeta_sd = 0
+    # zeta_sd_ind = array(0, dim = c(0))
+    # z = matrix(0, nrow = N, ncol = Lzeta)
     zeta_dstart = array(0, dim = c(0))
     zeta_dend = array(0, dim = c(0))
   }
@@ -579,262 +615,293 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   }
 
   if(D == 1) {
+
     standata = list(
-      N = N, 
-      J = J, 
-      K = K, 
-      any_rand = any_rand, 
-      any_rand_ind = any_rand_ind, 
-      any_rand_cor = any_rand_cor, 
-      any_rand_ind_a = any_rand_ind_a, 
-      any_rand_cor_a = any_rand_cor_a, 
-      any_rand_ind_d = any_rand_ind_d, 
-      any_rand_cor_d = any_rand_cor_d,
-      Ncateg_max = Ncateg_max, 
-      Ncategi = Ncategi, 
-      N_long = N_long, 
-      nn = nn, 
-      jj = jj, 
-      y = y, 
-      itype = itype, 
-      any_eta3pl = any_eta3pl, 
-      nEta3pl = nEta3pl, 
-      find_eta3pl = find_eta3pl, 
-      x = x, 
-      D = D, 
-      DAlpha = DAlpha, 
-      nDelta = nDelta, 
-      L = L, 
-      has_treg = has_treg, 
-      beta_dstart = beta_dstart, 
-      beta_dend = beta_dend, 
-      zeta_dstart = zeta_dstart, 
-      zeta_dend = zeta_dend, 
-      fweights = fweights, 
-      # x_miss = x_miss, 
-      nDelta_r = nDelta_r, 
-      nAlpha_r = nAlpha_r, 
-      LMean = LMean, 
-      deltaMean = deltaMean, 
-      d_design = d_design, 
-      a_design = a_design, 
-      Lzeta = Lzeta, 
-      Laeta = Laeta, 
-      Ldeta = Ldeta, 
-      u_Lzeta_cor = u_Lzeta_cor, 
-      l_Lzeta_cor = l_Lzeta_cor, 
-      u_Laeta_cor = u_Laeta_cor, 
-      l_Laeta_cor = l_Laeta_cor, 
-      u_Ldeta_cor = u_Ldeta_cor, 
-      l_Ldeta_cor = l_Ldeta_cor, 
-      Lzeta_cor = Lzeta_cor, 
-      Laeta_cor = Laeta_cor, 
-      Ldeta_cor = Ldeta_cor, 
-      z = z, 
-      ar = ar,
-      dr = dr,
-      Lzeta_sd = Lzeta_sd, 
-      zeta_sd_ind = zeta_sd_ind, 
-      cor_z_item_ind = cor_z_item_ind, 
-      cor_z_item_elem_ind = cor_z_item_elem_ind, 
-      Laeta_sd = Laeta_sd, 
-      alindex = alindex, 
-      aeta_sd_ind = aeta_sd_ind, 
-      cor_a_item_ind = cor_a_item_ind, 
-      cor_a_item_elem_ind = cor_a_item_elem_ind,
-      Ldeta_sd = Ldeta_sd, 
-      dlindex = dlindex, 
-      deta_sd_ind = deta_sd_ind, 
-      cor_d_item_ind = cor_d_item_ind, 
-      cor_d_item_elem_ind = cor_d_item_elem_ind,
-      z_c = z_c,
-      a_c = a_c, 
-      d_c = d_c)
+        N = N, 
+        J = J, 
+        K = K, 
+        any_rand = any_rand, 
+        any_rand_ind = any_rand_ind, 
+        any_rand_cor = any_rand_cor, 
+        any_rand_ind_a = any_rand_ind_a, 
+        any_rand_cor_a = any_rand_cor_a, 
+        any_rand_ind_d = any_rand_ind_d, 
+        any_rand_cor_d = any_rand_cor_d,
+        Ncateg_max = Ncateg_max, 
+        Ncategi = Ncategi, 
+        N_long = N_long, 
+        nn = nn, 
+        jj = jj, 
+        y = y, 
+        itype = itype, 
+        any_eta3pl = any_eta3pl, 
+        nEta3pl = nEta3pl, 
+        find_eta3pl = find_eta3pl, 
+        x = x, 
+        D = D, 
+        DAlpha = DAlpha, 
+        nDelta = nDelta, 
+        L = L, 
+        has_treg = has_treg, 
+        beta_dstart = beta_dstart, 
+        beta_dend = beta_dend, 
+        zeta_dstart = zeta_dstart, 
+        zeta_dend = zeta_dend, 
+        fweights = fweights, 
+        # x_miss = x_miss, 
+        nDelta_r = nDelta_r, 
+        nAlpha_r = nAlpha_r, 
+        LMean = LMean, 
+        deltaMean = deltaMean, 
+        d_design = d_design, 
+        a_design = a_design, 
+        Lzeta = Lzeta, 
+        Laeta = Laeta, 
+        Ldeta = Ldeta, 
+        u_Lzeta_cor = u_Lzeta_cor, 
+        l_Lzeta_cor = l_Lzeta_cor, 
+        u_Laeta_cor = u_Laeta_cor, 
+        l_Laeta_cor = l_Laeta_cor, 
+        u_Ldeta_cor = u_Ldeta_cor, 
+        l_Ldeta_cor = l_Ldeta_cor, 
+        Lzeta_cor = Lzeta_cor, 
+        Laeta_cor = Laeta_cor, 
+        Ldeta_cor = Ldeta_cor, 
+        z = z, 
+        ar = ar,
+        dr = dr,
+        Lzeta_sd = Lzeta_sd, 
+        zeta_sd_ind = zeta_sd_ind, 
+        cor_z_item_ind = cor_z_item_ind, 
+        cor_z_item_elem_ind = cor_z_item_elem_ind, 
+        Laeta_sd = Laeta_sd, 
+        alindex = alindex, 
+        aeta_sd_ind = aeta_sd_ind, 
+        cor_a_item_ind = cor_a_item_ind, 
+        cor_a_item_elem_ind = cor_a_item_elem_ind,
+        Ldeta_sd = Ldeta_sd, 
+        dlindex = dlindex, 
+        deta_sd_ind = deta_sd_ind, 
+        cor_d_item_ind = cor_d_item_ind, 
+        cor_d_item_elem_ind = cor_d_item_elem_ind,
+        z_c = z_c,
+        a_c = a_c, 
+        d_c = d_c
+      )
+
   } else if(D > 1 & h2_dims == 0) {
+
     standata = list(
-      N = N, 
-      J = J, 
-      K = K, 
-      any_rand = any_rand, 
-      any_rand_ind = any_rand_ind, 
-      any_rand_cor = any_rand_cor, 
-      any_rand_ind_a = any_rand_ind_a, 
-      any_rand_cor_a = any_rand_cor_a, 
-      any_rand_ind_d = any_rand_ind_d, 
-      any_rand_cor_d = any_rand_cor_d,
-      Ncateg_max = Ncateg_max, 
-      Ncategi = Ncategi, 
-      N_long = N_long, 
-      nn = nn, 
-      jj = jj, 
-      y = y, 
-      itype = itype, 
-      any_eta3pl = any_eta3pl, 
-      nEta3pl = nEta3pl, 
-      find_eta3pl = find_eta3pl, 
-      x = x, 
-      D = D, 
-      DAlpha = DAlpha, 
-      alpha_dstart = alpha_dstart,
-      alpha_dend = alpha_dend,
-      nDelta = nDelta, 
-      L = L, 
-      has_treg = has_treg, 
-      beta_dstart = beta_dstart, 
-      beta_dend = beta_dend, 
-      zeta_dstart = zeta_dstart, 
-      zeta_dend = zeta_dend, 
-      fweights = fweights, 
-      # x_miss = x_miss, 
-      nDelta_r = nDelta_r, 
-      nAlpha_r = nAlpha_r, 
-      LMean = LMean, 
-      deltaMean = deltaMean, 
-      d_design = d_design, 
-      a_design = a_design, 
-      Lzeta = Lzeta, 
-      Laeta = Laeta, 
-      Ldeta = Ldeta, 
-      which_dim_cor_reg = which_dim_cor_reg,
-      rand_cor_g1 = rand_cor_g1,
-      rand_cor_g2 = rand_cor_g2,
-      u_Lzeta_cor = u_Lzeta_cor, 
-      u_Lzeta_cor_2 = u_Lzeta_cor_2, 
-      u_Lzeta_cor_3 = u_Lzeta_cor_3, 
-      l_Lzeta_cor = l_Lzeta_cor, 
-      l_Lzeta_cor_2 = l_Lzeta_cor_2,
-      l_Lzeta_cor_3 = l_Lzeta_cor_3,
-      u_Laeta_cor = u_Laeta_cor, 
-      l_Laeta_cor = l_Laeta_cor, 
-      u_Ldeta_cor = u_Ldeta_cor, 
-      l_Ldeta_cor = l_Ldeta_cor, 
-      Lzeta_cor = Lzeta_cor,
-      Lzeta_cor_2 = Lzeta_cor_2,
-      Lzeta_cor_3 = Lzeta_cor_3,
-      Laeta_cor = Laeta_cor, 
-      Ldeta_cor = Ldeta_cor, 
-      z = z, 
-      ar = ar,
-      dr = dr,
-      Lzeta_sd = Lzeta_sd, 
-      zeta_sd_ind = zeta_sd_ind, 
-      cor_z_item_ind = cor_z_item_ind, 
-      cor_z_item_elem_ind = cor_z_item_elem_ind, 
-      cor_z_item_ind_2 = cor_z_item_ind_2, 
-      cor_z_item_elem_ind_2 = cor_z_item_elem_ind_2, 
-      cor_z_item_ind_3 = cor_z_item_ind_3, 
-      cor_z_item_elem_ind_3 = cor_z_item_elem_ind_3, 
-      Laeta_sd = Laeta_sd, 
-      alindex = alindex, 
-      aeta_sd_ind = aeta_sd_ind, 
-      cor_a_item_ind = cor_a_item_ind, 
-      cor_a_item_elem_ind = cor_a_item_elem_ind,
-      Ldeta_sd = Ldeta_sd, 
-      dlindex = dlindex, 
-      deta_sd_ind = deta_sd_ind, 
-      cor_d_item_ind = cor_d_item_ind, 
-      cor_d_item_elem_ind = cor_d_item_elem_ind,
-      z_c = z_c,
-      z_c_2 = z_c_2,
-      z_c_3 = z_c_3,
-      a_c = a_c, 
-      d_c = d_c)
+        N = N, 
+        J = J, 
+        K = K, 
+        any_rand = any_rand, 
+        any_rand_ind = any_rand_ind, 
+        any_rand_cor = any_rand_cor, 
+        any_rand_ind_a = any_rand_ind_a, 
+        any_rand_cor_a = any_rand_cor_a, 
+        any_rand_ind_d = any_rand_ind_d, 
+        any_rand_cor_d = any_rand_cor_d,
+        Ncateg_max = Ncateg_max, 
+        Ncategi = Ncategi, 
+        N_long = N_long, 
+        nn = nn, 
+        jj = jj, 
+        y = y, 
+        itype = itype, 
+        any_eta3pl = any_eta3pl, 
+        nEta3pl = nEta3pl, 
+        find_eta3pl = find_eta3pl, 
+        x = x, 
+        D = D, 
+        DAlpha = DAlpha, 
+        alpha_dstart = alpha_dstart,
+        alpha_dend = alpha_dend,
+        nDelta = nDelta, 
+        L = L, 
+        has_treg = has_treg, 
+        beta_dstart = beta_dstart, 
+        beta_dend = beta_dend, 
+        zeta_dstart = zeta_dstart, 
+        zeta_dend = zeta_dend, 
+        fweights = fweights, 
+        # x_miss = x_miss, 
+        nDelta_r = nDelta_r, 
+        nAlpha_r = nAlpha_r, 
+        LMean = LMean, 
+        deltaMean = deltaMean, 
+        d_design = d_design, 
+        a_design = a_design, 
+        rand_ind_g1 = rand_ind_g1,
+        rand_ind_g2 = rand_ind_g2,
+        Lzeta = Lzeta, 
+        Lzeta_2 = Lzeta_2,
+        Lzeta_3 = Lzeta_3,
+        Laeta = Laeta, 
+        Ldeta = Ldeta, 
+        which_dim_cor_reg = which_dim_cor_reg,
+        rand_cor_g1 = rand_cor_g1,
+        rand_cor_g2 = rand_cor_g2,
+        u_Lzeta_cor = u_Lzeta_cor, 
+        u_Lzeta_cor_2 = u_Lzeta_cor_2, 
+        u_Lzeta_cor_3 = u_Lzeta_cor_3, 
+        l_Lzeta_cor = l_Lzeta_cor, 
+        l_Lzeta_cor_2 = l_Lzeta_cor_2,
+        l_Lzeta_cor_3 = l_Lzeta_cor_3,
+        u_Laeta_cor = u_Laeta_cor, 
+        l_Laeta_cor = l_Laeta_cor, 
+        u_Ldeta_cor = u_Ldeta_cor, 
+        l_Ldeta_cor = l_Ldeta_cor, 
+        Lzeta_cor = Lzeta_cor,
+        Lzeta_cor_2 = Lzeta_cor_2,
+        Lzeta_cor_3 = Lzeta_cor_3,
+        Laeta_cor = Laeta_cor, 
+        Ldeta_cor = Ldeta_cor, 
+        z = z, 
+        z_2 = z_2,
+        z_3 = z_3,
+        ar = ar,
+        dr = dr,
+        Lzeta_sd = Lzeta_sd, 
+        Lzeta_sd_2 = Lzeta_sd_2, 
+        Lzeta_sd_3 = Lzeta_sd_3, 
+        zeta_sd_ind = zeta_sd_ind, 
+        zeta_sd_ind_2 = zeta_sd_ind_2, 
+        zeta_sd_ind_3 = zeta_sd_ind_3, 
+        cor_z_item_ind = cor_z_item_ind, 
+        cor_z_item_elem_ind = cor_z_item_elem_ind, 
+        cor_z_item_ind_2 = cor_z_item_ind_2, 
+        cor_z_item_elem_ind_2 = cor_z_item_elem_ind_2, 
+        cor_z_item_ind_3 = cor_z_item_ind_3, 
+        cor_z_item_elem_ind_3 = cor_z_item_elem_ind_3, 
+        Laeta_sd = Laeta_sd, 
+        alindex = alindex, 
+        aeta_sd_ind = aeta_sd_ind, 
+        cor_a_item_ind = cor_a_item_ind, 
+        cor_a_item_elem_ind = cor_a_item_elem_ind,
+        Ldeta_sd = Ldeta_sd, 
+        dlindex = dlindex, 
+        deta_sd_ind = deta_sd_ind, 
+        cor_d_item_ind = cor_d_item_ind, 
+        cor_d_item_elem_ind = cor_d_item_elem_ind,
+        z_c = z_c,
+        z_c_2 = z_c_2,
+        z_c_3 = z_c_3,
+        a_c = a_c, 
+        d_c = d_c
+      )
+
   } else {    # D > 1 & h2_dims > 0
+
     standata = list(
-      N = N, 
-      J = J, 
-      K = K, 
-      any_rand = any_rand, 
-      any_rand_ind = any_rand_ind, 
-      any_rand_cor = any_rand_cor, 
-      any_rand_ind_a = any_rand_ind_a, 
-      any_rand_cor_a = any_rand_cor_a, 
-      any_rand_ind_d = any_rand_ind_d, 
-      any_rand_cor_d = any_rand_cor_d,
-      Ncateg_max = Ncateg_max, 
-      Ncategi = Ncategi, 
-      N_long = N_long, 
-      nn = nn, 
-      jj = jj, 
-      y = y, 
-      itype = itype, 
-      any_eta3pl = any_eta3pl, 
-      nEta3pl = nEta3pl, 
-      find_eta3pl = find_eta3pl, 
-      x = x, 
-      D = D, 
-      DAlpha = DAlpha, 
-      alpha_dstart = alpha_dstart,
-      alpha_dend = alpha_dend,
-      nDelta = nDelta, 
-      lambda_ind = lambda_ind,
-      L = L, 
-      has_treg = has_treg, 
-      beta_dstart = beta_dstart, 
-      beta_dend = beta_dend, 
-      zeta_dstart = zeta_dstart, 
-      zeta_dend = zeta_dend, 
-      fweights = fweights, 
-      # x_miss = x_miss, 
-      nDelta_r = nDelta_r, 
-      nAlpha_r = nAlpha_r, 
-      LMean = LMean, 
-      deltaMean = deltaMean, 
-      d_design = d_design, 
-      a_design = a_design, 
-      Lzeta = Lzeta, 
-      Laeta = Laeta, 
-      Ldeta = Ldeta, 
-      u_Lzeta_cor = u_Lzeta_cor, 
-      l_Lzeta_cor = l_Lzeta_cor, 
-      u_Laeta_cor = u_Laeta_cor, 
-      l_Laeta_cor = l_Laeta_cor, 
-      u_Ldeta_cor = u_Ldeta_cor, 
-      l_Ldeta_cor = l_Ldeta_cor, 
-      Lzeta_cor = Lzeta_cor, 
-      Laeta_cor = Laeta_cor, 
-      Ldeta_cor = Ldeta_cor, 
-      z = z, 
-      ar = ar,
-      dr = dr,
-      Lzeta_sd = Lzeta_sd, 
-      zeta_sd_ind = zeta_sd_ind, 
-      cor_z_item_ind = cor_z_item_ind, 
-      cor_z_item_elem_ind = cor_z_item_elem_ind, 
-      Laeta_sd = Laeta_sd, 
-      alindex = alindex, 
-      aeta_sd_ind = aeta_sd_ind, 
-      cor_a_item_ind = cor_a_item_ind, 
-      cor_a_item_elem_ind = cor_a_item_elem_ind,
-      Ldeta_sd = Ldeta_sd, 
-      dlindex = dlindex, 
-      deta_sd_ind = deta_sd_ind, 
-      cor_d_item_ind = cor_d_item_ind, 
-      cor_d_item_elem_ind = cor_d_item_elem_ind,
-      z_c = z_c,
-      a_c = a_c, 
-      d_c = d_c)
+        N = N, 
+        J = J, 
+        K = K, 
+        any_rand = any_rand, 
+        any_rand_ind = any_rand_ind, 
+        any_rand_cor = any_rand_cor, 
+        any_rand_ind_a = any_rand_ind_a, 
+        any_rand_cor_a = any_rand_cor_a, 
+        any_rand_ind_d = any_rand_ind_d, 
+        any_rand_cor_d = any_rand_cor_d,
+        Ncateg_max = Ncateg_max, 
+        Ncategi = Ncategi, 
+        N_long = N_long, 
+        nn = nn, 
+        jj = jj, 
+        y = y, 
+        itype = itype, 
+        any_eta3pl = any_eta3pl, 
+        nEta3pl = nEta3pl, 
+        find_eta3pl = find_eta3pl, 
+        x = x, 
+        D = D, 
+        DAlpha = DAlpha, 
+        alpha_dstart = alpha_dstart,
+        alpha_dend = alpha_dend,
+        nDelta = nDelta, 
+        lambda_ind = lambda_ind,
+        L = L, 
+        has_treg = has_treg, 
+        beta_dstart = beta_dstart, 
+        beta_dend = beta_dend, 
+        zeta_dstart = zeta_dstart, 
+        zeta_dend = zeta_dend, 
+        fweights = fweights, 
+        # x_miss = x_miss, 
+        nDelta_r = nDelta_r, 
+        nAlpha_r = nAlpha_r, 
+        LMean = LMean, 
+        deltaMean = deltaMean, 
+        d_design = d_design, 
+        a_design = a_design, 
+        Lzeta = Lzeta, 
+        Laeta = Laeta, 
+        Ldeta = Ldeta, 
+        u_Lzeta_cor = u_Lzeta_cor, 
+        l_Lzeta_cor = l_Lzeta_cor, 
+        u_Laeta_cor = u_Laeta_cor, 
+        l_Laeta_cor = l_Laeta_cor, 
+        u_Ldeta_cor = u_Ldeta_cor, 
+        l_Ldeta_cor = l_Ldeta_cor, 
+        Lzeta_cor = Lzeta_cor, 
+        Laeta_cor = Laeta_cor, 
+        Ldeta_cor = Ldeta_cor, 
+        z = z, 
+        ar = ar,
+        dr = dr,
+        Lzeta_sd = Lzeta_sd, 
+        zeta_sd_ind = zeta_sd_ind, 
+        cor_z_item_ind = cor_z_item_ind, 
+        cor_z_item_elem_ind = cor_z_item_elem_ind, 
+        Laeta_sd = Laeta_sd, 
+        alindex = alindex, 
+        aeta_sd_ind = aeta_sd_ind, 
+        cor_a_item_ind = cor_a_item_ind, 
+        cor_a_item_elem_ind = cor_a_item_elem_ind,
+        Ldeta_sd = Ldeta_sd, 
+        dlindex = dlindex, 
+        deta_sd_ind = deta_sd_ind, 
+        cor_d_item_ind = cor_d_item_ind, 
+        cor_d_item_elem_ind = cor_d_item_elem_ind,
+        z_c = z_c,
+        a_c = a_c, 
+        d_c = d_c
+      )
+
   }
 
   # Select the correct inirt implementation based on input parameters
   if(D == 1) {
+
     modl = stanmodels$theta2_unidim
     mtype = "unidim"
+
   } else if(D > 1 & h2_dims == 0) {
+
     modl = stanmodels$theta2_mirt
     mtype = "mdim"
+
   } else {    # D > 1 & h2_dims > 0
+
     modl = stanmodels$theta2_soirt
     mtype = "soirt"
+
   }
 
   # Choose a model estimateion method: variational inference or HMC
   if(method[1] == "vb") {
+
     out = rstan::vb(modl, data = standata, ...)
+
   } else if(method[1] == "hmc") {
+
     out = rstan::sampling(modl, data = standata, ...)
+
   } else {
+
     stop("Method not yet implemeted.")
+
   }
 
   output = list(
@@ -843,7 +910,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     mtype = mtype
   )
 
-  class(output) = "theta2Obj"
+  class(output) = 'theta2Obj'
 
   return(output)
+
 }
