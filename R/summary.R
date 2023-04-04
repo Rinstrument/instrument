@@ -27,7 +27,7 @@ summary.theta2Obj = function(object, pars = 'default', probs = c(0.025, 0.50, 0.
   # remove unused parameter names
   if(pars == 'default') {
     all_par_names = setdiff(all_par_names, c('alpha_l', 'eta3pl_l', 'delta_l', 
-      'eta3pl', 'db', 'ab', 'xb', 'nu', 'c', 'lp__'))
+      'eta3pl', 'db', 'ab', 'xb', 'nu', 'c', 'zeta_l[', 'lp__'))
   } else {
     all_par_names = pars
   }

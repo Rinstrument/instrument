@@ -2,6 +2,9 @@
 # libraries
 library(theta2)
 
+library(devtools)
+install()
+
 # ------------------------------------------------------------------------------
 # data
 data(familyrisk)
@@ -33,6 +36,24 @@ model = 'theta1 = c(3:16)
          theta3 = c(3:16)
          theta1 ~ wave + (1 | id)'
 
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta2 ~ wave + (1 | id)
+         theta3 ~ wave + (1 | id)'
+
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta3 ~ wave + (1 | id)'
+
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta1 ~ wave + (1 | id)
+         theta2 ~ wave + (1 | id)
+         theta3 ~ wave + (1 | id)'
+
 # report the rotation. Are there three dimensions?
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
@@ -46,13 +67,17 @@ exploratory = TRUE
 method = 'hmc'
 iter = 500
 chains = 1
+fweights = NULL
 library(devtools)
 load_all()
 
 fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
   exploratory = TRUE, method = 'hmc', iter = 500, chains = 1)
 
-save(fit, file = "tests/case_study_results/fit_exploratory_3dim_wave.RData")
+fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
+  exploratory = TRUE, method = 'vb', tol_rel_obj = 0.001, iter = 10000)
+
+save(fit, file = "tests/case_study_results/fit_exploratory_3dim_wave_random_intercept_dim1.RData")
 
 object = fit
 

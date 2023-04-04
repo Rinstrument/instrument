@@ -96,6 +96,7 @@ data {
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
   
   int<lower=0> which_dim_ind_reg[D];
+  int<lower=0> which_dim_ind_reg_sort[D];
   // whether to use extra slots for independend ranef matrices
   int<lower=0,upper=1> rand_ind_g1;
   int<lower=0,upper=1> rand_ind_g2;
@@ -212,6 +213,13 @@ parameters {
 
   vector[Lzeta] zeta_l;          // random regression pars
   vector<lower=0>[Lzeta_sd] zeta_l_sd;          // random regression pars
+
+  vector[Lzeta_2] zeta_l_2;
+  vector<lower=0>[Lzeta_sd_2] zeta_l_sd_2;
+
+  vector[Lzeta_3] zeta_l_3;
+  vector<lower=0>[Lzeta_sd_3] zeta_l_sd_3;
+
   vector[Laeta] aeta_l;
   vector<lower=0>[Laeta_sd] aeta_l_sd; 
   vector[Ldeta] deta_l;
@@ -239,8 +247,11 @@ parameters {
 
   vector[l_Laeta_cor] aeta_c[u_Laeta_cor];
   vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
+
 }
+
 transformed parameters {
+
   matrix[D*(DAlpha ? 1 : 0), J] alpha;                  // connstrain the upper traingular elements to zero 
   matrix[K, D] betat; // may generalize to [K,D]              // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
@@ -251,8 +262,6 @@ transformed parameters {
   vector[N_long] nu;
   matrix[N_long, Ncateg_max-1] c;
   vector<lower=0,upper=1>[N_long] eta3pl;
-  // vector[D] lambda_identify;  // restrict the first lambda to be >= 0 for identifiability of the model!
-  // vector[N*D] sig_thetag_reg_rep;
 
   {
     for(j in 1:J) {
@@ -260,7 +269,6 @@ transformed parameters {
         alpha[d, j] = negative_infinity();
       }
     }
-  // {
     int index = 0;
     for(d in 1:D) {
       for(j in d:J) {
@@ -268,32 +276,7 @@ transformed parameters {
         alpha[d, j] = alpha_l[index];
       }
     }
-  // }
-    // if(L) {
-    //   for(d in 1:D) {
-    //     for(j in 1:J) {
-    //       alpha[d, j] = negative_infinity();
-    //     }
-    //   }
-    //   int aindex = 0;
-    //   int a_lower = 0;
-    //   int a_upper = 0;
-    //   for(d in 1:D) {
-    //     a_lower = alpha_dstart[d];
-    //     a_upper = alpha_dend[d];
-    //     for(i in a_lower:a_upper) {
-    //       aindex += 1;
-    //       alpha[d, i] = alpha_l[aindex];
-    //     }
-    //   }
-    // }
   }
-
-  // {
-  //   if(has_treg) {
-      
-  //   }
-  // }
     
   {
     if(has_treg) {
@@ -326,8 +309,8 @@ transformed parameters {
         z_upper = zeta_dend[d];
         for(i in z_lower:z_upper) {
           zindex = zindex + 1;
-          zeta[i, d] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
-        }
+          zeta[i, which_dim_ind_reg[d]] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
+        } // try to vectorize this zeta math with dot_product()
       }
     }
   }
@@ -437,22 +420,35 @@ transformed parameters {
         //   }
         // }
       }
+
       if(any_rand_ind) {
-        for(k in 1:Lzeta) {
-          for(d in 1:D) {
-            xb[i, d] += z[nn[i], k] * zeta[k, d];
-          }
+      
+        // for(k in 1:Lzeta) {
+
+        xb[i, which_dim_ind_reg_sort[1]] += dot_product(z[nn[i], ], zeta[, which_dim_ind_reg[1]]);
+
+        // }
+
+        if(rand_ind_g1) {
+          // for(k in 1:Lzeta_2) {
+            // xb[i, which_dim_ind_reg[2]] += z[nn[i], k] * zeta[k, 2];
+          xb[i, which_dim_ind_reg_sort[2]] += dot_product(z[nn[i], ], zeta[, which_dim_ind_reg[2]]);
+          // }
         }
+
+        if(rand_ind_g2) {
+          // for(k in 1:Lzeta_3) {
+            // xb[i, which_dim_ind_reg[3]] += z[nn[i], k] * zeta[k, 3];
+          xb[i, which_dim_ind_reg_sort[3]] += dot_product(z[nn[i], ], zeta[, which_dim_ind_reg[3]]);
+          // }
+        }
+
       }
 
       c[i, ] = delta[jj[i], ] + db[i];
       
       nu[i] = dot_product(theta[nn[i], ] + xb[i, ], exp(col(alpha, jj[i])));
 
-      // print(nu[i]);
-      // print(c[i, ]);
-      // print(xb[i, ]);
-      // print(col(alpha, jj[i]));
 
       if(any_eta3pl) {
         eta3pl[i] = (itype[i] == 3) ? eta3pl_l[find_eta3pl[i]] : 0.0;
@@ -460,8 +456,11 @@ transformed parameters {
         eta3pl[i] = 0.0;
       }
     }
+
   }
+
 }
+
 model {
   // prior N(0,1) on general theta dimension (second-order theta)
   to_vector(theta) ~ normal(0, 1);
