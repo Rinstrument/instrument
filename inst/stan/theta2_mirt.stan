@@ -312,6 +312,34 @@ transformed parameters {
           zeta[i, which_dim_ind_reg[d]] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
         } // try to vectorize this zeta math with dot_product()
       }
+
+      z_lower = zeta_dstart[1];
+      z_upper = zeta_dend[1];
+      for(i in z_lower:z_upper) {
+        zindex = zindex + 1;
+        zeta[i, which_dim_ind_reg[1]] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
+      }
+
+      if(rand_ind_g1) {
+        zindex = 0;
+        z_lower = zeta_dstart[2];
+        z_upper = zeta_dend[2];
+        for(i in z_lower:z_upper) {
+          zindex = zindex + 1;
+          zeta[i, which_dim_ind_reg[2]] = zeta_l_2[zindex]*zeta_l_sd_2[zeta_sd_ind_2[i]];
+        }
+      }
+
+      if(rand_ind_g2) {
+        zindex = 0;
+        z_lower = zeta_dstart[3];
+        z_upper = zeta_dend[3];
+        for(i in z_lower:z_upper) {
+          zindex = zindex + 1;
+          zeta[i, which_dim_ind_reg[3]] = zeta_l_3[zindex]*zeta_l_sd_3[zeta_sd_ind_3[i]];
+        }
+      }
+
     }
   }
 
