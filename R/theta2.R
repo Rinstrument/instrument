@@ -602,9 +602,9 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     p_ind = 1
     for(d in 1:D) { # insert which_ thing here (equivalent to correlated case)
       if(which_dim_ind_reg[d] > 0) {
-        zeta_dstart[d] = start_index
-        zeta_dend[d] = start_index + length(predictors_ranef[[p_ind]]) - 1
-        start_index = start_index + length(predictors_ranef[[p_ind]])
+        zeta_dstart[d] = 1
+        zeta_dend[d] = 1 + length(predictors_ranef[[p_ind]]) - 1
+        # start_index = start_index + length(predictors_ranef[[p_ind]])
         p_ind = p_ind + 1
       }
     }

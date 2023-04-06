@@ -307,14 +307,14 @@ transformed parameters {
       int zindex = 0;
       int z_lower = 0;
       int z_upper = 0;
-      for(d in 1:D) {
-        z_lower = zeta_dstart[d];
-        z_upper = zeta_dend[d];
-        for(i in z_lower:z_upper) {
-          zindex = zindex + 1;
-          zeta[i, which_dim_ind_reg[d]] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
-        } // try to vectorize this zeta math with dot_product()
-      }
+      // for(d in 1:D) {
+      //   z_lower = zeta_dstart[d];
+      //   z_upper = zeta_dend[d];
+      //   for(i in z_lower:z_upper) {
+      //     zindex = zindex + 1;
+      //     zeta[i, which_dim_ind_reg[d]] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
+      //   } // try to vectorize this zeta math with dot_product()
+      // }
 
       z_lower = zeta_dstart[1];
       z_upper = zeta_dend[1];
