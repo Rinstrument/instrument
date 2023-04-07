@@ -74,6 +74,9 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
   predictors = lapply(regr_theta, \(x) {x$predictors})
 
+  # does this need to be protected agains empty names_regr_theta
+  find_dims = which(irt_model[['dim_names']] %in% names_regr_theta)
+
   # predictors = regr_theta$predictors
   #   if(!is.null(predictors)) {
   #     predictors = list(regr_theta$predictors)
@@ -93,16 +96,10 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
   }
 
+  which_dim_ind_reg = array(0, dim = dims)
+  which_dim_ind_reg_sort = array(0, dim = dims)
+
   if(any(sapply(regr_theta, \(x) { !is.null(x[['predictors_ranef']]) }))) {
-
-    find_dims = which(irt_model[['dim_names']] %in% names_regr_theta)
-
-    fill_match = function(x, d) {
-      y = match(1:d, x)
-      y[is.na(y)] = 0
-      y[y > 0] = x
-      return(y)
-    }
 
     which_dim_ind_reg = fill_match(find_dims, dims)
 
@@ -538,6 +535,9 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   beta_dstart = array(0, dim = c(0))
   beta_dend = array(0, dim = c(0))
 
+  which_dim_fixed_reg = array(0, dim = dims)
+  which_dim_fixed_reg_sort = array(0, dim = dims)
+
   if(any(!is.null(unlist(predictors)))) {
     regress = 1
     start_index = 1
@@ -556,13 +556,27 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
       # sapply(regr_theta, \(x) {x[['type']]}) ### here ###
       # irt_model$dim_names
       # names_regr_theta
+
+      which_dim_fixed_reg = fill_match(find_dims, dims)
+
+      which_dim_fixed_reg = c(
+          which_dim_fixed_reg[which_dim_fixed_reg > 0],
+          which_dim_fixed_reg[which_dim_fixed_reg == 0]
+        )
+      which_dim_fixed_reg_sort = sort(which_dim_fixed_reg, TRUE)
+      # which_dim_ind_reg = which_dim_ind_reg_sort
+      which_dim_fixed_reg_sort = c(
+          (1:dims)[which_dim_fixed_reg_sort > 0],
+          (rep(0, dims))[which_dim_fixed_reg_sort == 0]
+        )
+
       predictors_by_dim = irt_model$dim_names %in% names_regr_theta
       start_index = 1
       beta_dstart = numeric(D) + 1
       beta_dend = numeric(D)
       p_ind = 1
       for(d in 1:D) {
-        if(predictors_by_dim[d]) {
+        if(which_dim_fixed_reg[d] > 0) {
           beta_dstart[d] = start_index
           beta_dend[d] = start_index + length(predictors[[p_ind]]) - 1
           start_index = start_index + length(predictors[[p_ind]])
@@ -789,6 +803,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         deltaMean = deltaMean, 
         d_design = d_design, 
         a_design = a_design, 
+        which_dim_fixed_reg = which_dim_fixed_reg,
+        which_dim_fixed_reg_sort = which_dim_fixed_reg_sort,
         which_dim_ind_reg = which_dim_ind_reg,
         which_dim_ind_reg_sort = which_dim_ind_reg_sort,
         rand_ind_g1 = rand_ind_g1,

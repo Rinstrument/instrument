@@ -94,6 +94,9 @@ data {
   int<lower=0> deltaMean;    // want at least intercept for delta pars?
   matrix[N, nDelta_r] d_design;     // delta structural design matrix
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
+
+  int<lower=0> which_dim_fixed_reg[D];
+  int<lower=0> which_dim_fixed_reg_sort[D];
   
   int<lower=0> which_dim_ind_reg[D];
   int<lower=0> which_dim_ind_reg_sort[D];
@@ -320,7 +323,7 @@ transformed parameters {
       z_upper = zeta_dend[1];
       for(i in z_lower:z_upper) {
         zindex = zindex + 1;
-        zeta[i, which_dim_ind_reg[1]] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
+        zeta[i, 1] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
       }
 
       if(rand_ind_g1) {
@@ -329,7 +332,7 @@ transformed parameters {
         z_upper = zeta_dend[2];
         for(i in z_lower:z_upper) {
           zindex = zindex + 1;
-          zeta_2[i, which_dim_ind_reg[2]] = zeta_l_2[zindex]*zeta_l_sd_2[zeta_sd_ind_2[i]];
+          zeta_2[i, 1] = zeta_l_2[zindex]*zeta_l_sd_2[zeta_sd_ind_2[i]];
         }
       }
 
@@ -339,7 +342,7 @@ transformed parameters {
         z_upper = zeta_dend[3];
         for(i in z_lower:z_upper) {
           zindex = zindex + 1;
-          zeta[i, which_dim_ind_reg[3]] = zeta_l_3[zindex]*zeta_l_sd_3[zeta_sd_ind_3[i]];
+          zeta[i, 1] = zeta_l_3[zindex]*zeta_l_sd_3[zeta_sd_ind_3[i]];
         }
       }
 
@@ -354,12 +357,12 @@ transformed parameters {
     int d_index = 0;
     for(j in 1:J) {
       vector[Ncategi[j]-1] ds_ind = sort_asc(delta_l[(d_index+1):(d_index+Ncategi[j]-1)]);
-      for(i in 1:(Ncategi[j]-1)) {
+      for(i in 1:(Ncategi[j]-1)) { // faster to combine this into a single for loop?
         d_index = d_index + 1;
         delta[j, i] = ds_ind[i];
       }
       for(i in (Ncategi[j]):(Ncateg_max-1)) {
-        delta[j, i] = 1e7 + idx;
+        delta[j, i] = 1e7;// + j + i;
         idx = idx + 1;
       }
     }
@@ -404,17 +407,9 @@ transformed parameters {
       if(has_treg) {
         for(d in 1:D) {
           xb[i, d] = 0.0;
-          for(k in 1:K) {
-            // if(x_miss[i, k] == 0) {
-            // print("betat[k, d] ", betat[k, d]);
-            // print("x[nn[i], k] ", x[nn[i], k]);
-            xb[i, d] += x[nn[i], k] * betat[k, d];
-            // print("k ", k);
-            // print("d ", d);
-            // print("betat[k, d] ", betat[k, d]);
-            // print("x[nn[i], k] after ", x[nn[i], k]);
-            // }
-          }
+          //for(k in 1:K) {  // vectorize this for loop with dot_product
+          xb[i, d] += dot_product(x[nn[i], ], betat[, d]);
+          //}
         }
       } else {
         for(d in 1:D) {
@@ -456,21 +451,21 @@ transformed parameters {
       
         // for(k in 1:Lzeta) {
 
-        xb[i, which_dim_ind_reg_sort[1]] += dot_product(z[nn[i], ], zeta[, which_dim_ind_reg[1]]);
+        xb[i, which_dim_ind_reg_sort[1]] += dot_product(z[nn[i], ], zeta[, 1]);
 
         // }
 
         if(rand_ind_g1) {
           // for(k in 1:Lzeta_2) {
             // xb[i, which_dim_ind_reg[2]] += z[nn[i], k] * zeta[k, 2];
-          xb[i, which_dim_ind_reg_sort[2]] += dot_product(z[nn[i], ], zeta[, which_dim_ind_reg[2]]);
+          xb[i, which_dim_ind_reg_sort[2]] += dot_product(z_2[nn[i], ], zeta_2[, 1]);
           // }
         }
 
         if(rand_ind_g2) {
           // for(k in 1:Lzeta_3) {
             // xb[i, which_dim_ind_reg[3]] += z[nn[i], k] * zeta[k, 3];
-          xb[i, which_dim_ind_reg_sort[3]] += dot_product(z[nn[i], ], zeta[, which_dim_ind_reg[3]]);
+          xb[i, which_dim_ind_reg_sort[3]] += dot_product(z_3[nn[i], ], zeta_3[, 1]);
           // }
         }
 
