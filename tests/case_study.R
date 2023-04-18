@@ -58,7 +58,8 @@ model = 'theta1 = c(3:16)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta1 ~ wave + (1 + wave | id)'
+         theta1 ~ wave + (1 + wave | id)
+         theta3 ~ wave + (1 + wave | id)'
 
 data = familyrisk
 model = model

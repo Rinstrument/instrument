@@ -282,6 +282,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   z = array(0, dim = c(N, 0))
   Lzeta_sd = 0
   zeta_sd_ind = array(0, dim = c(0))
+  zeta_sd_ind_diag = array(0, dim = c(0, 0))
+  zeta_sd_ind_ones = array(0, dim = c(0))
     # z = matrix(0, nrow = N, ncol = Lzeta)
   if(!is.null(unlist(predictors_ranef))) {
     # has_treg = 1
@@ -297,6 +299,12 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     z = reg_data_ranef[[1]]
     Lzeta_sd = Lzeta_sd_list[[1]]
     zeta_sd_ind = zeta_sd_ind_list[[1]]
+
+    # diagonalize this here
+    zeta_sd_ind_diag
+
+    # also update this
+    zeta_sd_ind_ones
     
     if(length(regr_theta) > 1) {
       for(i in 2:length(regr_theta)) {

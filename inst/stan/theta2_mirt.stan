@@ -146,6 +146,9 @@ data {
 
   int<lower=0> Lzeta_sd;     // number of sd pars
   int<lower=0> zeta_sd_ind[Lzeta]; // sd index for each column of z
+  matrix<lower=0>[Lzeta, Lzeta_sd] zeta_sd_ind_diag;
+  int<lower=1> zeta_sd_ind_ones[Lzeta_sd];
+
   int<lower=0> Lzeta_sd_2;
   int<lower=0> zeta_sd_ind_2[Lzeta_2];
   int<lower=0> Lzeta_sd_3;
@@ -269,6 +272,18 @@ transformed parameters {
   matrix[N_long, Ncateg_max-1] c;
   vector<lower=0,upper=1>[N_long] eta3pl;
 
+  vector[Lzeta] zeta_l_sd_elong;
+
+  {
+    // elongate zeta_l_sd for fast dot product
+    zeta_l_sd_elong = (zeta_sd_ind_diag * zeta_l_sd) * zeta_sd_ind_ones;
+
+    // zeta_l_sd_elong = zeta_sd_ind_diag * zeta_sd_ind_ones;
+    // for(ze in 1:Lzeta) {
+    //   zeta_l_sd_elong[ze] = zeta_l_sd[zeta_sd_ind[ze]];
+    // }
+  }
+
   {
     for(j in 1:J) {
       for(d in (j+1):D) {
@@ -321,10 +336,10 @@ transformed parameters {
 
       z_lower = zeta_dstart[1];
       z_upper = zeta_dend[1];
-      for(i in z_lower:z_upper) {
-        zindex = zindex + 1;
-        zeta[i, 1] = zeta_l[zindex]*zeta_l_sd[zeta_sd_ind[i]];
-      }
+      // for(i in z_lower:z_upper) {
+        // zindex = zindex + 1;
+      zeta[, 1] = zeta_l .* zeta_l_sd_elong;
+      // }
 
       if(rand_ind_g1) {
         zindex = 0;
