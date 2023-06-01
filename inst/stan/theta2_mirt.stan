@@ -71,6 +71,7 @@ data {
   int<lower=0> nEta3pl; // number of eta parameters
   int<lower=0> find_eta3pl[N_long];      // find the correct eta parameter for long format of data
   matrix[N, K] x;   // fixed effect design matrix for observation n
+  matrix[N_long, K] xLong;   // fixed effect design matrix for observation n (long format)
   int<lower=1> D;        // number of first-order dimensions
   int<lower=0> DAlpha;  // Copy of D except that it is zero if itype == "1pl" - no alpha parameters estimated in this case
   // int<lower=0> exploratory;
@@ -138,6 +139,7 @@ data {
   int<lower=0> Ldeta_cor;
 
   matrix[N, Lzeta] z;   // design matrix for the uncorrelated random effects
+  matrix[N_long, Lzeta] zLong;
   matrix[N, Lzeta_2] z_2;
   matrix[N, Lzeta_3] z_3;
 
@@ -147,7 +149,7 @@ data {
   int<lower=0> Lzeta_sd;     // number of sd pars
   int<lower=0> zeta_sd_ind[Lzeta]; // sd index for each column of z
   matrix<lower=0>[Lzeta, Lzeta_sd] zeta_sd_ind_diag;
-  int<lower=1> zeta_sd_ind_ones[Lzeta_sd];
+  //int<lower=1> zeta_sd_ind_ones[Lzeta_sd];
 
   int<lower=0> Lzeta_sd_2;
   int<lower=0> zeta_sd_ind_2[Lzeta_2];
@@ -276,7 +278,7 @@ transformed parameters {
 
   {
     // elongate zeta_l_sd for fast dot product
-    zeta_l_sd_elong = (zeta_sd_ind_diag * zeta_l_sd) * zeta_sd_ind_ones;
+    zeta_l_sd_elong = (zeta_sd_ind_diag * zeta_l_sd); //.* zeta_sd_ind_ones;
 
     // zeta_l_sd_elong = zeta_sd_ind_diag * zeta_sd_ind_ones;
     // for(ze in 1:Lzeta) {
@@ -357,7 +359,7 @@ transformed parameters {
         z_upper = zeta_dend[3];
         for(i in z_lower:z_upper) {
           zindex = zindex + 1;
-          zeta[i, 1] = zeta_l_3[zindex]*zeta_l_sd_3[zeta_sd_ind_3[i]];
+          zeta_3[i, 1] = zeta_l_3[zindex]*zeta_l_sd_3[zeta_sd_ind_3[i]];
         }
       }
 
@@ -423,14 +425,17 @@ transformed parameters {
         for(d in 1:D) {
           xb[i, d] = 0.0;
           //for(k in 1:K) {  // vectorize this for loop with dot_product
-          xb[i, d] += dot_product(x[nn[i], ], betat[, d]);
           //}
+          //xb[i, d] += dot_product(x[nn[i], ], betat[, d]);
+          xb[i, d] += dot_product(xLong[i, ], betat[, d]); // can this be vectorized over dimension D?
         }
+
       } else {
         for(d in 1:D) {
-          xb[i, d] = 0.0;
+          xb[i, d] = 0.0; // can this be replaces with rep_vec(0)?
         }
       }
+      
       if(any_rand_cor) {
         
         for(k in 1:Lzeta_cor) {
@@ -466,8 +471,9 @@ transformed parameters {
       
         // for(k in 1:Lzeta) {
 
-        xb[i, which_dim_ind_reg_sort[1]] += dot_product(z[nn[i], ], zeta[, 1]);
-
+        // PREVIOUS:
+        // xb[i, which_dim_ind_reg_sort[1]] += dot_product(z[nn[i], ], zeta[, 1]);
+        xb[i, which_dim_ind_reg_sort[1]] += dot_product(zLong[i, ], zeta[, 1]);
         // }
 
         if(rand_ind_g1) {

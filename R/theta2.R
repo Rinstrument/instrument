@@ -247,6 +247,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   K = 0
 
   x = array(0, dim = c(N, 0))
+  xLong = array(0, dim = c(N_long, 0))
   any_rand = 0
   any_rand_ind = 0
   any_rand_cor = 0
@@ -262,6 +263,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     if(any(is.na(reg_data))) {
         model_missing_x = 1
     }
+    xLong = matrix(rep(t(x), J), ncol = ncol(x), byrow = TRUE)
   }
 
   # extra memory slots used if more than one set of correlated random effects
@@ -300,11 +302,14 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     Lzeta_sd = Lzeta_sd_list[[1]]
     zeta_sd_ind = zeta_sd_ind_list[[1]]
 
+    # ______________________________ HERE _____________________________________
     # diagonalize this here
-    zeta_sd_ind_diag
-
-    # also update this
-    zeta_sd_ind_ones
+    zeta_sd_ind_diag = matrix(0, Lzeta, Lzeta_sd)
+    for(ll in 1:Lzeta) {
+      for(jl in 1:Lzeta_sd) {
+        zeta_sd_ind_diag[ll, jl] = ifelse(zeta_sd_ind[ll] == jl, 1, 0)
+      }
+    }
     
     if(length(regr_theta) > 1) {
       for(i in 2:length(regr_theta)) {
@@ -501,6 +506,18 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     nn = nn[y_nonMiss]
     jj = jj[y_nonMiss]
     y = y[y_nonMiss]
+    xLong = matrix(rep(t(x), J), 
+                   ncol = ncol(x), 
+                   byrow = TRUE
+                   )[y_nonMiss, , drop = FALSE]
+
+    if(!is.null(unlist(predictors_ranef))) {
+      zLong = matrix(rep(t(z), J), 
+                     ncol = ncol(z), 
+                     byrow = TRUE
+                     )[y_nonMiss, , drop = FALSE]
+    }
+
   }
 
   D = dims
@@ -792,6 +809,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         nEta3pl = nEta3pl, 
         find_eta3pl = find_eta3pl, 
         x = x, 
+        xLong = xLong,
         D = D, 
         DAlpha = DAlpha, 
         alpha_dstart = alpha_dstart,
@@ -841,6 +859,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         Laeta_cor = Laeta_cor, 
         Ldeta_cor = Ldeta_cor, 
         z = z, 
+        zLong = zLong,
         z_2 = z_2,
         z_3 = z_3,
         ar = ar,
@@ -851,6 +870,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         zeta_sd_ind = zeta_sd_ind, 
         zeta_sd_ind_2 = zeta_sd_ind_2, 
         zeta_sd_ind_3 = zeta_sd_ind_3, 
+        zeta_sd_ind_diag = zeta_sd_ind_diag,
         cor_z_item_ind = cor_z_item_ind, 
         cor_z_item_elem_ind = cor_z_item_elem_ind, 
         cor_z_item_ind_2 = cor_z_item_ind_2, 

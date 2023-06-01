@@ -11,55 +11,23 @@ data(familyrisk)
 
 # ------------------------------------------------------------------------------
 # fit model
-# model = 'theta1 = c(3:16)
-#          theta2 = c(3:16)
-#          theta3 = c(3:16)
-#          theta1 ~ wave + (1 + wave | id)
-#          theta2 ~ wave + (1 + wave | id)
-#          theta3 ~ wave + (1 + wave | id)'
-
-# build analysis up
-# model 1:
+# get this working on the cluster tomorrow
 model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)'
+         theta1 ~ (1 | id) + wave'
 
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta1 ~ wave'
+         theta1 ~ (1 | id) + wave
+         theta2 ~ (1 | id) + wave
+         theta3 ~ (1 | id) + wave'
 
-# fit three models with (1 + wave | id)
-# if slopes small, fit (1 | id)
-model = 'theta1 = c(3:16)
+model = 'tg = theta1 + theta2 + theta3
+         theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta1 ~ wave + (1 | id)'
+         tg ~ (1 | id) + wave'
 
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
-         theta2 ~ wave + (1 | id)
-         theta3 ~ wave + (1 | id)'
-
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
-         theta3 ~ wave + (1 | id)'
-
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
-         theta1 ~ wave + (1 | id)
-         theta2 ~ wave + (1 | id)
-         theta3 ~ wave + (1 | id)'
-
-# report the rotation. Are there three dimensions?
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
-         theta1 ~ wave + (1 + wave | id)
-         theta3 ~ wave + (1 + wave | id)'
 
 data = familyrisk
 model = model
