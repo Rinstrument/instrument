@@ -277,6 +277,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     eval(parse(text = paste0("Lzeta_sd_", i, " = 0")))
     eval(parse(text = paste0("zeta_sd_ind_", i, " = array(0, dim = 0)")))
     eval(parse(text = paste0("z_", i, " = array(0, dim = c(N, 0))")))
+    eval(parse(text = paste0("zeta_sd_ind_diag_", i, " = array(0, dim = c(0, 0))")))
   }
   # }
 
@@ -302,8 +303,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     Lzeta_sd = Lzeta_sd_list[[1]]
     zeta_sd_ind = zeta_sd_ind_list[[1]]
 
-    # ______________________________ HERE _____________________________________
-    # diagonalize this here
+    # diagonalize
     zeta_sd_ind_diag = matrix(0, Lzeta, Lzeta_sd)
     for(ll in 1:Lzeta) {
       for(jl in 1:Lzeta_sd) {
@@ -318,6 +318,18 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         eval(parse(text = paste0("Lzeta_sd_", i, " = Lzeta_sd_list[[", i, "]]")))
         eval(parse(text = paste0("zeta_sd_ind_", i, " = zeta_sd_ind_list[[", i, "]]")))
         eval(parse(text = paste0("z_", i, " = reg_data_ranef[[", i, "]]")))
+        eval(parse(text = paste0("zLong_", i, " = array(0, dim = c(N_long, 0))")))
+        eval(
+          parse(
+            text = paste0(
+              "for(ll in 1:Lzeta_", i, ") {
+                for(jl in 1:Lzeta_sd_", i, ") {
+                  zeta_sd_ind_diag_", i, "[ll, jl] = ifelse(zeta_sd_ind_", i, "[ll] == jl, 1, 0)
+                }
+              }"
+            )
+          )
+        )
       }
     }
     
@@ -516,6 +528,12 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
                      ncol = ncol(z), 
                      byrow = TRUE
                      )[y_nonMiss, , drop = FALSE]
+      for(i in 2:length(regr_theta)) {
+        eval(parse(text = paste0("zLong_", i, " = matrix(rep(t(z_", i, "), J), 
+                                                         ncol = ncol(z_", i, "), 
+                                                         byrow = TRUE
+                                                         )[y_nonMiss, , drop = FALSE]")))
+      }
     }
 
   }
@@ -787,6 +805,168 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
 
   } else if(D > 1 & h2_dims == 0) {
 
+         
+        # Lzeta_2  = NULL
+        # Lzeta_3  = NULL
+        # Lzeta_4  = NULL
+        # Lzeta_5  = NULL
+        # Lzeta_6  = NULL
+        # Lzeta_7  = NULL
+        # Lzeta_8  = NULL
+        # Lzeta_9  = NULL
+        # Lzeta_10 = NULL
+        # Lzeta_11 = NULL
+        # Lzeta_12 = NULL
+        # Lzeta_13 = NULL
+        # Lzeta_14 = NULL
+        # Lzeta_15 = NULL
+        # Lzeta_16 = NULL
+        # Lzeta_17 = NULL
+        # Lzeta_18 = NULL
+        # Lzeta_19 = NULL
+        # Lzeta_20 = NULL
+        # Lzeta_21 = NULL
+        # Lzeta_22 = NULL
+        # Lzeta_23 = NULL
+        # Lzeta_24 = NULL
+        # Lzeta_25 = NULL
+        # Lzeta_26 = NULL
+        # Lzeta_27 = NULL
+        # Lzeta_28 = NULL
+        # Lzeta_29 = NULL
+        # Lzeta_30 = NULL
+        # Lzeta_31 = NULL
+        # Lzeta_32 = NULL
+        # zLong_2  = NULL
+        # zLong_3  = NULL
+        # zLong_4  = NULL
+        # zLong_5  = NULL
+        # zLong_6  = NULL
+        # zLong_7  = NULL
+        # zLong_8  = NULL
+        # zLong_9  = NULL
+        # zLong_10 = NULL
+        # zLong_11 = NULL
+        # zLong_12 = NULL
+        # zLong_13 = NULL
+        # zLong_14 = NULL
+        # zLong_15 = NULL
+        # zLong_16 = NULL
+        # zLong_17 = NULL
+        # zLong_18 = NULL
+        # zLong_19 = NULL
+        # zLong_20 = NULL
+        # zLong_21 = NULL
+        # zLong_22 = NULL
+        # zLong_23 = NULL
+        # zLong_24 = NULL
+        # zLong_25 = NULL
+        # zLong_26 = NULL
+        # zLong_27 = NULL
+        # zLong_28 = NULL
+        # zLong_29 = NULL
+        # zLong_30 = NULL
+        # zLong_31 = NULL
+        # zLong_32 = NULL
+        # Lzeta_sd_2  = NULL
+        # Lzeta_sd_3  = NULL
+        # Lzeta_sd_4  = NULL
+        # Lzeta_sd_5  = NULL
+        # Lzeta_sd_6  = NULL
+        # Lzeta_sd_7  = NULL
+        # Lzeta_sd_8  = NULL
+        # Lzeta_sd_9  = NULL
+        # Lzeta_sd_10 = NULL
+        # Lzeta_sd_11 = NULL
+        # Lzeta_sd_12 = NULL
+        # Lzeta_sd_13 = NULL
+        # Lzeta_sd_14 = NULL
+        # Lzeta_sd_15 = NULL
+        # Lzeta_sd_16 = NULL
+        # Lzeta_sd_17 = NULL
+        # Lzeta_sd_18 = NULL
+        # Lzeta_sd_19 = NULL
+        # Lzeta_sd_20 = NULL
+        # Lzeta_sd_21 = NULL
+        # Lzeta_sd_22 = NULL
+        # Lzeta_sd_23 = NULL
+        # Lzeta_sd_24 = NULL
+        # Lzeta_sd_25 = NULL
+        # Lzeta_sd_26 = NULL
+        # Lzeta_sd_27 = NULL
+        # Lzeta_sd_28 = NULL
+        # Lzeta_sd_29 = NULL
+        # Lzeta_sd_30 = NULL
+        # Lzeta_sd_31 = NULL
+        # Lzeta_sd_32 = NULL
+
+        # zeta_sd_ind    = NULL
+        # zeta_sd_ind_2  = NULL
+        # zeta_sd_ind_3  = NULL
+        # zeta_sd_ind_4  = NULL
+        # zeta_sd_ind_5  = NULL
+        # zeta_sd_ind_6  = NULL
+        # zeta_sd_ind_7  = NULL
+        # zeta_sd_ind_8  = NULL
+        # zeta_sd_ind_9  = NULL
+        # zeta_sd_ind_10 = NULL
+        # zeta_sd_ind_11 = NULL
+        # zeta_sd_ind_12 = NULL
+        # zeta_sd_ind_13 = NULL
+        # zeta_sd_ind_14 = NULL
+        # zeta_sd_ind_15 = NULL
+        # zeta_sd_ind_16 = NULL
+        # zeta_sd_ind_17 = NULL
+        # zeta_sd_ind_18 = NULL
+        # zeta_sd_ind_19 = NULL
+        # zeta_sd_ind_20 = NULL
+        # zeta_sd_ind_21 = NULL
+        # zeta_sd_ind_22 = NULL
+        # zeta_sd_ind_23 = NULL
+        # zeta_sd_ind_24 = NULL
+        # zeta_sd_ind_25 = NULL
+        # zeta_sd_ind_26 = NULL
+        # zeta_sd_ind_27 = NULL
+        # zeta_sd_ind_28 = NULL
+        # zeta_sd_ind_29 = NULL
+        # zeta_sd_ind_30 = NULL
+        # zeta_sd_ind_31 = NULL
+        # zeta_sd_ind_32 = NULL
+
+        # zeta_sd_ind_diag    = NULL
+        # zeta_sd_ind_diag_2  = NULL
+        # zeta_sd_ind_diag_3  = NULL
+        # zeta_sd_ind_diag_4  = NULL
+        # zeta_sd_ind_diag_5  = NULL
+        # zeta_sd_ind_diag_6  = NULL
+        # zeta_sd_ind_diag_7  = NULL
+        # zeta_sd_ind_diag_8  = NULL
+        # zeta_sd_ind_diag_9  = NULL
+        # zeta_sd_ind_diag_10 = NULL
+        # zeta_sd_ind_diag_11 = NULL
+        # zeta_sd_ind_diag_12 = NULL
+        # zeta_sd_ind_diag_13 = NULL
+        # zeta_sd_ind_diag_14 = NULL
+        # zeta_sd_ind_diag_15 = NULL
+        # zeta_sd_ind_diag_16 = NULL
+        # zeta_sd_ind_diag_17 = NULL
+        # zeta_sd_ind_diag_18 = NULL
+        # zeta_sd_ind_diag_19 = NULL
+        # zeta_sd_ind_diag_20 = NULL
+        # zeta_sd_ind_diag_21 = NULL
+        # zeta_sd_ind_diag_22 = NULL
+        # zeta_sd_ind_diag_23 = NULL
+        # zeta_sd_ind_diag_24 = NULL
+        # zeta_sd_ind_diag_25 = NULL
+        # zeta_sd_ind_diag_26 = NULL
+        # zeta_sd_ind_diag_27 = NULL
+        # zeta_sd_ind_diag_28 = NULL
+        # zeta_sd_ind_diag_29 = NULL
+        # zeta_sd_ind_diag_30 = NULL
+        # zeta_sd_ind_diag_31 = NULL
+        # zeta_sd_ind_diag_32 = NULL
+
+
     standata = list(
         N = N, 
         J = J, 
@@ -833,11 +1013,40 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         which_dim_fixed_reg_sort = which_dim_fixed_reg_sort,
         which_dim_ind_reg = which_dim_ind_reg,
         which_dim_ind_reg_sort = which_dim_ind_reg_sort,
-        rand_ind_g1 = rand_ind_g1,
-        rand_ind_g2 = rand_ind_g2,
-        Lzeta = Lzeta, 
-        Lzeta_2 = Lzeta_2,
-        Lzeta_3 = Lzeta_3,
+
+        Lzeta    = Lzeta, 
+        Lzeta_2  = Lzeta_2,
+        Lzeta_3  = Lzeta_3,
+        Lzeta_4  = Lzeta_4,
+        Lzeta_5  = Lzeta_5,
+        Lzeta_6  = Lzeta_6,
+        Lzeta_7  = Lzeta_7,
+        Lzeta_8  = Lzeta_8,
+        Lzeta_9  = Lzeta_9,
+        Lzeta_10 = Lzeta_10,
+        Lzeta_11 = Lzeta_11,
+        Lzeta_12 = Lzeta_12,
+        Lzeta_13 = Lzeta_13,
+        Lzeta_14 = Lzeta_14,
+        Lzeta_15 = Lzeta_15,
+        Lzeta_16 = Lzeta_16,
+        Lzeta_17 = Lzeta_17,
+        Lzeta_18 = Lzeta_18,
+        Lzeta_19 = Lzeta_19,
+        Lzeta_20 = Lzeta_20,
+        Lzeta_21 = Lzeta_21,
+        Lzeta_22 = Lzeta_22,
+        Lzeta_23 = Lzeta_23,
+        Lzeta_24 = Lzeta_24,
+        Lzeta_25 = Lzeta_25,
+        Lzeta_26 = Lzeta_26,
+        Lzeta_27 = Lzeta_27,
+        Lzeta_28 = Lzeta_28,
+        Lzeta_29 = Lzeta_29,
+        Lzeta_30 = Lzeta_30,
+        Lzeta_31 = Lzeta_31,
+        Lzeta_32 = Lzeta_32,
+
         Laeta = Laeta, 
         Ldeta = Ldeta, 
         which_dim_cor_reg = which_dim_cor_reg,
@@ -859,18 +1068,144 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         Laeta_cor = Laeta_cor, 
         Ldeta_cor = Ldeta_cor, 
         z = z, 
-        zLong = zLong,
+
+        zLong    = zLong,
+        zLong_2  = zLong_2,
+        zLong_3  = zLong_3,
+        zLong_4  = zLong_4,
+        zLong_5  = zLong_5,
+        zLong_6  = zLong_6,
+        zLong_7  = zLong_7,
+        zLong_8  = zLong_8,
+        zLong_9  = zLong_9,
+        zLong_10 = zLong_10,
+        zLong_11 = zLong_11,
+        zLong_12 = zLong_12,
+        zLong_13 = zLong_13,
+        zLong_14 = zLong_14,
+        zLong_15 = zLong_15,
+        zLong_16 = zLong_16,
+        zLong_17 = zLong_17,
+        zLong_18 = zLong_18,
+        zLong_19 = zLong_19,
+        zLong_20 = zLong_20,
+        zLong_21 = zLong_21,
+        zLong_22 = zLong_22,
+        zLong_23 = zLong_23,
+        zLong_24 = zLong_24,
+        zLong_25 = zLong_25,
+        zLong_26 = zLong_26,
+        zLong_27 = zLong_27,
+        zLong_28 = zLong_28,
+        zLong_29 = zLong_29,
+        zLong_30 = zLong_30,
+        zLong_31 = zLong_31,
+        zLong_32 = zLong_32,
+
         z_2 = z_2,
         z_3 = z_3,
         ar = ar,
         dr = dr,
-        Lzeta_sd = Lzeta_sd, 
-        Lzeta_sd_2 = Lzeta_sd_2, 
-        Lzeta_sd_3 = Lzeta_sd_3, 
-        zeta_sd_ind = zeta_sd_ind, 
-        zeta_sd_ind_2 = zeta_sd_ind_2, 
-        zeta_sd_ind_3 = zeta_sd_ind_3, 
-        zeta_sd_ind_diag = zeta_sd_ind_diag,
+
+        Lzeta_sd    = Lzeta_sd, 
+        Lzeta_sd_2  = Lzeta_sd_2, 
+        Lzeta_sd_3  = Lzeta_sd_3, 
+        Lzeta_sd_4  = Lzeta_sd_4,
+        Lzeta_sd_5  = Lzeta_sd_5,
+        Lzeta_sd_6  = Lzeta_sd_6,
+        Lzeta_sd_7  = Lzeta_sd_7,
+        Lzeta_sd_8  = Lzeta_sd_8,
+        Lzeta_sd_9  = Lzeta_sd_9,
+        Lzeta_sd_10 = Lzeta_sd_10,
+        Lzeta_sd_11 = Lzeta_sd_11,
+        Lzeta_sd_12 = Lzeta_sd_12,
+        Lzeta_sd_13 = Lzeta_sd_13, 
+        Lzeta_sd_14 = Lzeta_sd_14,
+        Lzeta_sd_15 = Lzeta_sd_15,
+        Lzeta_sd_16 = Lzeta_sd_16,
+        Lzeta_sd_17 = Lzeta_sd_17,
+        Lzeta_sd_18 = Lzeta_sd_18,
+        Lzeta_sd_19 = Lzeta_sd_19,
+        Lzeta_sd_20 = Lzeta_sd_20,
+        Lzeta_sd_21 = Lzeta_sd_21,
+        Lzeta_sd_22 = Lzeta_sd_22,
+        Lzeta_sd_23 = Lzeta_sd_23, 
+        Lzeta_sd_24 = Lzeta_sd_24,
+        Lzeta_sd_25 = Lzeta_sd_25,
+        Lzeta_sd_26 = Lzeta_sd_26,
+        Lzeta_sd_27 = Lzeta_sd_27,
+        Lzeta_sd_28 = Lzeta_sd_28,
+        Lzeta_sd_29 = Lzeta_sd_29,
+        Lzeta_sd_30 = Lzeta_sd_30,
+        Lzeta_sd_31 = Lzeta_sd_31,
+        Lzeta_sd_32 = Lzeta_sd_32,
+
+        zeta_sd_ind    = zeta_sd_ind, 
+        zeta_sd_ind_2  = zeta_sd_ind_2, 
+        zeta_sd_ind_3  = zeta_sd_ind_3, 
+        zeta_sd_ind_4  = zeta_sd_ind_4, 
+        zeta_sd_ind_5  = zeta_sd_ind_5,
+        zeta_sd_ind_6  = zeta_sd_ind_6,
+        zeta_sd_ind_7  = zeta_sd_ind_7,
+        zeta_sd_ind_8  = zeta_sd_ind_8,
+        zeta_sd_ind_9  = zeta_sd_ind_9,
+        zeta_sd_ind_10 = zeta_sd_ind_10,
+        zeta_sd_ind_11 = zeta_sd_ind_11,
+        zeta_sd_ind_12 = zeta_sd_ind_12,
+        zeta_sd_ind_13 = zeta_sd_ind_13,
+        zeta_sd_ind_14 = zeta_sd_ind_14, 
+        zeta_sd_ind_15 = zeta_sd_ind_15,
+        zeta_sd_ind_16 = zeta_sd_ind_16,
+        zeta_sd_ind_17 = zeta_sd_ind_17,
+        zeta_sd_ind_18 = zeta_sd_ind_18,
+        zeta_sd_ind_19 = zeta_sd_ind_19,
+        zeta_sd_ind_20 = zeta_sd_ind_20,
+        zeta_sd_ind_21 = zeta_sd_ind_21,
+        zeta_sd_ind_22 = zeta_sd_ind_22,
+        zeta_sd_ind_23 = zeta_sd_ind_23,
+        zeta_sd_ind_24 = zeta_sd_ind_24, 
+        zeta_sd_ind_25 = zeta_sd_ind_25,
+        zeta_sd_ind_26 = zeta_sd_ind_26,
+        zeta_sd_ind_27 = zeta_sd_ind_27,
+        zeta_sd_ind_28 = zeta_sd_ind_28,
+        zeta_sd_ind_29 = zeta_sd_ind_29,
+        zeta_sd_ind_30 = zeta_sd_ind_30,
+        zeta_sd_ind_31 = zeta_sd_ind_31,
+        zeta_sd_ind_32 = zeta_sd_ind_32,
+
+        zeta_sd_ind_diag    = zeta_sd_ind_diag,
+        zeta_sd_ind_diag_2  = zeta_sd_ind_diag_2,
+        zeta_sd_ind_diag_3  = zeta_sd_ind_diag_3,
+        zeta_sd_ind_diag_4  = zeta_sd_ind_diag_4,
+        zeta_sd_ind_diag_5  = zeta_sd_ind_diag_5,
+        zeta_sd_ind_diag_6  = zeta_sd_ind_diag_6,
+        zeta_sd_ind_diag_7  = zeta_sd_ind_diag_7,
+        zeta_sd_ind_diag_8  = zeta_sd_ind_diag_8,
+        zeta_sd_ind_diag_9  = zeta_sd_ind_diag_9,
+        zeta_sd_ind_diag_10 = zeta_sd_ind_diag_10,
+        zeta_sd_ind_diag_11 = zeta_sd_ind_diag_11,
+        zeta_sd_ind_diag_12 = zeta_sd_ind_diag_12,
+        zeta_sd_ind_diag_13 = zeta_sd_ind_diag_13,
+        zeta_sd_ind_diag_14 = zeta_sd_ind_diag_14,
+        zeta_sd_ind_diag_15 = zeta_sd_ind_diag_15,
+        zeta_sd_ind_diag_16 = zeta_sd_ind_diag_16,
+        zeta_sd_ind_diag_17 = zeta_sd_ind_diag_17,
+        zeta_sd_ind_diag_18 = zeta_sd_ind_diag_18,
+        zeta_sd_ind_diag_19 = zeta_sd_ind_diag_19,
+        zeta_sd_ind_diag_20 = zeta_sd_ind_diag_20,
+        zeta_sd_ind_diag_21 = zeta_sd_ind_diag_21,
+        zeta_sd_ind_diag_22 = zeta_sd_ind_diag_22,
+        zeta_sd_ind_diag_23 = zeta_sd_ind_diag_23,
+        zeta_sd_ind_diag_24 = zeta_sd_ind_diag_24,
+        zeta_sd_ind_diag_25 = zeta_sd_ind_diag_25,
+        zeta_sd_ind_diag_26 = zeta_sd_ind_diag_26,
+        zeta_sd_ind_diag_27 = zeta_sd_ind_diag_27,
+        zeta_sd_ind_diag_28 = zeta_sd_ind_diag_28,
+        zeta_sd_ind_diag_29 = zeta_sd_ind_diag_29,
+        zeta_sd_ind_diag_30 = zeta_sd_ind_diag_30,
+        zeta_sd_ind_diag_31 = zeta_sd_ind_diag_31,
+        zeta_sd_ind_diag_32 = zeta_sd_ind_diag_32,
+
         cor_z_item_ind = cor_z_item_ind, 
         cor_z_item_elem_ind = cor_z_item_elem_ind, 
         cor_z_item_ind_2 = cor_z_item_ind_2, 
