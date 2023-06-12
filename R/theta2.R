@@ -145,6 +145,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   N = nrow(irt_data)
   J = ncol(irt_data)
   N_long = N*J
+
+  y = as.vector(irt_data)
   
   # alpha and delta
   if(any(itype >= 2)) {
@@ -242,6 +244,12 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   } else {
     model_missing_y = 0
   }
+
+  l_y_nonMiss = length(y)
+  y_nonMiss = !is.na(y)
+  if(any(!y_nonMiss)) {
+    l_y_nonMiss = sum(y_nonMiss)
+  }
   
   has_treg = 0
   K = 0
@@ -277,6 +285,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     eval(parse(text = paste0("Lzeta_sd_", i, " = 0")))
     eval(parse(text = paste0("zeta_sd_ind_", i, " = array(0, dim = 0)")))
     eval(parse(text = paste0("z_", i, " = array(0, dim = c(N, 0))")))
+    eval(parse(text = paste0("zLong_", i, " = array(0, dim = c(l_y_nonMiss, 0))")))# ??? N_long
     eval(parse(text = paste0("zeta_sd_ind_diag_", i, " = array(0, dim = c(0, 0))")))
   }
   # }
@@ -318,7 +327,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         eval(parse(text = paste0("Lzeta_sd_", i, " = Lzeta_sd_list[[", i, "]]")))
         eval(parse(text = paste0("zeta_sd_ind_", i, " = zeta_sd_ind_list[[", i, "]]")))
         eval(parse(text = paste0("z_", i, " = reg_data_ranef[[", i, "]]")))
-        eval(parse(text = paste0("zLong_", i, " = array(0, dim = c(N_long, 0))")))
+        eval(parse(text = paste0("zLong_", i, " = array(0, dim = c(l_y_nonMiss, 0))")))
+        eval(parse(text = paste0("zeta_sd_ind_diag_", i, " = array(0, dim = c(Lzeta_", i, ", Lzeta_sd_", i, "))")))
         eval(
           parse(
             text = paste0(
@@ -504,14 +514,12 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   # }
   
   Ncategi_jj = rep(Ncategi, each = N)
-  y = as.vector(irt_data)
   nn = rep(1:N, J)
   jj = rep(1:J, each = N)
 
   # missing values in the item observation matrix
   N_miss = 0
   if(model_missing_y == 1) {
-    y_nonMiss = !is.na(y)
     Ncategi_jj = Ncategi_jj[y_nonMiss]
     N_miss = sum(is.na(irt_data))
     N_long = N_long - N_miss

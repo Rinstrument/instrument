@@ -133,7 +133,6 @@ data {
   int<lower=0,upper=1> rand_ind_g29;
   int<lower=0,upper=1> rand_ind_g30;
   int<lower=0,upper=1> rand_ind_g31;
-  int<lower=0,upper=1> rand_ind_g32;
 
   int<lower=0> Lzeta   ;        // Number of uncorrelated random eff. parms
   int<lower=0> Lzeta_2 ;
