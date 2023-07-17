@@ -26,9 +26,9 @@ model = 'theta1 = c(3:16)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta1 ~ (1 + wave | id)
-         theta2 ~ (1 + wave | id)
-         theta3 ~ (1 + wave | id)'
+         theta1 ~ wave + (1 + wave | id)
+         theta2 ~ wave + (1 + wave | id)
+         theta3 ~ wave + (1 + wave | id)'
 
 # model = 'tg = theta1 + theta2 + theta3
 #          theta1 = c(3:16)
@@ -47,6 +47,8 @@ chains = 1
 fweights = NULL
 library(devtools)
 load_all()
+
+data(familyrisk)
 
 fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
   exploratory = TRUE, method = 'hmc', iter = 10, chains = 1)

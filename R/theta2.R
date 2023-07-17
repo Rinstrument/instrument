@@ -542,6 +542,8 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
                                                          byrow = TRUE
                                                          )[y_nonMiss, , drop = FALSE]")))
       }
+    } else {
+      zLong = array(0, dim = c(N_long, Lzeta))
     }
 
   }
