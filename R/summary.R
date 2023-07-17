@@ -34,11 +34,11 @@ summary.theta2Obj = function(object, pars = 'default', probs = c(0.025, 0.50, 0.
       ]
 
   # remove unneeded parameters
-  all_par_names = all_par_names[!grepl('delta_l|alpha_l|beta_l|zeta_l|db|ab|xb|nu|c|eta3pl|_elong|lp__', all_par_names)]
+  all_par_names = all_par_names[!grepl('delta_l|alpha_l|beta_l|zeta_l\\[|db|ab|xb|nu|c|eta3pl|_elong|lp__', all_par_names)]
 
   name_sorter = function(x) {
 
-    x = draws$parameter
+    # x = draws$parameter
 
     # x = c('a[2,2]', 'b[1,2]','a[2,1]', 'b[1,1]','a[1,2]', 'b[2,1]')
 
@@ -134,14 +134,15 @@ summary.theta2Obj = function(object, pars = 'default', probs = c(0.025, 0.50, 0.
   # unique(str_split(draws[, parameter], '\\[', simplify = TRUE)[,1])
 
   # reorder result for convenience
-  draws = draws[
-      , match := order(match_order)
-    ]
+  draws = 
+    draws[
+        , match := order(match_order)
+      ]
   
   data.table::setorder(draws, match)
 
   draws[
-      , -match
+      , match := NULL
     ]
 
   return(draws)

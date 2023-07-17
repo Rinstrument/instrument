@@ -66,8 +66,51 @@ fweights = NULL
 library(devtools)
 load_all()
 # ------------------------------------------------------------------------------
+
 # summarize results
+
+load('../Paper_Models/mirt1givenidPlusWave.rda')
+
 out = summary.theta2Obj(fit)
+
+out[
+    grep('betat', parameter), 
+  ]
+
+out[
+    grep('zeta', parameter), 
+  ]
+
+out[
+    grep('zeta\\[', parameter), 
+  ][
+    , sd(mean)
+  ]
+
+out[
+    grep('zeta_2\\[', parameter), 
+  ][
+    , sd(mean)
+  ]
+
+out[
+    grep('zeta_3\\[', parameter), 
+  ][
+    , sd(mean)
+  ]
+
+
+
+object = fit
+pars = 'default'
+probs = c(0.025, 0.50, 0.975)
+out = summary.theta2Obj(fit)
+
+
+
+
+
+
 out[grep('betat\\[1,1\\]', parameter), ]
 out[grep('Omega', parameter), ]
 omega = matrix(out[grep('Omega', parameter), 'mean']$mean, nrow = 2)
