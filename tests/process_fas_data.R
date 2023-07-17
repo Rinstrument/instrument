@@ -15,6 +15,12 @@ library(theta2)
 
 # read sav
 dt = read_sav('/Users/mk/Desktop/inirt_project/data/NIAAA_w1to4_and_census_data.sav')
+lapply(
+  dt,
+  \(x) {
+    attr(x, 'label')
+  }
+)
 
 # use data.table
 dt = as.data.table(dt)
@@ -40,32 +46,32 @@ dim(dt4)
 # distribution of items
 apply(dt4[, -c(1:2)], 2, table)
 
-dt4[, 
-  w3g2g := ifelse(w3g2g > 3, 3, w3g2g)][, 
-  w4g2g := ifelse(w4g2g > 3, 3, w4g2g)][, 
-  w3g2c := ifelse(w3g2c > 3, 3, w3g2c)][, 
-  w4g2c := ifelse(w4g2c > 3, 3, w4g2c)][, 
-  w1f4n := ifelse(w1f4n > 3, 3, w1f4n)][, 
-  w2f4n := ifelse(w2f4n > 3, 3, w2f4n)][, 
-  w3f4n := ifelse(w3f4n > 3, 3, w3f4n)][, 
-  w4f4n := ifelse(w4f4n > 3, 3, w4f4n)][, 
-  w2f4q := ifelse(w2f4q > 3, 3, w2f4q)][, 
-  w3f4q := ifelse(w3f4q > 3, 3, w3f4q)][, 
-  w4f4q := ifelse(w4f4q > 3, 3, w4f4q)][, 
-  w2f4s := ifelse(w2f4s > 3, 3, w2f4s)][, 
-  w3f4s := ifelse(w3f4s > 3, 3, w3f4s)][, 
-  w4f4s := ifelse(w4f4s > 3, 3, w4f4s)][, 
-  w1f4e := ifelse(w1f4e > 4, 4, w1f4e)][, 
-  w1f4f := ifelse(w1f4f > 2, 2, w1f4f)][, 
-  w2f4f := ifelse(w2f4f > 4, 4, w2f4f)][, 
-  w3f4f := ifelse(w3f4f > 4, 4, w3f4f)][, 
-  w4f4f := ifelse(w4f4f > 4, 4, w4f4f)][, 
-  w1f4j := ifelse(w1f4j > 2, 2, w1f4j)][, 
-  w2f4j := ifelse(w2f4j > 2, 2, w2f4j)][, 
-  w3f4j := ifelse(w3f4j > 2, 2, w3f4j)][, 
-  w4f4j := ifelse(w4f4j > 2, 2, w4f4j)][, 
-  w1f4b := ifelse(w1f4b > 3, 3, w1f4b)][, 
-  w2f4b := ifelse(w2f4b > 3, 3, w2f4b)][, 
+dt4[,
+  w3g2g := ifelse(w3g2g > 3, 3, w3g2g)][,
+  w4g2g := ifelse(w4g2g > 3, 3, w4g2g)][,
+  w3g2c := ifelse(w3g2c > 3, 3, w3g2c)][,
+  w4g2c := ifelse(w4g2c > 3, 3, w4g2c)][,
+  w1f4n := ifelse(w1f4n > 3, 3, w1f4n)][,
+  w2f4n := ifelse(w2f4n > 3, 3, w2f4n)][,
+  w3f4n := ifelse(w3f4n > 3, 3, w3f4n)][,
+  w4f4n := ifelse(w4f4n > 3, 3, w4f4n)][,
+  w2f4q := ifelse(w2f4q > 3, 3, w2f4q)][,
+  w3f4q := ifelse(w3f4q > 3, 3, w3f4q)][,
+  w4f4q := ifelse(w4f4q > 3, 3, w4f4q)][,
+  w2f4s := ifelse(w2f4s > 3, 3, w2f4s)][,
+  w3f4s := ifelse(w3f4s > 3, 3, w3f4s)][,
+  w4f4s := ifelse(w4f4s > 3, 3, w4f4s)][,
+  w1f4e := ifelse(w1f4e > 4, 4, w1f4e)][,
+  w1f4f := ifelse(w1f4f > 2, 2, w1f4f)][,
+  w2f4f := ifelse(w2f4f > 4, 4, w2f4f)][,
+  w3f4f := ifelse(w3f4f > 4, 4, w3f4f)][,
+  w4f4f := ifelse(w4f4f > 4, 4, w4f4f)][,
+  w1f4j := ifelse(w1f4j > 2, 2, w1f4j)][,
+  w2f4j := ifelse(w2f4j > 2, 2, w2f4j)][,
+  w3f4j := ifelse(w3f4j > 2, 2, w3f4j)][,
+  w4f4j := ifelse(w4f4j > 2, 2, w4f4j)][,
+  w1f4b := ifelse(w1f4b > 3, 3, w1f4b)][,
+  w2f4b := ifelse(w2f4b > 3, 3, w2f4b)][,
   w3f4b := ifelse(w3f4b > 4, 4, w3f4b)]
 
 # how is the distribution?
@@ -84,22 +90,22 @@ colnames(dt4)
 items_to_melt = c('g2a', 'g2g', 'g2c', 'g2d', 'g2e', 'f4n', 'f4q', 'f4s', 'f4e',
   'f4f', 'f4j', 'f41a', 'f42a', 'f4b')
 
-setnames(dt4, 
-  old = c("id", "w1g2a", "w2g2a", "w3g2a", "w4g2a", "w1g2g", "w2g2g", "w3g2g", 
-  "w4g2g", "w1g2c", "w2g2c", "w3g2c", "w4g2c", "w1g2d", "w2g2d", "w3g2d", "w4g2d", 
-  "w1g2e", "w2g2e", "w3g2e", "w4g2e", "w1f4n", "w2f4n", "w3f4n", "w4f4n", "w2f4q", 
-  "w3f4q", "w4f4q", "w2f4s", "w3f4s", "w4f4s", "w1f4e", "w2f4e", "w3f4e", "w4f4e", 
-  "w1f4f", "w2f4f", "w3f4f", "w4f4f", "w1f4j", "w2f4j", "w3f4j", "w4f4j", "w2f4aa", 
+setnames(dt4,
+  old = c("id", "w1g2a", "w2g2a", "w3g2a", "w4g2a", "w1g2g", "w2g2g", "w3g2g",
+  "w4g2g", "w1g2c", "w2g2c", "w3g2c", "w4g2c", "w1g2d", "w2g2d", "w3g2d", "w4g2d",
+  "w1g2e", "w2g2e", "w3g2e", "w4g2e", "w1f4n", "w2f4n", "w3f4n", "w4f4n", "w2f4q",
+  "w3f4q", "w4f4q", "w2f4s", "w3f4s", "w4f4s", "w1f4e", "w2f4e", "w3f4e", "w4f4e",
+  "w1f4f", "w2f4f", "w3f4f", "w4f4f", "w1f4j", "w2f4j", "w3f4j", "w4f4j", "w2f4aa",
   "w3f4aa", "w4f4aa", "w1f4a", "w2f4a", "w3f4a", "w4f4a", "w1f4b", "w2f4b", "w3f4b"),
-  new = c("id", "w1g2a", "w2g2a", "w3g2a", "w4g2a", "w1g2g", "w2g2g", "w3g2g", 
-  "w4g2g", "w1g2c", "w2g2c", "w3g2c", "w4g2c", "w1g2d", "w2g2d", "w3g2d", "w4g2d", 
-  "w1g2e", "w2g2e", "w3g2e", "w4g2e", "w1f4n", "w2f4n", "w3f4n", "w4f4n", "w2f4q", 
-  "w3f4q", "w4f4q", "w2f4s", "w3f4s", "w4f4s", "w1f4e", "w2f4e", "w3f4e", "w4f4e", 
-  "w1f4f", "w2f4f", "w3f4f", "w4f4f", "w1f4j", "w2f4j", "w3f4j", "w4f4j", "w2f41a", 
+  new = c("id", "w1g2a", "w2g2a", "w3g2a", "w4g2a", "w1g2g", "w2g2g", "w3g2g",
+  "w4g2g", "w1g2c", "w2g2c", "w3g2c", "w4g2c", "w1g2d", "w2g2d", "w3g2d", "w4g2d",
+  "w1g2e", "w2g2e", "w3g2e", "w4g2e", "w1f4n", "w2f4n", "w3f4n", "w4f4n", "w2f4q",
+  "w3f4q", "w4f4q", "w2f4s", "w3f4s", "w4f4s", "w1f4e", "w2f4e", "w3f4e", "w4f4e",
+  "w1f4f", "w2f4f", "w3f4f", "w4f4f", "w1f4j", "w2f4j", "w3f4j", "w4f4j", "w2f41a",
   "w3f41a", "w4f41a", "w1f42a", "w2f42a", "w3f42a", "w4f42a", "w1f4b", "w2f4b", "w3f4b"))
 
-dList = 
-  lapply(items_to_melt, 
+dList =
+  lapply(items_to_melt,
     \(x, d, c_names) {
       y = melt(d, id.vars = 'id', measure.vars = grep(x, c_names))
       y[, wave := substr(variable, 2, 2)]
@@ -109,14 +115,14 @@ dList =
 
 # any(duplicated(dList[[2]][, c('id', 'wave')]))
 
-# d = dList[[1]][, 
+# d = dList[[1]][,
 #   items_to_melt[1] := value][,
-#   value := NULL][, 
+#   value := NULL][,
 #   variable := NULL]
 
-dList[[1]] = dList[[1]][, 
+dList[[1]] = dList[[1]][,
     items_to_melt[1] := value][,
-    value := NULL][, 
+    value := NULL][,
     variable := NULL]
 
 dL = dList[[1]]
@@ -124,9 +130,9 @@ dL = dList[[1]]
 distinct(dList[[1]][, 1:2])
 
 for(i in 2:length(dList)) {
-  dList[[i]] = dList[[i]][, 
+  dList[[i]] = dList[[i]][,
     items_to_melt[i] := value][,
-    value := NULL][, 
+    value := NULL][,
     variable := NULL]
 
   dL = merge(dL, dList[[i]], by = c('id', 'wave'), all.x = TRUE)
@@ -145,7 +151,7 @@ familyrisk = dL
 save(familyrisk, file = 'familyrisk.rda')
 
 # how many don't have missing values
-# dL %>% 
+# dL %>%
 #   mutate(rsums = rowSums(is.na(.[3:16])) < 2) %>%
 #   group_by(id) %>%
 #   summarize(no_na = (sum(rsums) == 0) * 1) %>%
@@ -156,6 +162,6 @@ save(familyrisk, file = 'familyrisk.rda')
 # set.seed(7794)
 # f100 = dL$id %>% unique() %>% sample(., size = 100)
 
-# ds = 
+# ds =
 #   dL %>%
 #   filter(id %in% f100)

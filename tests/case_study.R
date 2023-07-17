@@ -22,6 +22,14 @@ model = 'theta1 = c(3:16)
          theta2 ~ (1 | id) + wave
          theta3 ~ (1 | id) + wave'
 
+
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta1 ~ (1 + wave | id)
+         theta2 ~ (1 + wave | id)
+         theta3 ~ (1 + wave | id)'
+
 # model = 'tg = theta1 + theta2 + theta3
 #          theta1 = c(3:16)
 #          theta2 = c(3:16)
