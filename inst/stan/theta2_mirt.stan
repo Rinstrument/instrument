@@ -810,7 +810,7 @@ transformed parameters {
       }
       
       if(any_rand_cor) {
-        
+        // edit
         for(k in 1:Lzeta_cor) {
           xb[i, which_dim_cor_reg[1]] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
         }
