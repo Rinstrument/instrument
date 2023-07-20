@@ -367,6 +367,10 @@ data {
   matrix[N, Lzeta_cor_2] z_c_2;
   matrix[N, Lzeta_cor_3] z_c_3;
 
+  matrix[N_long, Lzeta_cor] z_cLong; // long form equivalent of z_c
+  matrix[N_long, Lzeta_cor_2] z_cLong_2;
+  matrix[N_long, Lzeta_cor_3] z_cLong_3;
+
   matrix[N, Laeta_cor] a_c;
   matrix[N, Ldeta_cor] d_c;
 
@@ -587,6 +591,11 @@ transformed parameters {
   vector[Lzeta_31] zeta_l_sd_elong_31;
   vector[Lzeta_32] zeta_l_sd_elong_32;
 
+  // new
+  matrix[Lzeta_cor,     1]  zeta_cMat;
+  matrix[Lzeta_cor_2,   1]  zeta_cMat_2;
+  matrix[Lzeta_cor_3,   1]  zeta_cMat_3;
+
   {
     // elongate zeta_l_sd for fast dot product
     zeta_l_sd_elong    = (zeta_sd_ind_diag    * zeta_l_sd   ); //.* zeta_sd_ind_ones;
@@ -739,6 +748,27 @@ transformed parameters {
     }
   }
 
+  // new 
+  if(any_rand_cor) {
+
+    for(k in 1:Lzeta_cor) {
+      zeta_cMat[k, 1] = zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+    }
+
+    if(rand_cor_g1) {
+      for(k in 1:Lzeta_cor_2) {
+        zeta_cMat_2[k, 1] = zeta_c_2[cor_z_item_ind_2[k]][cor_z_item_elem_ind_2[k]];
+      }
+    }
+
+    if(rand_cor_g2) {
+      for(k in 1:Lzeta_cor_3) {
+        zeta_cMat_3[k, 1] = zeta_c_3[cor_z_item_ind_3[k]][cor_z_item_elem_ind_3[k]];
+      }
+    }
+    
+  }
+
   // ensures delta parameters satisfy requirements of the ordered logistic 
   // distribution according to STAN's definition
   // Basically, sort and make NA values inf
@@ -810,21 +840,23 @@ transformed parameters {
       }
       
       if(any_rand_cor) {
-        // edit
-        for(k in 1:Lzeta_cor) {
-          xb[i, which_dim_cor_reg[1]] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
-        }
+        // edit here ------------------------------
+        // prev version:
+        // for(k in 1:Lzeta_cor) {
+        //   xb[i, which_dim_cor_reg[1]] += z_c[nn[i], k] * zeta_c[cor_z_item_ind[k]][cor_z_item_elem_ind[k]];
+                      
+        // }
+        xb[i, which_dim_cor_reg[1]] += dot_product(   z_cLong[i, ]    ,   zeta_cMat[ , 1]    );
+        // edit here ------------------------------
+        // dot_product(   z_cLong[i, ]    ,   zeta_cMat[ , 1]    );
+        //+= dot_product(zLong[i,      ], zeta[,     1]) ;
 
         if(rand_cor_g1) {
-          for(k in 1:Lzeta_cor_2) {
-            xb[i, which_dim_cor_reg[2]] += z_c_2[nn[i], k] * zeta_c_2[cor_z_item_ind_2[k]][cor_z_item_elem_ind_2[k]];
-          }
+          xb[i, which_dim_cor_reg[2]] += dot_product(   z_cLong_2[i, ]    ,   zeta_cMat_2[ , 1]    );
         }
 
         if(rand_cor_g2) {
-          for(k in 1:Lzeta_cor_3) {
-            xb[i, which_dim_cor_reg[3]] += z_c_3[nn[i], k] * zeta_c_3[cor_z_item_ind_3[k]][cor_z_item_elem_ind_3[k]];
-          }
+          xb[i, which_dim_cor_reg[3]] += dot_product(   z_cLong_3[i, ]    ,   zeta_cMat_3[ , 1]    );
         }
         
         // for(rg in 1:n_rand_cor_sets) {
