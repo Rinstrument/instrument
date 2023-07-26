@@ -813,6 +813,13 @@ transformed parameters {
           ab[i] = 0.0;
         }
         if(any_rand_ind_a) {
+          
+          // HERE
+
+          //new
+          //ab[i] += dot_product(arLong[i, ], aeta[, 1]);
+
+          // old
           for(k in 1:Laeta) {
             ab[i] += ar[nn[i], k] * aeta_l[alindex[k]]*aeta_l_sd[aeta_sd_ind[k]];
           }

@@ -33,7 +33,7 @@ model = 'theta1 = c(3:16)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta3 ~ wave + (1 + wave | id)'
+         theta2 ~ wave + (1 + wave | id)'
 
 # model = 'tg = theta1 + theta2 + theta3
 #          theta1 = c(3:16)
@@ -52,6 +52,10 @@ chains = 1
 fweights = NULL
 library(devtools)
 load_all()
+
+library(tidyverse)
+standata %>% names()
+str(standata, list.len = length(standata))
 
 data(familyrisk)
 
@@ -76,9 +80,44 @@ load_all()
 
 # summarize results
 
-load('../Paper_Models/mirt1givenidPlusWave.rda')
+library(theta2)
+library(stringr)
+library(tidyverse)
+
+load('./tests/case_study_results/mirtRandInterceptLong.rda')
+load('./tests/case_study_results/mirtCorRanef1plusWave_theta1.rda')
+load('./tests/case_study_results/mirtCorRanef1plusWave_theta2.rda')
+load('./tests/case_study_results/mirtCorRanef1plusWave_theta3.rda')
 
 out = summary.theta2Obj(fit)
+
+(out %>%
+  pull(parameter) %>%
+  str_split(., '\\[', simplify = TRUE))[, 1] %>%
+  unique()
+
+omega = matrix(out[grep('Omega', parameter), 'mean']$mean, nrow = 2)
+tau = diag(out[grep('tau', parameter), 'mean']$mean)
+vcov = tau %*% omega %*% tau
+vcov
+
+vcov_p = function(p) {
+  omega = matrix(out[grep('Omega', parameter), ..p][[1]], nrow = 2)
+  tau = diag(out[grep('tau', parameter), ..p][[1]])
+  vcov = tau %*% omega %*% tau
+  vcov
+}
+vcov_p(p = 'quantile_0.025')
+vcov_p(p = 'quantile_0.975')
+
+out[
+    grep('alpha', parameter), 
+  ][
+    , mean
+   ] %>%
+  matrix(., byrow = FALSE, nrow = 14) %>%
+  as.data.frame() %>%
+  mutate_all(\(x) { ifelse(x < 0.5, '--', as.character(round(x, digits = 1)))})
 
 out[
     grep('betat', parameter), 
