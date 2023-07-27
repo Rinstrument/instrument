@@ -837,7 +837,13 @@ transformed parameters {
           //for(k in 1:K) {  // vectorize this for loop with dot_product
           //}
           //xb[i, d] += dot_product(x[nn[i], ], betat[, d]);
-          xb[i, d] += dot_product(xLong[i, ], betat[, d]); // can this be vectorized over dimension D?
+
+          // May be a bug: shouldn't this be xb[i, which_dim[d]]? How are we locating the dimension???
+          //recent:
+    //      xb[i, d] += dot_product(xLong[i, ], betat[, d]); // can this be vectorized over dimension D?
+
+          //new:
+          xb[i, which_dim_fixed_reg[d]] += dot_product(xLong[i, ], betat[, d]);
         }
 
       } else {
@@ -902,38 +908,40 @@ transformed parameters {
         //   // }
         // }
 
-                         xb[i, which_dim_ind_reg_sort[1]]  += dot_product(zLong[i,      ], zeta[,     1]) ;
-        if(rand_ind_g1)  xb[i, which_dim_ind_reg_sort[2]]  += dot_product(zLong_2[i,    ], zeta_2[,   1]) ;
-        if(rand_ind_g2)  xb[i, which_dim_ind_reg_sort[3]]  += dot_product(zLong_3[i,    ], zeta_3[,   1]) ;
-        if(rand_ind_g3)  xb[i, which_dim_ind_reg_sort[4]]  += dot_product(zLong_4[i,    ], zeta_4[,   1]) ;
-        if(rand_ind_g4)  xb[i, which_dim_ind_reg_sort[5]]  += dot_product(zLong_5[i,    ], zeta_5[,   1]) ;
-        if(rand_ind_g5)  xb[i, which_dim_ind_reg_sort[6]]  += dot_product(zLong_6[i,    ], zeta_6[,   1]) ;
-        if(rand_ind_g6)  xb[i, which_dim_ind_reg_sort[7]]  += dot_product(zLong_7[i,    ], zeta_7[,   1]) ;
-        if(rand_ind_g7)  xb[i, which_dim_ind_reg_sort[8]]  += dot_product(zLong_8[i,    ], zeta_8[,   1]) ;
-        if(rand_ind_g8)  xb[i, which_dim_ind_reg_sort[9]]  += dot_product(zLong_9[i,    ], zeta_9[,   1]) ;
-        if(rand_ind_g9)  xb[i, which_dim_ind_reg_sort[10]] += dot_product(zLong_10[i,   ], zeta_10[,   1]);
-        if(rand_ind_g10) xb[i, which_dim_ind_reg_sort[11]] += dot_product(zLong_11[i,   ], zeta_11[,   1]);
-        if(rand_ind_g11) xb[i, which_dim_ind_reg_sort[12]] += dot_product(zLong_12[i,   ], zeta_12[,   1]);
-        if(rand_ind_g12) xb[i, which_dim_ind_reg_sort[13]] += dot_product(zLong_13[i,   ], zeta_13[,   1]);
-        if(rand_ind_g13) xb[i, which_dim_ind_reg_sort[14]] += dot_product(zLong_14[i,   ], zeta_14[,   1]);
-        if(rand_ind_g14) xb[i, which_dim_ind_reg_sort[15]] += dot_product(zLong_15[i,   ], zeta_15[,   1]);
-        if(rand_ind_g15) xb[i, which_dim_ind_reg_sort[16]] += dot_product(zLong_16[i,   ], zeta_16[,   1]);
-        if(rand_ind_g16) xb[i, which_dim_ind_reg_sort[17]] += dot_product(zLong_17[i,   ], zeta_17[,   1]);
-        if(rand_ind_g17) xb[i, which_dim_ind_reg_sort[18]] += dot_product(zLong_18[i,   ], zeta_18[,   1]);
-        if(rand_ind_g18) xb[i, which_dim_ind_reg_sort[19]] += dot_product(zLong_19[i,   ], zeta_19[,   1]);
-        if(rand_ind_g19) xb[i, which_dim_ind_reg_sort[20]] += dot_product(zLong_20[i,   ], zeta_20[,   1]);
-        if(rand_ind_g20) xb[i, which_dim_ind_reg_sort[21]] += dot_product(zLong_21[i,   ], zeta_21[,   1]);
-        if(rand_ind_g21) xb[i, which_dim_ind_reg_sort[22]] += dot_product(zLong_22[i,   ], zeta_22[,   1]);
-        if(rand_ind_g22) xb[i, which_dim_ind_reg_sort[23]] += dot_product(zLong_23[i,   ], zeta_23[,   1]);
-        if(rand_ind_g23) xb[i, which_dim_ind_reg_sort[24]] += dot_product(zLong_24[i,   ], zeta_24[,   1]);
-        if(rand_ind_g24) xb[i, which_dim_ind_reg_sort[25]] += dot_product(zLong_25[i,   ], zeta_25[,   1]);
-        if(rand_ind_g25) xb[i, which_dim_ind_reg_sort[26]] += dot_product(zLong_26[i,   ], zeta_26[,   1]);
-        if(rand_ind_g26) xb[i, which_dim_ind_reg_sort[27]] += dot_product(zLong_27[i,   ], zeta_27[,   1]);
-        if(rand_ind_g27) xb[i, which_dim_ind_reg_sort[28]] += dot_product(zLong_28[i,   ], zeta_28[,   1]);
-        if(rand_ind_g28) xb[i, which_dim_ind_reg_sort[29]] += dot_product(zLong_29[i,   ], zeta_29[,   1]);
-        if(rand_ind_g29) xb[i, which_dim_ind_reg_sort[30]] += dot_product(zLong_30[i,   ], zeta_30[,   1]);
-        if(rand_ind_g30) xb[i, which_dim_ind_reg_sort[31]] += dot_product(zLong_31[i,   ], zeta_31[,   1]);
-        if(rand_ind_g31) xb[i, which_dim_ind_reg_sort[32]] += dot_product(zLong_32[i,   ], zeta_32[,   1]);
+   // we had xb[i, which_dim_ind_reg_sort[1]] here, but I think that's wrong
+   // so I replaced it with:
+                         xb[i, which_dim_ind_reg[1]]  += dot_product(zLong[i,      ], zeta[,     1]) ;
+        if(rand_ind_g1)  xb[i, which_dim_ind_reg[2]]  += dot_product(zLong_2[i,    ], zeta_2[,   1]) ;
+        if(rand_ind_g2)  xb[i, which_dim_ind_reg[3]]  += dot_product(zLong_3[i,    ], zeta_3[,   1]) ;
+        if(rand_ind_g3)  xb[i, which_dim_ind_reg[4]]  += dot_product(zLong_4[i,    ], zeta_4[,   1]) ;
+        if(rand_ind_g4)  xb[i, which_dim_ind_reg[5]]  += dot_product(zLong_5[i,    ], zeta_5[,   1]) ;
+        if(rand_ind_g5)  xb[i, which_dim_ind_reg[6]]  += dot_product(zLong_6[i,    ], zeta_6[,   1]) ;
+        if(rand_ind_g6)  xb[i, which_dim_ind_reg[7]]  += dot_product(zLong_7[i,    ], zeta_7[,   1]) ;
+        if(rand_ind_g7)  xb[i, which_dim_ind_reg[8]]  += dot_product(zLong_8[i,    ], zeta_8[,   1]) ;
+        if(rand_ind_g8)  xb[i, which_dim_ind_reg[9]]  += dot_product(zLong_9[i,    ], zeta_9[,   1]) ;
+        if(rand_ind_g9)  xb[i, which_dim_ind_reg[10]] += dot_product(zLong_10[i,   ], zeta_10[,   1]);
+        if(rand_ind_g10) xb[i, which_dim_ind_reg[11]] += dot_product(zLong_11[i,   ], zeta_11[,   1]);
+        if(rand_ind_g11) xb[i, which_dim_ind_reg[12]] += dot_product(zLong_12[i,   ], zeta_12[,   1]);
+        if(rand_ind_g12) xb[i, which_dim_ind_reg[13]] += dot_product(zLong_13[i,   ], zeta_13[,   1]);
+        if(rand_ind_g13) xb[i, which_dim_ind_reg[14]] += dot_product(zLong_14[i,   ], zeta_14[,   1]);
+        if(rand_ind_g14) xb[i, which_dim_ind_reg[15]] += dot_product(zLong_15[i,   ], zeta_15[,   1]);
+        if(rand_ind_g15) xb[i, which_dim_ind_reg[16]] += dot_product(zLong_16[i,   ], zeta_16[,   1]);
+        if(rand_ind_g16) xb[i, which_dim_ind_reg[17]] += dot_product(zLong_17[i,   ], zeta_17[,   1]);
+        if(rand_ind_g17) xb[i, which_dim_ind_reg[18]] += dot_product(zLong_18[i,   ], zeta_18[,   1]);
+        if(rand_ind_g18) xb[i, which_dim_ind_reg[19]] += dot_product(zLong_19[i,   ], zeta_19[,   1]);
+        if(rand_ind_g19) xb[i, which_dim_ind_reg[20]] += dot_product(zLong_20[i,   ], zeta_20[,   1]);
+        if(rand_ind_g20) xb[i, which_dim_ind_reg[21]] += dot_product(zLong_21[i,   ], zeta_21[,   1]);
+        if(rand_ind_g21) xb[i, which_dim_ind_reg[22]] += dot_product(zLong_22[i,   ], zeta_22[,   1]);
+        if(rand_ind_g22) xb[i, which_dim_ind_reg[23]] += dot_product(zLong_23[i,   ], zeta_23[,   1]);
+        if(rand_ind_g23) xb[i, which_dim_ind_reg[24]] += dot_product(zLong_24[i,   ], zeta_24[,   1]);
+        if(rand_ind_g24) xb[i, which_dim_ind_reg[25]] += dot_product(zLong_25[i,   ], zeta_25[,   1]);
+        if(rand_ind_g25) xb[i, which_dim_ind_reg[26]] += dot_product(zLong_26[i,   ], zeta_26[,   1]);
+        if(rand_ind_g26) xb[i, which_dim_ind_reg[27]] += dot_product(zLong_27[i,   ], zeta_27[,   1]);
+        if(rand_ind_g27) xb[i, which_dim_ind_reg[28]] += dot_product(zLong_28[i,   ], zeta_28[,   1]);
+        if(rand_ind_g28) xb[i, which_dim_ind_reg[29]] += dot_product(zLong_29[i,   ], zeta_29[,   1]);
+        if(rand_ind_g29) xb[i, which_dim_ind_reg[30]] += dot_product(zLong_30[i,   ], zeta_30[,   1]);
+        if(rand_ind_g30) xb[i, which_dim_ind_reg[31]] += dot_product(zLong_31[i,   ], zeta_31[,   1]);
+        if(rand_ind_g31) xb[i, which_dim_ind_reg[32]] += dot_product(zLong_32[i,   ], zeta_32[,   1]);
 
       }
 
