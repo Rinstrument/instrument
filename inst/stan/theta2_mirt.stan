@@ -831,26 +831,45 @@ transformed parameters {
         }
       }
 
+      for(d in 1:D) {
+        xb[i, d] = 0.0;
+      }
+
       if(has_treg) {
-        for(d in 1:D) {
-          xb[i, d] = 0.0;
+        
+          
           //for(k in 1:K) {  // vectorize this for loop with dot_product
           //}
           //xb[i, d] += dot_product(x[nn[i], ], betat[, d]);
 
           // May be a bug: shouldn't this be xb[i, which_dim[d]]? How are we locating the dimension???
           //recent:
-    //      xb[i, d] += dot_product(xLong[i, ], betat[, d]); // can this be vectorized over dimension D?
+        //  xb[i, d] += dot_product(xLong[i, ], betat[, d]); // can this be vectorized over dimension D?
 
           //new:
-          xb[i, which_dim_fixed_reg[d]] += dot_product(xLong[i, ], betat[, d]);
-        }
 
-      } else {
-        for(d in 1:D) {
-          xb[i, d] = 0.0; // can this be replaces with rep_vec(0)?
-        }
-      }
+          xb[i, which_dim_fixed_reg[1]] += dot_product(xLong[i, ], betat[, 1]);
+
+          if(which_dim_fixed_reg[2]) xb[i, which_dim_fixed_reg[2]] += dot_product(xLong[i, ], betat[, 2]);
+          if(which_dim_fixed_reg[3]) xb[i, which_dim_fixed_reg[3]] += dot_product(xLong[i, ], betat[, 3]);
+
+          // if(which_dim_fixed_reg[d]) {
+          //   xb[i, which_dim_fixed_reg[d]] += dot_product(xLong[i, ], betat[, d]);
+          // } 
+
+          // else {
+          //   xb[i, d] += dot_product(xLong[i, ], betat[, d]);
+          // }
+          
+        
+
+      } 
+      
+      // else {
+      //   for(d in 1:D) {
+      //     xb[i, d] = 0.0; // can this be replaces with rep_vec(0)?
+      //   }
+      // }
       
       if(any_rand_cor) {
         // edit here ------------------------------
@@ -910,6 +929,7 @@ transformed parameters {
 
    // we had xb[i, which_dim_ind_reg_sort[1]] here, but I think that's wrong
    // so I replaced it with:
+        
                          xb[i, which_dim_ind_reg[1]]  += dot_product(zLong[i,      ], zeta[,     1]) ;
         if(rand_ind_g1)  xb[i, which_dim_ind_reg[2]]  += dot_product(zLong_2[i,    ], zeta_2[,   1]) ;
         if(rand_ind_g2)  xb[i, which_dim_ind_reg[3]]  += dot_product(zLong_3[i,    ], zeta_3[,   1]) ;

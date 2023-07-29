@@ -2,6 +2,8 @@
 # libraries
 library(theta2)
 
+# install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+
 library(devtools)
 install(dependencies = FALSE)
 
@@ -33,7 +35,12 @@ model = 'theta1 = c(3:16)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta2 ~ wave + (1 + wave | id)'
+         theta3 ~ wave + (1 + wave | id)'
+
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta1 ~ wave + (1 | id)'
 
 # model = 'tg = theta1 + theta2 + theta3
 #          theta1 = c(3:16)
