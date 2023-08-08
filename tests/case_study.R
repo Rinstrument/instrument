@@ -35,6 +35,11 @@ model = 'theta1 = c(3:16)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
+         theta1 ~ wave + (1 | wave) + (1 | id)'
+
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
          theta3 ~ wave + (1 + wave | id)'
 
 model = 'theta1 = c(3:16)
@@ -91,10 +96,23 @@ library(theta2)
 library(stringr)
 library(tidyverse)
 
-load('./tests/case_study_results/mirtRandInterceptLong.rda')
-load('./tests/case_study_results/mirtCorRanef1plusWave_theta1.rda')
-load('./tests/case_study_results/mirtCorRanef1plusWave_theta2.rda')
-load('./tests/case_study_results/mirtCorRanef1plusWave_theta3.rda')
+rm(list = ls())
+
+# load('./tests/case_study_results/mirtRandInterceptLong.rda')
+# load('./tests/case_study_results/mirtCorRanef1plusWave_theta1_version2.rda')
+# load('./tests/case_study_results/mirtCorRanef1plusWave_theta2_version2.rda')
+# load('./tests/case_study_results/mirtCorRanef1plusWave_theta3_version2.rda')
+load('./tests/case_study_results/mirtCorRanef1plusWave_all_3_version2.rda')
+
+library(rstan)
+
+matrix_of_draws = as.matrix(fit$stanfit)
+dim(matrix_of_draws)
+
+Rhat(matrix_of_draws[,1])
+ess_bulk(matrix_of_draws[,1])
+ess_tail(matrix_of_draws[,1])
+
 
 out = summary.theta2Obj(fit)
 
@@ -103,8 +121,18 @@ out = summary.theta2Obj(fit)
   str_split(., '\\[', simplify = TRUE))[, 1] %>%
   unique()
 
-omega = matrix(out[grep('Omega', parameter), 'mean']$mean, nrow = 2)
-tau = diag(out[grep('tau', parameter), 'mean']$mean)
+omega = matrix(out[grep('Omega', parameter), 'mean']$mean, nrow = 2)[,1:2]
+tau = diag(out[grep('tau', parameter), 'mean']$mean[1:2])
+vcov = tau %*% omega %*% tau
+vcov
+
+omega = matrix(out[grep('Omega', parameter), 'mean']$mean, nrow = 2)[,3:4]
+tau = diag(out[grep('tau', parameter), 'mean']$mean[3:4])
+vcov = tau %*% omega %*% tau
+vcov
+
+omega = matrix(out[grep('Omega', parameter), 'mean']$mean, nrow = 2)[,5:6]
+tau = diag(out[grep('tau', parameter), 'mean']$mean[5:6])
 vcov = tau %*% omega %*% tau
 vcov
 
@@ -124,7 +152,7 @@ out[
    ] %>%
   matrix(., byrow = FALSE, nrow = 14) %>%
   as.data.frame() %>%
-  mutate_all(\(x) { ifelse(x < 0.5, '--', as.character(round(x, digits = 1)))})
+  mutate_all(\(x) { ifelse(x < 0.4, '--', as.character(round(x, digits = 1)))})
 
 out[
     grep('betat', parameter), 
