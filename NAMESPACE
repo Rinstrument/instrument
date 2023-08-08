@@ -1,7 +1,7 @@
 # Edit by hand (not managed by Roxygen)
 
 # Main model fitting function of package
-export(theta2)
+export(instrument)
 
 # Rcpp
 import(Rcpp)
@@ -9,14 +9,14 @@ import(Rcpp)
 # Methods
 import(methods)
 
-# Use compiled code (Stan -> cpp -> theta2)
-useDynLib(theta2, .registration = TRUE)
+# Use compiled code (Stan -> cpp -> instrument)
+useDynLib(instrument, .registration = TRUE)
 
 # S3 method exports
-S3method(summary, theta2Obj)
-export(summary.theta2Obj)
-S3method(traceplot, theta2Obj)
-export(traceplot.theta2Obj)
+S3method(summary, instrumentObj)
+export(summary.instrumentObj)
+S3method(traceplot, instrumentObj)
+export(traceplot.instrumentObj)
 
 # From rstan
 importFrom(rstan, sampling)

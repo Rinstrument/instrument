@@ -45,7 +45,7 @@ loadings = function(x, rotate = c('varimax', 'promax', 'oblimin'), ...) {
   rotate = rotate[1]
 
   # get summaries
-  fit_smy = theta2::summary.theta2Obj(x)
+  fit_smy = instrument::summary.instrumentObj(x)
   
   # subset loading estimates
   posterior = fit_smy[

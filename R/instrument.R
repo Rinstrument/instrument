@@ -19,7 +19,7 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
 #' @export 
-theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc"), 
+instrument = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc"), 
   fweights = NULL, ...) {
 
   # item_id = NULL
@@ -1340,17 +1340,17 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   # Select the correct inirt implementation based on input parameters
   if(D == 1) {
 
-    modl = stanmodels$theta2_unidim
+    modl = stanmodels$instrument_unidim
     mtype = "unidim"
 
   } else if(D > 1 & h2_dims == 0) {
 
-    modl = stanmodels$theta2_mirt
+    modl = stanmodels$instrument_mirt
     mtype = "mdim"
 
   } else {    # D > 1 & h2_dims > 0
 
-    modl = stanmodels$theta2_soirt
+    modl = stanmodels$instrument_soirt
     mtype = "soirt"
 
   }
@@ -1376,7 +1376,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     mtype = mtype
   )
 
-  class(output) = 'theta2Obj'
+  class(output) = 'instrumentObj'
 
   return(output)
 

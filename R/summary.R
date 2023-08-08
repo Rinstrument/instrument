@@ -14,7 +14,7 @@
 #' @importFrom rstan summary
 #' @export
 #' 
-summary.theta2Obj = function(object, pars = 'default', probs = c(0.025, 0.50, 0.975), 
+summary.instrumentObj = function(object, pars = 'default', probs = c(0.025, 0.50, 0.975), 
   ...) {
   
   stanfit = object$stanfit
@@ -109,13 +109,13 @@ summary.theta2Obj = function(object, pars = 'default', probs = c(0.025, 0.50, 0.
     ]
 
   # posterior summary function
-  summary_theta2Obj = function(x, probs) { 
+  summary_instrumentObj = function(x, probs) { 
       c(mean(x), sd(x), quantile(x, probs = probs)) 
     }
 
   # apply posterior summary to all parameters
   draws = draws[
-      , lapply(.SD[, -c(1, 2)], summary_theta2Obj, probs = probs)
+      , lapply(.SD[, -c(1, 2)], summary_instrumentObj, probs = probs)
     ]
 
   # summary names

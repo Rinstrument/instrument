@@ -1,9 +1,9 @@
-Package: theta2
-Title: Bayesian Explanatory Multivariate Item Response Theory Models
-Version: 1.5
+Package: instrument
+Title: Bayesian Explanatory Multidimensional Item Response Theory Modeling
+Version: 2.1.1
 Authors@R: 
     person("Michael", "Kleinsasser", , "mjkleinsa@gmail.com", role = c("aut", "cre"))
-Description: Estimate explanatory multivariate item response theory models using
+Description: Estimate explanatory multidimensional item response theory models using
     Stan.
 License: GPL-3
 Encoding: UTF-8

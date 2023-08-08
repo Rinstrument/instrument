@@ -1,7 +1,7 @@
-// Unidimensional IRT with latent regression (theta2 package)
+// Unidimensional IRT with latent regression (instrument package)
 // Author: Michael Kleinsasser
 // Description:
-// Stan program meant to be used by the theta2::theta2() R function
+// Stan program meant to be used by the instrument::instrument() R function
 // Example (test if it compiles to c++):
 // mod = rstan::stan_model(file = "./inst/stan/theta2_mirt.stan", verbose = TRUE)
 // rstan::stanc(file = "./inst/stan/theta2_mirt.stan", verbose = TRUE)
