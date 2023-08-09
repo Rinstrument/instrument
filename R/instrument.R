@@ -19,8 +19,12 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
 #' @export 
-instrument = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc"), 
-  fweights = NULL, ...) {
+instrument = function(data, 
+                      model, 
+                      itype, 
+                      exploratory = FALSE, 
+                      method = c("vb", "hmc"), 
+                      fweights = NULL, ...) {
 
   # item_id = NULL
   # predictors = NULL
@@ -354,7 +358,7 @@ instrument = function(data, model, itype, exploratory = FALSE, method = c("vb", 
   cor_z_item_elem_ind = array(0, dim = c(0)) # index the position within random effect vectors
   z_c = array(0, dim = c(N, 0)) # random effect design matrix
 
- 
+  z_cLong = array(0, dim = c(l_y_nonMiss, 0)) # long version of z_c
 
   # if(length(regr_theta) > 1) {
   for(i in 2:extra_mem_slots) {
