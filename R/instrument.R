@@ -22,7 +22,7 @@
 instrument = function(data, 
                       model, 
                       itype = '2pl', 
-                      exploratory = FALSE, 
+                      exploratory = TRUE, 
                       method = "hmc", 
                       fweights = NULL, 
                       chains = 1,
