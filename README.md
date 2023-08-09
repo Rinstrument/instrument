@@ -16,7 +16,7 @@
 
 The R package `instrument` is an item response theory modeling software whose purpose is: 
 
- - Fit a variety of IRT models including the univariate, multivariate exploratory and confirmatory, and higher-order confirmatory models
+ - Fit a variety of IRT models including the univdimensional, multidimensional, and higher-order models
  - Specify regression models in the context of IRT with both fixed and random effects (i.e., mixed modeling)
  - Simple model syntax to describe IRT models with and without regression
 
@@ -38,7 +38,7 @@ The R package `instrument` is an item response theory modeling software whose pu
 # remotes
 install.packages("remotes")
 # install from Github
-remotes::install_github("inirt/instrument")
+remotes::install_github("Rinstrument/instrument")
 ```
 
 Alternatively, install from CRAN with:
