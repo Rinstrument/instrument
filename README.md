@@ -12,7 +12,7 @@
 
 <img align="right" src="https://github.com/Rinstrument/instrument/blob/master/www/hexsticker.png" width="200px">
 
-## R Instrument quick guide
+# R instrument quick guide
 
 ## Overview
 
