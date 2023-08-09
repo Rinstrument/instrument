@@ -19,7 +19,7 @@
 #' @return An object of class `stanfit` returned by `rstan::sampling`
 #' 
 #' @export 
-theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc"), 
+instrument = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc"), 
   fweights = NULL, ...) {
 
   # item_id = NULL
@@ -365,6 +365,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     eval(parse(text = paste0("cor_z_item_ind_", i, " = array(0, dim = c(0))")))
     eval(parse(text = paste0("cor_z_item_elem_ind_", i, " = array(0, dim = c(0))")))
     eval(parse(text = paste0("z_c_", i, " = array(0, dim = c(N, 0))")))
+    eval(parse(text = paste0("z_cLong_", i, " = array(0, dim = c(l_y_nonMiss, 0))")))
   }
   # }
   
@@ -396,6 +397,20 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         eval(parse(text = paste0("u_Lzeta_cor_", i, paste0(" = Lzeta_cor_", i, " / ", "l_Lzeta_cor_", i))))
         eval(parse(text = paste0("cor_z_item_ind_", i, paste0(" = rep(1:u_Lzeta_cor_", i, ", l_Lzeta_cor_", i, ")"))))
         eval(parse(text = paste0("cor_z_item_elem_ind_", i, paste0(" = rep(1:l_Lzeta_cor_", i, ", each = u_Lzeta_cor_", i, ")"))))
+      }
+    }
+
+    # long version of z_c, z_cLong
+    z_cLong = matrix(rep(t(z_c), J), 
+                     ncol = ncol(z_c), 
+                     byrow = TRUE
+                     )[y_nonMiss, , drop = FALSE]
+    if(length(regr_theta) > 1) {
+      for(i in 2:length(regr_theta)) {
+        eval(parse(text = paste0("z_cLong_", i, " = matrix(rep(t(z_c_", i, "), J), 
+                                                           ncol = ncol(z_c_", i, "), 
+                                                           byrow = TRUE
+                                                           )[y_nonMiss, , drop = FALSE]")))
       }
     }
 
@@ -542,7 +557,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
                                                          byrow = TRUE
                                                          )[y_nonMiss, , drop = FALSE]")))
       }
-    } else {
+    } else { # this could probably be moved to the other pre-instantiations up above
       zLong = array(0, dim = c(N_long, Lzeta))
     }
 
@@ -1235,6 +1250,9 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
         z_c = z_c,
         z_c_2 = z_c_2,
         z_c_3 = z_c_3,
+        z_cLong = z_cLong,
+        z_cLong_2 = z_cLong_2,
+        z_cLong_3 = z_cLong_3,
         a_c = a_c, 
         d_c = d_c
       )
@@ -1322,17 +1340,17 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
   # Select the correct inirt implementation based on input parameters
   if(D == 1) {
 
-    modl = stanmodels$theta2_unidim
+    modl = stanmodels$instrument_unidim
     mtype = "unidim"
 
   } else if(D > 1 & h2_dims == 0) {
 
-    modl = stanmodels$theta2_mirt
+    modl = stanmodels$instrument_mirt
     mtype = "mdim"
 
   } else {    # D > 1 & h2_dims > 0
 
-    modl = stanmodels$theta2_soirt
+    modl = stanmodels$instrument_soirt
     mtype = "soirt"
 
   }
@@ -1358,7 +1376,7 @@ theta2 = function(data, model, itype, exploratory = FALSE, method = c("vb", "hmc
     mtype = mtype
   )
 
-  class(output) = 'theta2Obj'
+  class(output) = 'instrumentObj'
 
   return(output)
 

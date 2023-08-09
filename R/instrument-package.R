@@ -1,11 +1,11 @@
-#' The 'theta2' package.
+#' The 'instrument' package.
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
 #' @docType package
-#' @name theta2-package
-#' @aliases theta2
-#' @useDynLib theta2, .registration = TRUE
+#' @name instrument-package
+#' @aliases instrument
+#' @useDynLib instrument, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling

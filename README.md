@@ -14,15 +14,15 @@
 
 ## Overview
 
-The R package `theta2` is an item response theory modeling software whose purpose is: 
+The R package `instrument` is an item response theory modeling software whose purpose is: 
 
- - Fit a variety of IRT models including the univariate, multivariate exploratory and confirmatory, and higher-order confirmatory models
+ - Fit a variety of IRT models including the univdimensional, multidimensional, and higher-order models
  - Specify regression models in the context of IRT with both fixed and random effects (i.e., mixed modeling)
  - Simple model syntax to describe IRT models with and without regression
 
 ## Documentation & Source
 
- - The `theta2` R package source code can be found at [github.com/inirt/theta2](https://github.com/inirt/theta2)
+ - The `instrument` R package source code can be found at [github.com/inirt/theta2](https://github.com/inirt/theta2)
 
  - Full documentation and tutorials can be found at [inirt.github.io/doc/](https://inirt.github.io/doc/)
 
@@ -38,13 +38,13 @@ The R package `theta2` is an item response theory modeling software whose purpos
 # remotes
 install.packages("remotes")
 # install from Github
-remotes::install_github("inirt/theta2")
+remotes::install_github("Rinstrument/instrument")
 ```
 
 Alternatively, install from CRAN with:
 
 ``` r
-install.packages("theta2")
+install.packages("instrument")
 ```
 
 ---

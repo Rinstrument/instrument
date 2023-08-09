@@ -15,7 +15,7 @@
 #' 
 #' @importFrom rstan traceplot
 #' @export 
-traceplot.theta2Obj = function(object, pars, ...) {
+traceplot.instrumentObj = function(object, pars, ...) {
 
 	stanfit = object$stanfit
 
