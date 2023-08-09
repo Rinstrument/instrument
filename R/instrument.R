@@ -21,10 +21,12 @@
 #' @export 
 instrument = function(data, 
                       model, 
-                      itype, 
+                      itype = '2pl', 
                       exploratory = FALSE, 
-                      method = c("vb", "hmc"), 
-                      fweights = NULL, ...) {
+                      method = "hmc", 
+                      fweights = NULL, 
+                      chains = 1,
+                      ...) {
 
   # item_id = NULL
   # predictors = NULL
@@ -555,11 +557,13 @@ instrument = function(data,
                      ncol = ncol(z), 
                      byrow = TRUE
                      )[y_nonMiss, , drop = FALSE]
-      for(i in 2:length(regr_theta)) {
-        eval(parse(text = paste0("zLong_", i, " = matrix(rep(t(z_", i, "), J), 
-                                                         ncol = ncol(z_", i, "), 
-                                                         byrow = TRUE
-                                                         )[y_nonMiss, , drop = FALSE]")))
+      if(length(predictors_ranef) > 1) {
+        for(i in 2:length(regr_theta)) {
+          eval(parse(text = paste0("zLong_", i, " = matrix(rep(t(z_", i, "), J), 
+                                                           ncol = ncol(z_", i, "), 
+                                                           byrow = TRUE
+                                                           )[y_nonMiss, , drop = FALSE]")))
+        }
       }
     } else { # this could probably be moved to the other pre-instantiations up above
       zLong = array(0, dim = c(N_long, Lzeta))
@@ -1362,11 +1366,11 @@ instrument = function(data,
   # Choose a model estimateion method: variational inference or HMC
   if(method[1] == "vb") {
 
-    out = rstan::vb(modl, data = standata, ...)
+    out = rstan::vb(modl, data = standata, chains = chains, ...)
 
   } else if(method[1] == "hmc") {
 
-    out = rstan::sampling(modl, data = standata, ...)
+    out = rstan::sampling(modl, data = standata, chains = chains, ...)
 
   } else {
 

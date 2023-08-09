@@ -24,6 +24,11 @@ model = 'theta1 = c(3:16)
          theta2 ~ (1 | id) + wave
          theta3 ~ (1 | id) + wave'
 
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
+         theta1 ~ (1 | id) + wave'
+fit = instrument::instrument(data = familyrisk, model = model, iter = 10)
 
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
