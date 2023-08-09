@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 # libraries
-library(theta2)
+library(instrument)
 
 # install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 
@@ -71,7 +71,7 @@ str(standata, list.len = length(standata))
 
 data(familyrisk)
 
-fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
+fit = instrument::instrument(data = familyrisk, model = model, itype = '2pl', 
   exploratory = TRUE, method = 'hmc', iter = 10, chains = 1)
 
 fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
