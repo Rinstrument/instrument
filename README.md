@@ -10,7 +10,7 @@
   </a>
 </p> -->
 
-<img align="right" src="https://github.com/inirt/.github/blob/master/images/hex-inirt.png" width="200px">
+<img align="right" src="https://github.com/Rinstrument/instrument/blob/master/www/hexsticker.png" width="200px">
 
 ## Overview
 
