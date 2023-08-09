@@ -32,7 +32,15 @@ The R package `instrument` is an item response theory modeling software whose pu
 
 1. Since this is an R pacakge, the user first needs to install R from <a href="https://www.r-project.org/">the R project website</a>.
 
-2. Once R is installed, open an R console and install the package from Github using remotes:
+2. In addition to R, a good editor is recommended such as RStudio.
+
+3. The key dependency of this package is RStan. Use the development version of the software, which can be installed with:
+
+``` r
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+```
+
+4. Once R and RStan are installed, open an R console and install the package from Github using remotes (recommended):
 
 ``` r
 # remotes
@@ -41,7 +49,7 @@ install.packages("remotes")
 remotes::install_github("Rinstrument/instrument")
 ```
 
-Alternatively, install from CRAN with:
+Alternatively, install from CRAN with (coming soon):
 
 ``` r
 install.packages("instrument")
