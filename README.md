@@ -12,6 +12,8 @@
 
 <img align="right" src="https://github.com/Rinstrument/instrument/blob/master/www/hexsticker.png" width="200px">
 
+# `Instrument` quick guide
+
 ## Overview
 
 The R package `instrument` is an item response theory modeling software whose purpose is: 
