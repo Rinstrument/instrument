@@ -40,6 +40,12 @@ model = 'theta1 = c(3:16)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
+         thetag = theta1 + theta2 + theta3
+         thetag ~ wave + (1 + wave | id)'
+
+model = 'theta1 = c(3:16)
+         theta2 = c(3:16)
+         theta3 = c(3:16)
          theta1 ~ wave + (1 | wave) + (1 | id)'
 
 model = 'theta1 = c(3:16)
@@ -76,10 +82,10 @@ str(standata, list.len = length(standata))
 
 data(familyrisk)
 
-fit = instrument::instrument(data = familyrisk, model = model, itype = '2pl', 
+fit = instrument::instrument(data = familyrisk, model = model, itype = '2pl',
   exploratory = TRUE, method = 'hmc', iter = 10, chains = 1)
 
-fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl', 
+fit = theta2::theta2(data = familyrisk, model = model, itype = '2pl',
   exploratory = TRUE, method = 'vb', tol_rel_obj = 0.001, iter = 10000)
 
 save(fit, file = "tests/case_study_results/fit_exploratory_3dim_wave_random_intercept_dim1.RData")
@@ -88,7 +94,7 @@ object = fit
 
 
 
-data = ds; model = model; itype = "2pl"; 
+data = ds; model = model; itype = "2pl";
 exploratory = TRUE; method = "hmc"; iter = 500; chains = 1
 fweights = NULL
 library(devtools)
@@ -151,7 +157,7 @@ vcov_p(p = 'quantile_0.025')
 vcov_p(p = 'quantile_0.975')
 
 out[
-    grep('alpha', parameter), 
+    grep('alpha', parameter),
   ][
     , mean
    ] %>%
@@ -160,27 +166,27 @@ out[
   mutate_all(\(x) { ifelse(x < 0.4, '--', as.character(round(x, digits = 1)))})
 
 out[
-    grep('betat', parameter), 
+    grep('betat', parameter),
   ]
 
 out[
-    grep('zeta', parameter), 
+    grep('zeta', parameter),
   ]
 
 out[
-    grep('zeta\\[', parameter), 
+    grep('zeta\\[', parameter),
   ][
     , sd(mean)
   ]
 
 out[
-    grep('zeta_2\\[', parameter), 
+    grep('zeta_2\\[', parameter),
   ][
     , sd(mean)
   ]
 
 out[
-    grep('zeta_3\\[', parameter), 
+    grep('zeta_3\\[', parameter),
   ][
     , sd(mean)
   ]
@@ -224,7 +230,7 @@ for(i in 1:nrow(reffs)) {
     y = reffs[i, 1] + reffs[i, 2]*x))
 }
 
-ggplot(bdat) + aes(x = x, y = y, group = ln) + 
+ggplot(bdat) + aes(x = x, y = y, group = ln) +
     geom_line()
 
 
