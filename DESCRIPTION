@@ -1,6 +1,6 @@
 Package: instrument
-Title: Bayesian Explanatory Multidimensional Item Response Theory Modeling
-Version: 2.1.1
+Title: Bayesian Explanatory Multidimensional Item Response Theory Models
+Version: 2.1.2
 Authors@R: 
     person("Michael", "Kleinsasser", , "mjkleinsa@gmail.com", role = c("aut", "cre"))
 Description: Estimate explanatory multidimensional item response theory models using
