@@ -5,7 +5,8 @@ library(instrument)
 # install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 
 library(devtools)
-install(dependencies = FALSE)
+load_all()
+install(dependencies = TRUE)
 
 # ------------------------------------------------------------------------------
 # data
@@ -20,28 +21,17 @@ data(familyrisk)
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)
          theta3 = c(3:16)
-         theta1 ~ (1 | id) + wave
-         theta2 ~ (1 | id) + wave
-         theta3 ~ (1 | id) + wave'
-
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
-         theta1 ~ (1 | id) + wave'
-fit = instrument::instrument(data = familyrisk, model = model, iter = 10)
-
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
          theta1 ~ wave + (1 + wave | id)
          theta2 ~ wave + (1 + wave | id)
          theta3 ~ wave + (1 + wave | id)'
 
-model = 'theta1 = c(3:16)
-         theta2 = c(3:16)
-         theta3 = c(3:16)
+model = 'theta1 = c(3:8)
+         theta2 = c(9:12)
+         theta3 = c(13:16)
          thetag = theta1 + theta2 + theta3
          thetag ~ wave + (1 + wave | id)'
+
+fit = instrument::instrument(data = familyrisk, model = model, iter = 1000)
 
 model = 'theta1 = c(3:16)
          theta2 = c(3:16)

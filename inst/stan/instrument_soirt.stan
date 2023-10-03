@@ -7,7 +7,7 @@
 // stanc(file = "./inst/stan/inirt_unidim.stan", verbose = TRUE)
 // https://github.com/henrixapp/muq2/blob/35d366b07cf1929c03e1ac8b5e6f1f355e12a760/external/include/stan/prob/distributions/univariate/discrete/ordered_logistic.hpp
 functions {
-  real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut, 
+  real ordered_logistic_log_irt_vec(array[] int y, vector nu, matrix cut,
     vector eta, array[] int K, int nlong, array[] int itype) {
     real val = 0.0;
     int K_i = 0;
@@ -76,7 +76,7 @@ data {
   int<lower=0> alpha_dstart[D];
   int<lower=0> alpha_dend[D];
   int<lower=1> nDelta;        // total number of delta parameters
-  int<lower=1,upper=D> lambda_ind[N_long]; // which 1st order dim does each obs. belong to? 
+  int<lower=1,upper=D> lambda_ind[N_long]; // which 1st order dim does each obs. belong to?
   int<lower=0> L;        // number of non-zero loadings
   int<lower=0,upper=1> has_treg;  // do theta regression?
   int<lower=1> beta_dstart[has_treg ? 1 : 0]; // beta start index for each dimension
@@ -84,7 +84,7 @@ data {
   int<lower=1> zeta_dstart[any_rand_ind ? 1 : 0]; // zeta start index for each dimension
   int<lower=1> zeta_dend[any_rand_ind ? 1 : 0];   // zeta end index for each dimension
   real fweights[N_long]; // weights for each observation
-  matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
+  // matrix[N_long, K] x_miss;    // missing x index matrix (1 if missing, 0 else)
   // int reg_miss[N, K];       // id value of missing x within a matrix, 0 else
   // int<lower=0,upper=1> x_in_row_is_missing[N_long]; // any missing x's in given row? for efficiency
   int<lower=0> nDelta_r;            // number of delta structural regression parameters
@@ -93,18 +93,18 @@ data {
   int<lower=0> deltaMean;    // want at least intercept for delta pars?
   matrix[N, nDelta_r] d_design;     // delta structural design matrix
   matrix[N, nAlpha_r] a_design;     // alpha structural design matrix
-  
+
   int<lower=0> Lzeta;        // Number of uncorrelated random eff. parms
   int<lower=0> Laeta;
   int<lower=0> Ldeta;
-  
+
   int<lower=0> u_Lzeta_cor;      // number of corr ranef par vectors
   int<lower=0> l_Lzeta_cor;      // length of corr ranef par vectors
   int<lower=0> u_Laeta_cor;
-  int<lower=0> l_Laeta_cor; 
+  int<lower=0> l_Laeta_cor;
   int<lower=0> u_Ldeta_cor;
-  int<lower=0> l_Ldeta_cor; 
-  
+  int<lower=0> l_Ldeta_cor;
+
   int<lower=0> Lzeta_cor;    // total number of correlated random eff. parms
   int<lower=0> Laeta_cor;
   int<lower=0> Ldeta_cor;
@@ -165,15 +165,15 @@ parameters {
   vector[Lzeta] zeta_l;          // random regression pars
   vector<lower=0>[Lzeta_sd] zeta_l_sd;          // random regression pars
   vector[Laeta] aeta_l;
-  vector<lower=0>[Laeta_sd] aeta_l_sd; 
+  vector<lower=0>[Laeta_sd] aeta_l_sd;
   vector[Ldeta] deta_l;
-  vector<lower=0>[Ldeta_sd] deta_l_sd; 
+  vector<lower=0>[Ldeta_sd] deta_l_sd;
 
   corr_matrix[l_Lzeta_cor] Omega;        // prior correlation
   vector<lower=0>[l_Lzeta_cor] tau;              // prior scale
-  corr_matrix[l_Laeta_cor] Omega_a;     
+  corr_matrix[l_Laeta_cor] Omega_a;
   vector<lower=0>[l_Laeta_cor] tau_a;
-  corr_matrix[l_Ldeta_cor] Omega_d;     
+  corr_matrix[l_Ldeta_cor] Omega_d;
   vector<lower=0>[l_Ldeta_cor] tau_d;
 
   vector[l_Lzeta_cor] zeta_c[u_Lzeta_cor];          // random regression pars
@@ -181,7 +181,7 @@ parameters {
   vector[l_Ldeta_cor] deta_c[u_Ldeta_cor];
 }
 transformed parameters {
-  matrix[D*(DAlpha ? 1 : 0), J] alpha;                  // connstrain the upper traingular elements to zero 
+  matrix[D*(DAlpha ? 1 : 0), J] alpha;                  // connstrain the upper traingular elements to zero
   matrix[K, 1] betat; // may generalize to [K,D]              // organize regression parameters into a matrix            beta and zeta could potentially be eliminated??
   matrix[Lzeta, D] zeta;               // organize ranef regression parameters into a matrix
   matrix[J, Ncateg_max-1] delta; // Make excess categories infinite
@@ -214,7 +214,7 @@ transformed parameters {
       }
     }
   }
-    
+
   {
     if(has_treg) {
       int bindex = 0;
@@ -247,7 +247,7 @@ transformed parameters {
     }
   }
 
-  // ensures delta parameters satisfy requirements of the ordered logistic 
+  // ensures delta parameters satisfy requirements of the ordered logistic
   // distribution according to STAN's definition
   // Basically, sort and make NA values inf
   {
@@ -386,7 +386,7 @@ model {
 
   // If 2pl model (i.e., discrimination params), then sample from a normal(-0.5,1)
   // and transform to a lognormal distribution above since discriminations
-  // must be positive. Transformation preferred so that regression is made 
+  // must be positive. Transformation preferred so that regression is made
   // possible in this context.
   if(L) {
     alpha_l ~ normal(-0.5, 1.0); // should these priors be wider?
